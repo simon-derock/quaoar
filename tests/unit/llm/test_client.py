@@ -95,8 +95,8 @@ def test_all_keys_limited_or_a_hard_error_raise(tmp_path: Path) -> None:
     limited = Factory({k.get_secret_value(): 429 for k in KEYS})
     with pytest.raises(LlmError, match="rate limited"):
         make(tmp_path / "a", limited)[0].extract("quotes", Quotes, "text")
-    broken = Factory({KEYS[0].get_secret_value(): 500})
-    with pytest.raises(LlmError, match="500"):
+    broken = Factory({KEYS[0].get_secret_value(): 400})
+    with pytest.raises(LlmError, match="400"):
         make(tmp_path / "b", broken)[0].extract("quotes", Quotes, "text")
 
 
@@ -157,3 +157,11 @@ def test_transient_model_errors_retry_on_the_same_key(tmp_path: Path, status: in
     assert client.extract("quotes", Quotes, "text").items[0].page == 89
     assert factory.calls == 2
     assert sink.events[-1].data["key"] == fingerprint(KEYS[0].get_secret_value())
+
+
+def test_a_key_that_keeps_failing_hands_over_to_the_next_key(tmp_path: Path) -> None:
+    factory = Factory({KEYS[0].get_secret_value(): 422})
+    client, sink = make(tmp_path, factory)
+    assert client.extract("quotes", Quotes, "text").items[0].page == 89
+    assert factory.calls.count(KEYS[0].get_secret_value()) == 3
+    assert sink.events[-1].data["key"] == fingerprint(KEYS[1].get_secret_value())

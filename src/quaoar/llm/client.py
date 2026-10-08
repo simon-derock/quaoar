@@ -107,8 +107,12 @@ class LlmClient:
             try:
                 result = self._run(task, output, data, key)
             except ModelHTTPError as exc:
+                # a rate limit retires the key for the run; a stubborn transient error just
+                # moves on to the next key; anything else is a real failure
                 if exc.status_code in ROTATE_ON:
                     self._spent.add(fp)
+                    continue
+                if exc.status_code in RETRY_ON:
                     continue
                 raise LlmError(f"{task}: model error {exc.status_code}") from None
             except UnexpectedModelBehavior as exc:
@@ -141,7 +145,7 @@ class LlmClient:
                 cached=False,
             )
             return result.output
-        raise LlmError(f"{task}: every Cohere key is rate limited")
+        raise LlmError(f"{task}: every Cohere key is rate limited or failing")
 
     def _run[T: BaseModel](
         self, task: str, output: type[T], data: str, key: SecretStr
