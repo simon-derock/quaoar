@@ -656,6 +656,7 @@ All checks implement `Check.run(claims, ctx) -> list[Signal]`. Absence of eviden
 - SPEC-VX-05 [P0] Presence: `google_maps` for `<vendor> <city>`; a match with similarity at least 0.85 is CONSISTENT, a matched place marked permanently closed is INCONSISTENT, no match is UNVERIFIED.
 - SPEC-VX-06 [P1] Vendor legal and news footprint (SEBI, Indian Kanoon, news) before the cutoff.
 - SPEC-VX-07 [P2] Website first-seen date via the Wayback CDX API, labelled as a non-SerpApi source.
+- SPEC-VX-08 [P0] Acceptance: when the quoting vendor's paid-up capital on registry pages is far below its quote, the card ends with a VX-03 "doesn't match" line, end to end from the PDF. A synthetic prospectus covers this in CI; the real Trafiksol prospectus gave "the quote is 1,770 times its capital" locally on 2026-10-09.
 
 ## BK: merchant banker track record
 - SPEC-BK-01 [P0] Lead manager name(s) from General Information or the cover page.
