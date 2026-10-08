@@ -1,6 +1,6 @@
 # memory (compact live state; PLAN_SPEC.md is canonical)
 updated: 2026-10-09T02:05+05:30
-phase: P3 checks (vendor x-ray live on Trafiksol); next card, scan, cli
+phase: P3/P6 vendor + banker checks, cli, replay, mcp, skill done; next api, web, litigation, backtest
 deadline: 2026-10-10 23:59 IST (aim to submit by 21:00)
 
 decisions:
@@ -20,11 +20,12 @@ blocked:
 - none (user said proceed; agent CLI design taken as approved)
 
 next:
-- card + scan orchestration + `quaoar scan` + replay bundle for Trafiksol
-- BK banker track record, LT litigation diff, SV site visit
-- mcp server, skill, api + web, backtest, README, video script
+- api (SSE replay) on render, web console on netlify
+- LT litigation diff, SV site visit
+- backtest (needs more prospectuses), README, video script, tag v0.1.0
 
 numbers:
+- trafiksol card: 6 lines (2 consistent banker, vendor 1,770x capital flagged), 2 credits; replay is byte-identical
 - Trafiksol: sections located (375 pages, 23 ms), 15 llm calls, vendor quote 1,770x paid-up capital flagged, 2 credits
 - probe: 20 credits, ledger count == SerpApi usage (docs/benchmark-audits/probe-2026-10-09.md)
 - parse_inr 3.6 us, request hash 7.8 us, cache hit 0.12 ms, section locator 23.8 ms
