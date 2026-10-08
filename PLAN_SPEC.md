@@ -566,7 +566,7 @@ flowchart LR
 
 [ORCHESTRA:DOMAIN]
 - SPEC-DOM-01 [P0] Ids are the first 16 hex chars of sha256 over canonical JSON (sorted keys, no spaces); the same content always gives the same id.
-- SPEC-DOM-02 [P0] Company names normalize (case, punctuation, `pvt/private`, `ltd/limited`, `&/and`, `m/s`) before rapidfuzz `token_set_ratio`; similarity is reported in 0..1.
+- SPEC-DOM-02 [P0] Company names normalize (NFKC, case, punctuation, `m/s` prefix, `&` to `and`, legal forms like `pvt/private/ltd/limited/llp` dropped, initials like `I.T.S.` joined) before rapidfuzz `token_sort_ratio`; similarity is reported in 0..1. `token_set_ratio` is avoided because it scores a partial name like "Oasis" as a full match.
 - SPEC-DOM-03 [P0] Dates parse from `12th March, 2024`, `12.03.2024`, `March 12, 2024`, `2024-03-12`; relative dates (`3 days ago`) resolve against the search's own `created_at`, never the wall clock.
 - SPEC-MNY-01 [P0] `parse_inr` turns `Rs. 17.70 crore`, `₹1,77,00,000`, `INR 17.7 cr`, `177.00 lakhs` into integer paise; table unit headers (`₹ in lakhs`) are passed as context.
 - SPEC-MNY-02 [P0] Money is never a float; `format_inr` prints Indian grouping and `Cr`/`L` short forms.
