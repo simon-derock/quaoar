@@ -62,3 +62,12 @@ def chain_to_root(sink: MemorySink, event_id: str) -> list[str]:
         types.append(event.type)
         current = event.parent
     return types
+
+
+def test_a_fresh_journal_replaces_the_previous_run(tmp_path: Path) -> None:
+    path = tmp_path / "s.jsonl"
+    Emitter("s", JournalSink(path), FixedClock())("stage", {"name": "old"})
+    Emitter("s", JournalSink(path, fresh=True), FixedClock())("stage", {"name": "new"})
+    lines = path.read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 1
+    assert json.loads(lines[0])["data"]["name"] == "new"

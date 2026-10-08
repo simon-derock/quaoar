@@ -41,9 +41,12 @@ class MemorySink:
 
 class JournalSink:
     # append-only, flushed per event, so a killed scan keeps everything it already did
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, *, fresh: bool = False) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         self._path = path
+        # a re-run of the same scan starts its own journal instead of mixing two runs
+        if fresh:
+            path.write_text("", encoding="utf-8")
 
     def write(self, event: Event) -> None:
         with self._path.open("a", encoding="utf-8") as handle:

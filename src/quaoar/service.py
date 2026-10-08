@@ -58,7 +58,7 @@ def execute(
     scan_id = scan_id_for(prospectus)
     folder = scan_folder(runtime, scan_id)
     clock = SystemClock()
-    sinks: list[EventSink] = [JournalSink(folder / "events.jsonl"), *extra_sinks]
+    sinks: list[EventSink] = [JournalSink(folder / "events.jsonl", fresh=True), *extra_sinks]
     redact = SecretRedactor(all_secrets(runtime.settings)).redact
     emit = Emitter(scan_id, Tee(sinks), clock, scrub=lambda text: redact(text).text)
 
