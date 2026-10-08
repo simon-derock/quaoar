@@ -800,7 +800,7 @@ Small n is stated plainly: every rate comes with its interval.
 - SPEC-API-02 [P0] Public mode is replay only with no keys on the server; CORS allows the Netlify origin only; per-IP token-bucket rate limit.
 
 ## Web console (Netlify)
-- SPEC-WEB-01 [P0] Terminal pane (xterm.js) renders the event stream exactly like `--events pretty`.
+- SPEC-WEB-01 [P0] Terminal-style pane renders the event stream with the same lines as `quaoar replay` (plain text nodes, no third-party terminal script, so nothing extra to pin or trust).
 - SPEC-WEB-02 [P0] Card pane with the three statuses and a "show proof" drawer (source link, date, engine, `search_id`).
 - SPEC-WEB-03 [P0] Case picker (Trafiksol plus controls); works at phone width with no horizontal scroll.
 - SPEC-WEB-04 [P1] Hindi toggle.
