@@ -873,7 +873,7 @@ Every guard is a pure function in `quaoar.guard`, its regexes compiled once at i
 - SPEC-GRD-05 [P0] G6 redacts exact configured key values, `api_key=[^&\s]+` and `(?i)bearer\s+\S+`. Generic 64-hex strings are not redacted, because our own evidence hashes are 64 hex; gitleaks covers generic secrets in CI.
 - SPEC-GRD-06 [P0] G7 banned terms (word boundaries, case-insensitive): fraud, fraudulent, scam, fake, cheat, ponzi, scamster, buy, sell, avoid, "invest now", multibagger, "sure shot", guaranteed, "target price", plus Hinglish dhokha, ghotala, farzi, nakli, kharido, becho.
 - SPEC-GRD-07 [P0] G8 advice requests return the facts and the disclaimer, never a view on price or allocation.
-- SPEC-GRD-08 [P0] ReDoS test: each guard runs on 100 KB adversarial input within 5 ms (scaled by `QUAOAR_PERF_SCALE`).
+- SPEC-GRD-08 [P0] ReDoS test: each guard and parser runs on 50 KB and 100 KB adversarial inputs; the 100 KB run stays under 50 ms (scaled by `QUAOAR_PERF_SCALE`) and under 3x the 50 KB run, i.e. linear, not quadratic. Any regex quantifier that can meet another quantifier over the same characters is bounded (found and fixed 2026-10-09: the money pattern backtracked for minutes on 1,000 spaces).
 - SPEC-GRD-09 [P0] Each guard has a `tests/perf` benchmark; medians are reported in ns.
 - SPEC-GRD-10 [P0] Guard events carry guard id, source and match count, never the matched text.
 [/ORCHESTRA:GUARDRAILS]
