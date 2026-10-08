@@ -84,6 +84,8 @@ markers = [
     "perf: timing budgets, run in the perf job",
     "live: calls real SerpApi or Cohere, never runs in CI",
 ]
+# pydantic-ai's run_sync asks for an event loop the old way; not our code to fix
+filterwarnings = ["ignore:There is no current event loop:DeprecationWarning:pydantic_graph"]
 
 [tool.coverage.run]
 source = ["quaoar"]
