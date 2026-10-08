@@ -1,7 +1,7 @@
 {
   "scan_id": "q16129907970",
   "company": "TRAFIKSOL ITS TECHNOLOGIES LIMITED",
-  "consistent": 2,
+  "consistent": 4,
   "inconsistent": 1,
   "unverified": 1,
   "top": [
@@ -106,6 +106,30 @@
       "page": 89,
       "evidence": [],
       "pit_ok": false
+    },
+    {
+      "check": "banker",
+      "rule": "BK-04",
+      "subject": "Ekadrisht Capital Private Limited",
+      "status": "consistent",
+      "text": "No SEBI order naming Ekadrisht Capital Private Limited turned up in search before Sep 2024.",
+      "observed": "",
+      "threshold": "",
+      "page": 80,
+      "evidence": [],
+      "pit_ok": true
+    },
+    {
+      "check": "banker",
+      "rule": "BK-05",
+      "subject": "Ekadrisht Capital Private Limited",
+      "status": "consistent",
+      "text": "No SEBI order naming past issuer of Ekadrisht Capital Private Limited turned up in search.",
+      "observed": "0 of 1 past issues",
+      "threshold": "",
+      "page": 80,
+      "evidence": [],
+      "pit_ok": true
     }
   ],
   "ruleset": "1",
