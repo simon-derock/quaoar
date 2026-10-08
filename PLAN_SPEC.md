@@ -734,6 +734,7 @@ Borrowed from the go-agent runtime design (2026-10-09): the runtime is the autho
 - SPEC-RT-09 [P0] Progressive context: prompts are assembled from fragments (L0 rules, L1 check goal, L2 claim, L3 section excerpt, L4 compact observations), never the whole prospectus; each LLM call has a 24 KB context cap that is enforced and logged.
 - SPEC-RT-10 [P0] Fault injection in `tests/chaos/`: SerpApi timeout, 429, malformed JSON and empty results; Cohere 429, timeout and invalid JSON; duplicate events; a failed ledger write. Each ends in a defined outcome (retry, key rotation, Partial or UNVERIFIED), never a crash or a wrong status.
 - SPEC-RT-11 [P1] Peak RSS of a replay scan is recorded by the perf job (budget 300 MB).
+- SPEC-RT-12 [P0] Cycles are allowed, runaway is not. Inside a check the agent loops think -> search -> observe until evidence or budget. Across checks, a signal may enqueue follow-ups for other checks (a litigation hit naming the vendor re-opens the vendor x-ray; a vendor director found on the registry is sent to the litigation check), so the check graph can loop back. Every follow-up carries a hop count (at most 2), is deduplicated by (check, entity), and spends from the same scan budget; the follow-up queue is bounded at 20.
 [/ORCHESTRA:RUNTIME]
 
 ---
