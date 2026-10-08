@@ -26,6 +26,11 @@ from quaoar.prospectus.sections import SectionMap
 
 CHUNK_BYTES = 20 * 1024
 SPAN_CHARS = 300
+# role words the model sometimes returns where a name should be
+GENERIC_NAMES = frozenset(
+    {"book running lead manager", "book running lead managers", "lead manager", "lead managers",
+     "brlm", "registrar", "registrar to the issue", "promoter", "promoters", "group company"}
+)  # fmt: skip
 SPAN_BEFORE = 60
 GROUNDING_SKIP = frozenset({"page", "span", "role"})
 TASKS: dict[str, tuple[type[BaseModel], tuple[str, ...]]] = {
@@ -85,7 +90,9 @@ def extract_claims(
                     continue
                 for claim in items_of(result):
                     page_text = safe.get(claim.page, "")
-                    if is_grounded(claim, page_text):
+                    if is_generic(claim):
+                        dropped[task] += 1
+                    elif is_grounded(claim, page_text):
                         kept.append(with_page_span(claim, page_text))
                     else:
                         dropped[task] += 1
@@ -139,6 +146,11 @@ def is_grounded(claim: Grounded, page_text: str) -> bool:
     values = claim_values(claim)
     # every value the claim states must be printed on the page it cites
     return bool(page) and bool(values) and all(norm(v) in page for v in values)
+
+
+def is_generic(claim: Grounded) -> bool:
+    name = getattr(claim, "name", None)
+    return isinstance(name, str) and norm(name) in GENERIC_NAMES
 
 
 def with_page_span(claim: Grounded, page_text: str) -> Grounded:

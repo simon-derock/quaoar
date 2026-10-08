@@ -3,7 +3,7 @@ from collections.abc import Mapping
 
 from pydantic import BaseModel
 
-from quaoar.domain.claims import QuoteClaim, Quotes
+from quaoar.domain.claims import LeadManagerClaim, LeadManagers, QuoteClaim, Quotes
 from quaoar.events import Emitter, MemorySink
 from quaoar.llm.client import LlmError
 from quaoar.prospectus.extract import CHUNK_BYTES, chunks, extract_claims, is_grounded
@@ -152,3 +152,26 @@ def test_a_chunk_the_model_cannot_answer_is_counted_not_fatal() -> None:
     result = extract_claims(pages, objects_only(pages), FailingSource({}))
     assert result.failed["quotes"] == 1
     assert result.claims["quotes"] == []
+
+
+def test_role_words_in_place_of_a_name_are_dropped() -> None:
+    page = Page(
+        80, "Book Running Lead Manager\nEkadrisht Capital Private Limited\n", needs_ocr=False
+    )
+    sections = SectionMap(
+        {"general_information": Section("general_information", "GENERAL INFORMATION", 80, 80)},
+        (),
+        3,
+    )
+    answers = {
+        "lead_managers": LeadManagers(
+            items=[
+                LeadManagerClaim(page=80, name="Book Running Lead Manager"),
+                LeadManagerClaim(page=80, name="Ekadrisht Capital Private Limited"),
+            ]
+        )
+    }
+    result = extract_claims([page], sections, FakeSource(answers))
+    assert [c.model_dump()["name"] for c in result.claims["lead_managers"]] == [
+        "Ekadrisht Capital Private Limited"
+    ]
