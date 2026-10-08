@@ -7,3 +7,16 @@ Quaoar reads an SME IPO prospectus, pulls out the claims that can be checked aga
 Facts with sources. Not investment advice.
 
 > Work in progress for the SerpApi India Hackathon 2026. The design lives in [PLAN_SPEC.md](PLAN_SPEC.md).
+
+## Try it with no keys
+```bash
+git clone https://github.com/simon-derock/quaoar && cd quaoar
+uv sync
+uv run quaoar replay fixtures/replay/trafiksol
+```
+
+## Use it from your own agent (MCP)
+```bash
+claude mcp add quaoar -- uvx --from git+https://github.com/simon-derock/quaoar quaoar mcp
+```
+Then ask for `list_replays`, or give it a prospectus PDF. Copy `skills/quaoar/SKILL.md` into your agent's skills folder for the playbooks.
