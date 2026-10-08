@@ -16,6 +16,7 @@ from quaoar.guard.secrets import SecretRedactor
 from quaoar.guard.text import clean_text
 from quaoar.llm.client import LlmClient
 from quaoar.prospectus.acquire import IntakeError, Prospectus, from_path, from_url
+from quaoar.replay import ReplayBundleError, export_scan, load_replay
 from quaoar.scan import ScanResult, run_scan, scan_id_for
 from quaoar.scoring.card import MARKS, Card, headline
 from quaoar.serp.client import CreditBudget, CreditBudgetExceededError, LedgerClient, account_lookup
@@ -99,6 +100,31 @@ def card(scan_id: str) -> None:
         console.print(f"no saved card for {escape(scan_id)}")
         raise typer.Exit(EXIT_INPUT)
     print_card(Card.model_validate_json(path.read_text(encoding="utf-8")))
+
+
+@app.command()
+def export(scan_id: str, name: str) -> None:
+    runtime = make_runtime()
+    dest = Path("fixtures/replay") / name
+    try:
+        export_scan(runtime.settings.home / "scans" / scan_id, dest, all_secrets(runtime.settings))
+    except ReplayBundleError as exc:
+        console.print(f"[red]{escape(str(exc))}[/red]")
+        raise typer.Exit(EXIT_INPUT) from None
+    console.print(f"replay bundle written to {dest}")
+
+
+@app.command()
+def replay(bundle: Path) -> None:
+    try:
+        events, saved = load_replay(bundle)
+    except ReplayBundleError as exc:
+        console.print(f"[red]{escape(str(exc))}[/red]")
+        raise typer.Exit(EXIT_INPUT) from None
+    sink = ConsoleSink(raw=False)
+    for event in events:
+        sink.write(event)
+    print_card(saved)
 
 
 @ledger_app.command("stats")
