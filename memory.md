@@ -1,6 +1,6 @@
 # memory (compact live state; PLAN_SPEC.md is canonical)
-updated: 2026-10-09T02:00+05:30
-phase: P1 foundation (domain done, guard in progress)
+updated: 2026-10-09T03:10+05:30
+phase: P1 foundation (domain + guard G1/G2/G5-G8 done, CI green)
 deadline: 2026-10-10 23:59 IST (aim to submit by 21:00)
 
 decisions:
@@ -20,7 +20,10 @@ blocked:
 - case prospectus PDFs (manual download, kept local)
 
 next:
-- P1: guard perf/ReDoS, ci.yml, serp client, ledger, key pools
+- P1: serp client (G3 query guard), ledger, key pools, replay, sanitizer
 - P0 probe through the ledger (budget 30 searches)
 
-numbers: none measured yet
+numbers:
+- parse_inr median 2.6-3.6 us (budget 20 us), tests/perf
+- guards linear on 200 KB adversarial input (tests/unit/guard/test_redos.py)
+- CI run 37832935578: gates, perf, privacy green
