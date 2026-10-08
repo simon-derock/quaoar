@@ -65,3 +65,17 @@ def test_short_format_uses_crore_and_lakh() -> None:
 @given(st.integers(min_value=-(10**14), max_value=10**14))
 def test_full_format_round_trips_exactly(paise: int) -> None:
     assert parse_inr(format_inr(paise)) == paise
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["1" * 40, "1" * 100_000, "Rs. " + "9" * 35],
+    ids=["40-digits", "100k-digits", "rs-35-digits"],
+)
+def test_digit_runs_longer_than_any_real_amount_are_rejected(text: str) -> None:
+    with pytest.raises(MoneyParseError):
+        parse_inr(text)
+
+
+def test_a_match_never_starts_inside_a_longer_number() -> None:
+    assert parse_inr("ref 12345678901234567890123456789012345 or Rs. 5") == 500
