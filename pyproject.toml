@@ -23,6 +23,9 @@ dependencies = [
     "uvicorn>=0.38,<1",
 ]
 
+[project.scripts]
+quaoar = "quaoar.cli:app"
+
 [build-system]
 requires = ["uv_build>=0.9.5,<0.10"]
 build-backend = "uv_build"
@@ -58,6 +61,8 @@ ignore = ["E501"]
 [tool.ruff.lint.per-file-ignores]
 # tests assert freely and use obviously fake secrets
 "tests/**" = ["S101", "S105", "S106", "FBT"]
+# typer reads command-line flags from boolean parameters
+"src/quaoar/cli.py" = ["FBT001", "FBT003"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
