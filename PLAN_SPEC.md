@@ -8,7 +8,7 @@
 - [ORCHESTRA:RULES]       : hackathon rules and legal guardrails (hard constraints)
 - [ORCHESTRA:STYLE]       : UML-first coding style, file order, comments, typing
 - [ORCHESTRA:SDLC]        : phases, spec-driven + test-driven loop, definition of done
-- [ORCHESTRA:GIT]         : worktrees, commit rules, integration, memory.md
+- [ORCHESTRA:GIT]         : single working copy, gate-commit-push loop, commit rules, memory.md
 - [ORCHESTRA:CICD]        : custom CI jobs, timing budgets, Render + Netlify deploy
 - [ORCHESTRA:UML]         : component, class, sequence, state, activity, deployment diagrams
 - [ORCHESTRA:DOMAIN]      : models, money, ids, names, dates
@@ -154,7 +154,7 @@ SERPAPI_API_KEYS=
 # Cohere: comma separated keys rotate on rate limits; the model stays locked per scan
 COHERE_API_KEYS=
 COHERE_MODEL=command-a-plus-05-2026
-# shared ledger/cache for every worktree
+# shared ledger/cache for every run
 QUAOAR_HOME=~/.quaoar
 QUAOAR_MAX_CREDITS_PER_SCAN=45
 QUAOAR_KEY_RESERVE=5
@@ -274,11 +274,11 @@ Decisions that change the design get an ADR in `docs/decisions/` and a line in m
 ## Remote
 `origin = https://github.com/simon-derock/quaoar.git`, trunk `main`. One agent (Claude Code) does all work.
 
-## Worktrees
-- Each task gets its own worktree and branch: `git worktree add ../wt-quaoar-<slug> -b feat/<slug>` (also `fix/`, `test/`, `docs/`, `ci/`).
-- Long jobs (backtest, probe) run in their own worktree so main work is not blocked.
-- All worktrees share one ledger through `QUAOAR_HOME`, so no search is paid for twice.
-- Integration: rebase on `main`, run `scripts/gate.sh`, `git merge --ff-only`, push, remove the worktree. History stays linear and keeps the micro-commits.
+## Working copy
+- All work happens in the main checkout (`Quaoar/`) on `main`; no extra worktree directories.
+- Loop per micro-commit: `scripts/gate.sh && git commit && git push`. A red gate never commits, and every green commit is pushed at once.
+- Long jobs (probe, backtest) run in the background from the same checkout and write only to `$QUAOAR_HOME` and `results/`; the shared ledger means no search is paid for twice.
+- History stays linear: no merge commits, no force pushes to `main`.
 
 ## Commit rules (binding)
 - Conventional subject: `<type>(<scope>): <summary>`, imperative, at most 72 characters. Types: feat, fix, test, refactor, perf, docs, build, ci, chore. Scope is the module (`serp`, `money`, `vendor`, ...).
@@ -620,7 +620,7 @@ Account API (free) gives searches left per key. Searches Archive API links every
 - SPEC-KEY-05 [P0] `COHERE_API_KEYS` is a comma list; a rate-limit or quota error moves to the next key with the same model; `llm_calls` records the key fingerprint.
 
 ## Ledger and cache
-- SPEC-LGR-01 [P0] SQLite at `$QUAOAR_HOME/ledger.sqlite3` in WAL mode, shared by all worktrees; tables `searches`, `llm_calls`, `scans`, `claims`, `signals`.
+- SPEC-LGR-01 [P0] SQLite at `$QUAOAR_HOME/ledger.sqlite3` in WAL mode, shared by every run; tables `searches`, `llm_calls`, `scans`, `claims`, `signals`.
 - SPEC-LGR-02 [P0] Response bodies are gzip JSON files named by their sha256; `quaoar ledger verify` recomputes every hash.
 - SPEC-LGR-03 [P0] TTL per engine: news 6 h, google 7 d, maps 14 d, registry and legal 14 d, finance 1 d. Errors are never cached; empty results are cached 24 h and marked empty.
 - SPEC-LGR-04 [P0] `quaoar ledger stats` shows credits by scan, engine and key, cache hit rate, p50/p95 latency.
