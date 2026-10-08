@@ -104,6 +104,16 @@ def mcp() -> None:
     serve()
 
 
+@app.command()
+def serve(host: str = "127.0.0.1", port: int = 8000) -> None:
+    import uvicorn
+
+    from quaoar.api.app import create_app
+
+    settings = make_runtime().settings
+    uvicorn.run(create_app(Path("fixtures/replay"), settings.cors_origin), host=host, port=port)
+
+
 @ledger_app.command("stats")
 def ledger_stats() -> None:
     stats = make_runtime().ledger.stats()
