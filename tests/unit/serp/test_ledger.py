@@ -1,10 +1,11 @@
 # spec: SPEC-LGR-01, SPEC-LGR-02, SPEC-LGR-03, SPEC-LGR-04, SPEC-SAF-10, SPEC-SAF-19, SPEC-RT-06
+# spec: SPEC-CLM-04
 import gzip
 import sqlite3
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from quaoar.serp.ledger import Ledger, SearchRecord
+from quaoar.serp.ledger import Ledger, LlmCall, SearchRecord
 
 NOW = datetime(2026, 10, 9, 12, 0, tzinfo=UTC)
 WEEK = timedelta(days=7)
@@ -108,3 +109,13 @@ def test_stats_report_credits_hit_rate_and_latency(tmp_path: Path) -> None:
     assert stats.hit_rate == 1 / 3
     assert stats.live_p50_ms == 3.0
     assert stats.live_p95_ms == 3.9
+
+
+def test_llm_answers_are_cached_by_request_hash_without_expiry(tmp_path: Path) -> None:
+    ledger = Ledger(tmp_path)
+    body = b'{"items":[]}'
+    call = LlmCall("r1", "command-a-03-2025", "quotes", ledger.blobs.put(body), "fp", 10, 2, 5, NOW)
+    ledger.record_llm(call)
+    ledger.record_llm(call)
+    assert ledger.llm_body("r1") == body
+    assert ledger.llm_body("missing") is None

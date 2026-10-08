@@ -16,6 +16,10 @@ SCHEMA = (
         status TEXT NOT NULL, search_id TEXT, body_sha256 TEXT NOT NULL, key_fp TEXT NOT NULL,
         credits INTEGER NOT NULL, latency_ns INTEGER NOT NULL, fetched_at TEXT NOT NULL,
         PRIMARY KEY (request_hash, fetched_at))""",
+    """CREATE TABLE IF NOT EXISTS llm_calls (
+        request_hash TEXT PRIMARY KEY, model TEXT NOT NULL, task TEXT NOT NULL,
+        body_sha256 TEXT NOT NULL, key_fp TEXT NOT NULL, input_tokens INTEGER NOT NULL,
+        output_tokens INTEGER NOT NULL, latency_ns INTEGER NOT NULL, created_at TEXT NOT NULL)""",
     """CREATE TABLE IF NOT EXISTS uses (
         scan TEXT NOT NULL, request_hash TEXT NOT NULL, cached INTEGER NOT NULL,
         credits INTEGER NOT NULL, latency_ns INTEGER NOT NULL, used_at TEXT NOT NULL)""",
@@ -25,6 +29,11 @@ INSERT_SEARCH = (
     "INSERT OR IGNORE INTO searches (request_hash, engine, params_json, status, search_id, "
     "body_sha256, key_fp, credits, latency_ns, fetched_at) VALUES (?,?,?,?,?,?,?,?,?,?)"
 )
+INSERT_LLM = (
+    "INSERT OR IGNORE INTO llm_calls (request_hash, model, task, body_sha256, key_fp, "
+    "input_tokens, output_tokens, latency_ns, created_at) VALUES (?,?,?,?,?,?,?,?,?)"
+)
+SELECT_LLM = "SELECT body_sha256 FROM llm_calls WHERE request_hash = ?"
 SELECT_LATEST = (
     "SELECT request_hash, engine, params_json, status, search_id, body_sha256, key_fp, "
     "credits, latency_ns, fetched_at FROM searches WHERE request_hash = ? "
@@ -48,6 +57,19 @@ class SearchRecord:
     credits: int
     latency_ns: int
     fetched_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class LlmCall:
+    request_hash: str
+    model: str
+    task: str
+    body_sha256: str
+    key_fp: str
+    input_tokens: int
+    output_tokens: int
+    latency_ns: int
+    created_at: datetime
 
 
 @dataclass(frozen=True, slots=True)
@@ -131,6 +153,23 @@ class Ledger:
         # a tampered or truncated blob is treated as never fetched
         try:
             return rec, self.blobs.get(rec.body_sha256)
+        except (BlobCorruptError, OSError, EOFError):
+            return None
+
+    def record_llm(self, call: "LlmCall") -> None:
+        # llm answers are cached forever: same model, task and text give the same claims
+        row = (*astuple(call)[:-1], call.created_at.isoformat())
+        with self._lock:
+            self._db.execute(INSERT_LLM, row)
+            self._db.commit()
+
+    def llm_body(self, request_hash: str) -> bytes | None:
+        with self._lock:
+            row = self._db.execute(SELECT_LLM, (request_hash,)).fetchone()
+        if row is None:
+            return None
+        try:
+            return self.blobs.get(str(row[0]))
         except (BlobCorruptError, OSError, EOFError):
             return None
 
