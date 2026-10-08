@@ -97,6 +97,13 @@ def replay(bundle: Path) -> None:
     print_card(saved)
 
 
+@app.command()
+def mcp() -> None:
+    from quaoar.mcp_server import serve
+
+    serve()
+
+
 @ledger_app.command("stats")
 def ledger_stats() -> None:
     stats = make_runtime().ledger.stats()
