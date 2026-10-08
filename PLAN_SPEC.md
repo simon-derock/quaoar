@@ -20,6 +20,8 @@
 - [ORCHESTRA:BACKTEST]    : labelled SEBI cases, point-in-time mode, metrics, audit
 - [ORCHESTRA:INTERFACES]  : CLI, MCP server, SKILL.md, API, web console
 - [ORCHESTRA:SECURITY]    : threat model, prompt and SQL injection, SSRF, XSS, secrets, supply chain
+- [ORCHESTRA:GUARDRAILS]  : ten regex and rule guards (G1-G10) on every input, query and output
+- [ORCHESTRA:AGENT_CLI]   : interactive agent terminal (PROPOSED, awaiting user confirmation)
 - [ORCHESTRA:PERF]        : nanosecond/millisecond budgets and how CI measures them
 - [ORCHESTRA:DELIVERABLES]: README, video script, submission checklist
 - [ORCHESTRA:RISKS]       : what the probe must confirm, and the fallback for each
@@ -35,6 +37,10 @@
 - A number is only quoted as a result when a reproducible artifact in `results/` or `docs/benchmark-audits/` backs it. Targets are never written as results.
 
 Current state (2026-10-09): spec written, nothing implemented. Every SPEC below is **Missing** until its tests pass in CI.
+
+Accounts (checked 2026-10-09 through free endpoints, keys never printed):
+- SerpApi: one key, Free plan, 250 searches/month, 250 left, 250/hour rate limit.
+- Cohere: two keys, both valid; chat models include `command-a-plus-05-2026` and `command-a-03-2025`.
 
 ## Verified facts this design rests on (checked 2026-10-08/09)
 - Deadline: "A complete submission must be received before October 10, 2026 at 23:59 IST" (official rules page). Some web-search summaries say October 5; that is wrong.
@@ -90,7 +96,7 @@ The banker -> past issues -> SEBI orders and promoter -> other companies relatio
 - MCP: **fastmcp** (stdio server, in-memory test client).
 - Dev: pytest, pytest-cov, pytest-benchmark, hypothesis, mypy (strict, pydantic plugin), ruff, vulture, bandit, pip-audit.
 - Web: TypeScript in strict mode compiled by `tsc` only (no framework), xterm.js, `node --test` for render functions.
-- LLM: Cohere, one model locked per scan (`COHERE_MODEL`, default `command-a-03-2025`, confirm in the probe).
+- LLM: Cohere, one model locked per scan (`COHERE_MODEL`, default `command-a-plus-05-2026`, fallback `command-a-03-2025`; both listed on our keys). Keys rotate on rate limits, the model never changes inside a scan.
 
 ## 7. Repository layout
 ```text
@@ -123,10 +129,11 @@ quaoar/
 │   ├── domain/               # models, money, ids, names, dates
 │   ├── prospectus/           # acquire, pdf, sections, extract
 │   ├── serp/                 # engines, client, keys, ledger, replay, sanitize, snippets
-│   ├── llm/                  # cohere adapter, llm ledger, guard, prompts
+│   ├── guard/                # regex guardrails G1-G10: text, injection, query, url, pii, secrets, wording, advice
+│   ├── llm/                  # cohere adapter, key rotation, llm ledger, prompts
 │   ├── checks/               # base, vendor, banker, litigation, site, promoters, customers, hype
 │   ├── agent/                # loop, tools, trace
-│   ├── scoring/              # rules, baseline, card, dossier, comment, wording
+│   ├── scoring/              # rules, baseline, card, dossier, comment
 │   ├── backtest/             # cases, runner, metrics
 │   ├── cli.py
 │   ├── mcp_server.py
@@ -142,11 +149,11 @@ quaoar/
 
 ## 8. Environment (`.env.example`)
 ```dotenv
-# SerpApi: two or more keys from accounts you are entitled to use, comma separated
+# SerpApi: keys from accounts you are entitled to use, comma separated
 SERPAPI_API_KEYS=
-# Cohere
-COHERE_API_KEY=
-COHERE_MODEL=command-a-03-2025
+# Cohere: comma separated keys rotate on rate limits; the model stays locked per scan
+COHERE_API_KEYS=
+COHERE_MODEL=command-a-plus-05-2026
 # shared ledger/cache for every worktree
 QUAOAR_HOME=~/.quaoar
 QUAOAR_MAX_CREDITS_PER_SCAN=45
@@ -234,7 +241,7 @@ if months_since(last_filed, cutoff) > 18:
 4. **Refactor**: keep the stepdown order and the short-block style.
 5. **Gate**: `scripts/gate.sh` (same checks as CI).
 6. **Commit**: one micro-commit holding test and code together (a red test is never committed alone, main stays green).
-7. **Trace**: SPEC-STY-03 fails CI if a P0 spec has no test or a test cites an unknown spec.
+7. **Trace**: SPEC-STY-03 always fails CI when a test cites an unknown spec; with `QUAOAR_TRACE_STRICT=1` (switched on in CI at P7) it also fails when a P0 spec has no test.
 
 ## Test kinds
 - `unit/`: pure functions, fakes for ports.
@@ -340,8 +347,8 @@ flowchart LR
         RU[rules] --> BA[baseline] --> CA[card]
         CA --> DO[dossier]
         CA --> CM[comment]
-        WO[wording]
     end
+    GD[guard]
     subgraph serp
         CL[client] --> KP[keys]
         CL --> LG[ledger]
@@ -367,8 +374,12 @@ flowchart LR
     CL -->|HTTPS| SERPAPI[(SerpApi)]
     LLM -->|HTTPS| COHERE[(Cohere)]
     RP -.-> CL
+    interfaces --> GD
+    EXT --> GD
+    CL --> GD
+    scoring --> GD
 ```
-Packages under `src/quaoar/` (SPEC-STY-02 checks this list): `domain`, `prospectus`, `serp`, `llm`, `checks`, `agent`, `scoring`, `backtest`, `api`.
+Packages under `src/quaoar/` (SPEC-STY-02 checks this list): `domain`, `guard`, `prospectus`, `serp`, `llm`, `checks`, `agent`, `scoring`, `backtest`, `api`.
 
 ## Class diagram (core)
 ```mermaid
@@ -606,6 +617,7 @@ Account API (free) gives searches left per key. Searches Archive API links every
 - SPEC-KEY-02 [P0] At start the Account API is read for each key; the key with most searches left is used; keys at or below `QUAOAR_KEY_RESERVE` are skipped.
 - SPEC-KEY-03 [P0] A QUOTA error marks the key exhausted for the run and moves to the next; when all are exhausted the scan ends `Partial` and unchecked claims become UNVERIFIED.
 - SPEC-KEY-04 [P0] `QUAOAR_MAX_CREDITS_PER_SCAN` is enforced before each live call.
+- SPEC-KEY-05 [P0] `COHERE_API_KEYS` is a comma list; a rate-limit or quota error moves to the next key with the same model; `llm_calls` records the key fingerprint.
 
 ## Ledger and cache
 - SPEC-LGR-01 [P0] SQLite at `$QUAOAR_HOME/ledger.sqlite3` in WAL mode, shared by all worktrees; tables `searches`, `llm_calls`, `scans`, `claims`, `signals`.
@@ -720,7 +732,7 @@ Small n is stated plainly: every rate comes with its interval.
 
 [ORCHESTRA:INTERFACES]
 ## Events (shared by CLI, API and web)
-- SPEC-EVT-01 [P0] JSONL events `{"v":1,"t_ns":int,"scan":str,"type":str,"data":{}}` with types `stage`, `serp`, `llm`, `claim`, `signal`, `card`, `warn`, `done`; each stage reports its duration in ns.
+- SPEC-EVT-01 [P0] JSONL events `{"v":1,"t_ns":int,"scan":str,"type":str,"data":{}}` with types `stage`, `serp`, `llm`, `guard`, `claim`, `signal`, `card`, `warn`, `done`; each stage reports its duration in ns.
 
 ## CLI (`quaoar`)
 - SPEC-CLI-01 [P0] `quaoar scan <pdf|url> [--mode fixed|agent] [--replay DIR] [--max-credits N] [--events pretty|jsonl] [--out DIR]` streams events, then prints the card and "credits used, wall time, LLM tokens".
@@ -751,6 +763,33 @@ Small n is stated plainly: every rate comes with its interval.
 - SPEC-WEB-04 [P1] Hindi toggle.
 - SPEC-WEB-05 [P0] TypeScript strict, no framework; render functions covered by `node --test`.
 [/ORCHESTRA:INTERFACES]
+
+---
+
+[ORCHESTRA:AGENT_CLI]
+**Status: PROPOSED. No code until the user confirms this section.**
+
+## What it is
+`quaoar` with no arguments opens an interactive agent terminal, like Claude Code but only for IPO checks. The scripted subcommands in [ORCHESTRA:INTERFACES], the MCP server and the web console all run the same core, so the web page replays exactly what this terminal shows.
+
+## Interaction
+- Plain language: "check trafiksol.pdf", "who brought this IPO and what happened to their past issues?", "show proof for 2", "draft a public comment", "card in Hindi".
+- Slash commands: `/scan <pdf|url>`, `/card`, `/proof <n>`, `/dossier`, `/comment`, `/vendor`, `/banker`, `/cases`, `/replay on|off`, `/mode fixed|agent`, `/budget <credits>`, `/keys`, `/credits`, `/lang en|hi`, `/export md|json`, `/clear`, `/help`, `/quit`.
+- Every step streams as one line: tool, engine, credits, milliseconds. Ctrl-C cancels only the running step and keeps partial results.
+- Status bar: model, mode, replay on/off, credits used and left per key fingerprint, scan id.
+- Input passes G1, G2 and G8; output passes G5, G6 and G7.
+
+## Tech
+Python inside the same package (no Rust or Go, so one core serves CLI, MCP and API): typer for subcommands, rich for rendering and live panels, prompt_toolkit for history and completion of slash commands and file paths. Agent turns run through PydanticAI with the same tools and budgets.
+
+## Specs (activated after confirmation)
+- SPEC-ACL-01 [P0] Loop: input, then guards, then router (slash command or agent turn), then rendered events.
+- SPEC-ACL-02 [P0] Each slash command has a test driven by a scripted session with no TTY.
+- SPEC-ACL-03 [P0] Session state: current scan, last card, mode, replay flag, language; `quaoar --resume <scan_id>`.
+- SPEC-ACL-04 [P0] Ctrl-C cancels the running step only; the scan becomes Partial.
+- SPEC-ACL-05 [P0] One pretty renderer shared with `quaoar scan --events pretty` and the web terminal.
+- SPEC-ACL-06 [P1] Hindi card and help text.
+[/ORCHESTRA:AGENT_CLI]
 
 ---
 
@@ -809,6 +848,38 @@ The repo is public by rule, so no secret ever lives in code. The public server r
 
 ---
 
+[ORCHESTRA:GUARDRAILS]
+## Ten guards, one package
+Every guard is a pure function in `quaoar.guard`, its regexes compiled once at import, linear-time (no nested quantifiers), each with a nanosecond benchmark. A guard never logs the raw text it caught, only its id, source and counts.
+
+| Id | Runs on | Does | On a hit |
+|---|---|---|---|
+| G1 text hygiene | every untrusted string (PDF, snippet, user input) | NFKC; strips ANSI/OSC escapes, C0/C1 controls (keeps newline and tab), bidi overrides, zero-width characters | sanitize |
+| G2 injection scan | PDF text, snippets, chat input | structural prompt-injection patterns | `guard` event `suspicious_input`; text still goes in only as data |
+| G3 query guard | every SerpApi request | engine and param allowlist, `q` printable and at most 512 chars, no `api_key` or credentials in `q`, `site:` only from an allowlist, never `site:` with `tbs` | reject as INVALID |
+| G4 URL and path guard | downloads, rendered links, CLI/MCP paths | https only, public addresses only, no credentials in URLs, exchange hosts refused, `.pdf` regular files only | reject |
+| G5 PII mask | everything leaving the process: card, dossier, events, fixtures, logs | masks PAN, Aadhaar (Verhoeff-checked), Indian mobile numbers, personal emails, house-level addresses of individuals | mask |
+| G6 secret redaction | same as G5 | exact values of configured keys, `api_key=` params, `Authorization`/`Bearer` values | redact |
+| G7 wording | all user-facing text | banned terms in English and Hinglish | templates: CI fails; LLM text: replaced by the template line |
+| G8 advice intent | chat and MCP requests | "should I buy/apply/sell", "target price", "will it go up", "multibagger", Hinglish forms | answers with facts plus "Quaoar doesn't give investment advice" |
+| G9 output contract | every LLM output | pydantic schema, grounded spans, numbers from `parse_inr`, statuses only from rules | drop or fall back |
+| G10 budget | every live call | credits per scan, steps per check, key reserve, rate limit | stop, scan becomes Partial |
+
+## Specs
+- SPEC-GRD-01 [P0] G1 removes `\x1b\[[0-?]*[ -/]*[@-~]` (CSI), `\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)` (OSC), C0/C1 controls except `\n` and `\t`, U+202A..U+202E, U+2066..U+2069, U+200B..U+200D, U+FEFF, then applies NFKC.
+- SPEC-GRD-02 [P0] G2 flags, case-insensitive with word boundaries: "ignore/disregard/forget (all|any|the) (previous|prior|above) (instructions|rules|prompts)", "you are now", "act as", "developer mode", "jailbreak", "system prompt", "mark (all|every) (check|claim)s? (as)? (consistent|verified|true|clean)", "do not (flag|report|mention)", role tags like `<system>`, `</assistant>`, `[INST]`, "BEGIN (SYSTEM|INSTRUCTIONS)", "respond only with", `tool_call`/`function_call` strings, and base64-like runs over 200 chars.
+- SPEC-GRD-03 [P0] G3 per-engine allowlists; `site:` domains allowed: sebi.gov.in, indiankanoon.org, ibbi.gov.in, nclt.gov.in, instafinancials.com, zaubacorp.com, tofler.in, chittorgarh.com; `site:` plus `tbs` is rejected (SerpApi issue #4396).
+- SPEC-GRD-04 [P0] G5 patterns: PAN `\b[A-Z]{5}[0-9]{4}[A-Z]\b`; Aadhaar `\b[2-9][0-9]{3}[ -]?[0-9]{4}[ -]?[0-9]{4}\b` masked only when the Verhoeff checksum passes; mobile `(?:\+91[ -]?|\b0)?[6-9][0-9]{9}\b`; emails on free-mail domains; `(flat|house|h\.? ?no|plot|door) ?(no\.?)? ?[\w/-]+` lines that belong to a person are cut to locality.
+- SPEC-GRD-05 [P0] G6 redacts exact configured key values, `api_key=[^&\s]+` and `(?i)bearer\s+\S+`. Generic 64-hex strings are not redacted, because our own evidence hashes are 64 hex; gitleaks covers generic secrets in CI.
+- SPEC-GRD-06 [P0] G7 banned terms (word boundaries, case-insensitive): fraud, fraudulent, scam, fake, cheat, ponzi, scamster, buy, sell, avoid, "invest now", multibagger, "sure shot", guaranteed, "target price", plus Hinglish dhokha, ghotala, farzi, nakli, kharido, becho.
+- SPEC-GRD-07 [P0] G8 advice requests return the facts and the disclaimer, never a view on price or allocation.
+- SPEC-GRD-08 [P0] ReDoS test: each guard runs on 100 KB adversarial input within 5 ms (scaled by `QUAOAR_PERF_SCALE`).
+- SPEC-GRD-09 [P0] Each guard has a `tests/perf` benchmark; medians are reported in ns.
+- SPEC-GRD-10 [P0] Guard events carry guard id, source and match count, never the matched text.
+[/ORCHESTRA:GUARDRAILS]
+
+---
+
 [ORCHESTRA:PERF]
 Measured with `time.perf_counter_ns()` in code and pytest-benchmark medians in `tests/perf/`. Budgets are local numbers multiplied by `QUAOAR_PERF_SCALE` (3 on CI runners). Each test times only its own task and finishes in well under a second.
 - SPEC-PRF-01 [P0] `parse_inr` median at most 20 µs.
@@ -823,8 +894,8 @@ CI writes every median in ns and ms to the job summary and uploads `perf.json`.
 
 ## Meta checks (style enforcement)
 - SPEC-STY-01 [P0] No docstrings in `src/`, `tests/`, `scripts/` (AST walk).
-- SPEC-STY-02 [P0] Packages under `src/quaoar/` match the UML package list.
-- SPEC-STY-03 [P0] Every P0 SPEC id has a test; no test cites an unknown id.
+- SPEC-STY-02 [P0] Every package under `src/quaoar/` is in the UML package list; under `QUAOAR_TRACE_STRICT=1` the two lists must be equal.
+- SPEC-STY-03 [P0] No test cites an unknown id; under `QUAOAR_TRACE_STRICT=1` every P0 id needs a test.
 - SPEC-STY-04 [P0] No function longer than 60 lines.
 [/ORCHESTRA:PERF]
 
@@ -862,7 +933,7 @@ The P0 probe answers these before P3 starts; each answer is written into the pro
 | R3 | SME prospectuses may lack the past-issues table | present in the case PDFs? | banker's past issues from search snippets |
 | R4 | Google Finance may not cover SME tickers | quote found for 3 SME symbols? | drop BK-06 |
 | R5 | point-in-time leakage (registry and Maps show today's state) | which fields carry dates? | strict PIT counts dated evidence only; report both modes |
-| R6 | credits: about 45 per scan, backtest about 12 cases | searches left across keys | ledger reuse, fixed mode first, agent mode on positives plus their controls only |
+| R6 | credits: one Free key = 250 searches/month in total | budget: probe 30, backtest 150 (fixed mode, cap 20 per scan), demo and dev 50, reserve 20 | ledger reuse across scans, banker results shared, agent mode only on positives and their controls; a second legitimate key doubles this |
 | R7 | case prospectus PDFs must be downloaded by hand | user downloads into a local gitignored folder | fewer cases, stated in the audit |
 | R8 | Cohere rate limits | calls per minute on the key | per-section caching; extraction runs once per PDF |
 | R9 | Render free tier cold start | first request time | video uses the local run; site shows a warming notice |
