@@ -22,6 +22,7 @@ NOISE = re.compile(r"[^a-z0-9]+")
 @dataclass(slots=True)
 class Matter:
     subject: str
+    about_issuer: bool
     title: str
     url: str
     when: date | None
@@ -49,6 +50,7 @@ def litigation_check(
     found = LitigationFindings(issuer, issuer_page, disclosed_count=len(disclosed))
     names = [issuer, *dict.fromkeys(p.name for p in promoters)][: MAX_PROMOTERS + 1]
     refs = {squash(c.case_ref) for c in disclosed if c.case_ref.strip()}
+    issuer_core = normalize_company(issuer)
 
     for name in names:
         found.subjects.append(name)
@@ -59,8 +61,11 @@ def litigation_check(
             if not is_legal_url(url) or core not in normalize_company(title):
                 continue
             text = f"{title} {item.get('snippet', '')} {url}"
+            # a person's name alone can't tell two people apart, so a promoter hit must also name the issuer
+            if name != issuer and issuer_core not in normalize_company(text):
+                continue
             found.matters.append(
-                Matter(name, title, url, matter_date(url, title), any(r in squash(text) for r in refs), evidence(result, item))
+                Matter(name, name == issuer, title, url, matter_date(url, title), any(r in squash(text) for r in refs), evidence(result, item))
             )  # fmt: skip
     return found
 

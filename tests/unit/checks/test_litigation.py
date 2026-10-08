@@ -72,6 +72,29 @@ def test_matters_after_the_cutoff_or_undated_are_ignored_in_point_in_time_mode()
     assert litigation_signals(found, None)[0].status is Status.INCONSISTENT
 
 
+def test_a_person_with_a_common_name_is_not_matched_to_the_issuer() -> None:
+    namesake = {
+        "title": "Person One vs State Of Rajasthan on 25 March, 2015",
+        "link": "https://indiankanoon.org/doc/2/",
+        "snippet": "",
+    }
+    found, _ = check(namesake)
+    assert found.matters == []
+    assert litigation_signals(found, None)[0].status is Status.CONSISTENT
+
+
+def test_a_promoter_hit_counts_only_when_the_page_also_names_the_issuer() -> None:
+    both = {
+        "title": "Person One and Trafiksol Its Technologies Limited vs SEBI",
+        "link": "https://indiankanoon.org/doc/3/",
+        "snippet": "",
+    }
+    found, _ = check(both)
+    assert [m.subject for m in found.matters] == [ISSUER, "Person One"]
+    (signal,) = litigation_signals(found, None)
+    assert "Person One" not in signal.text
+
+
 def test_only_the_issuer_and_three_promoters_are_searched_by_name() -> None:
     found, search = check()
     assert len(search.calls) == 4

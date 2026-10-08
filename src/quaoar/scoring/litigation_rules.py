@@ -9,9 +9,10 @@ def litigation_signals(f: LitigationFindings, cutoff: date | None) -> list[Signa
     extra = undisclosed_before(f, cutoff)
     subjects = len(f.subjects)
     if extra:
-        names = ", ".join(sorted({m.subject for m in extra}))
+        # promoters are never named on the card: matching people by name alone is unreliable
+        who = "the issuer" if any(m.about_issuer for m in extra) else "the issuer and a promoter"
         text = (
-            f"{len(extra)} court or SEBI matter(s) naming {names} turned up in search that the "
+            f"{len(extra)} court or SEBI matter(s) naming {who} turned up in search that the "
             f"prospectus's litigation section ({f.disclosed_count} disclosed) doesn't list: worth a closer look."
         )
         return [lt(f, Status.INCONSISTENT, text, extra, cutoff)]
