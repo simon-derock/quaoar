@@ -3,7 +3,7 @@ import os
 from collections.abc import Callable, Sequence
 
 from pydantic import BaseModel, SecretStr
-from pydantic_ai import Agent, ToolOutput
+from pydantic_ai import Agent, AgentRunResult, ToolOutput
 from pydantic_ai.exceptions import ModelHTTPError, UnexpectedModelBehavior
 from pydantic_ai.models import Model
 
@@ -20,6 +20,9 @@ os.environ.setdefault("PYDANTIC_AI_NO_BANNER", "1")
 
 MAX_CONTEXT_BYTES = 24 * 1024
 ROTATE_ON = frozenset({429})
+# cohere answers 422 INVALID_TOOL_GENERATION now and then; a fresh try usually works
+RETRY_ON = frozenset({422, 500, 502, 503, 504})
+RETRIES_PER_KEY = 2
 
 ModelFactory = Callable[[str, str], Model]
 
@@ -101,14 +104,8 @@ class LlmClient:
             fp = fingerprint(key.get_secret_value())
             if fp in self._spent:
                 continue
-            agent = Agent(
-                self._factory(self._model, key.get_secret_value()),
-                output_type=ToolOutput(output),
-                instructions=instructions(task),
-                retries=1,
-            )
             try:
-                result = agent.run_sync(data)
+                result = self._run(task, output, data, key)
             except ModelHTTPError as exc:
                 if exc.status_code in ROTATE_ON:
                     self._spent.add(fp)
@@ -145,6 +142,24 @@ class LlmClient:
             )
             return result.output
         raise LlmError(f"{task}: every Cohere key is rate limited")
+
+    def _run[T: BaseModel](
+        self, task: str, output: type[T], data: str, key: SecretStr
+    ) -> AgentRunResult[T]:
+        attempt = 0
+        while True:
+            agent = Agent(
+                self._factory(self._model, key.get_secret_value()),
+                output_type=ToolOutput(output),
+                instructions=instructions(task),
+                retries=1,
+            )
+            try:
+                return agent.run_sync(data)
+            except ModelHTTPError as exc:
+                if exc.status_code not in RETRY_ON or attempt >= RETRIES_PER_KEY:
+                    raise
+                attempt += 1
 
     def _report(
         self,
