@@ -600,7 +600,8 @@ flowchart LR
 ## Engine catalog (why each one is used)
 | Engine | Used for | Checks |
 |---|---|---|
-| `google` | registry snippets (instafinancials.com, zaubacorp.com, tofler.in), SEBI orders (sebi.gov.in), court records (indiankanoon.org), insolvency (ibbi.gov.in, nclt.gov.in) | VX, BK, LT, PR |
+| `duckduckgo` | every site-restricted search: registry snippets (instafinancials.com, zaubacorp.com, tofler.in), SEBI orders (sebi.gov.in), court records (indiankanoon.org), insolvency (ibbi.gov.in, nclt.gov.in) | VX, BK, LT, PR |
+| `google` | open-web pages, answer boxes (exchange and price for SME stocks), knowledge panels; never for `site:` queries | VX, BK, R4 |
 | `google_news` | dated coverage of issuer, promoters, banker, grey-market chatter | VX, BK, LT, HY |
 | `google_maps` | does the factory, office, vendor or customer exist, category, closed flag | VX, SV, CU |
 | `google_maps_reviews` | oldest visible review as a lower bound on how long a place has been on Maps | SV |
@@ -616,6 +617,7 @@ Account API (free) gives searches left per key. Searches Archive API links every
 - SPEC-SRP-02 [P0] Request hash = sha256 of canonical JSON of engine + params without `api_key`.
 - SPEC-SRP-03 [P0] Errors are classified: QUOTA (rotate key), TRANSIENT (two retries with backoff on the same key), INVALID (fail), EMPTY (valid result with no items, negative-cached).
 - SPEC-SRP-04 [P0] Every call is recorded with latency in ns, credits (0 for ledger or SerpApi cache hits), key fingerprint and `search_id`.
+- SPEC-SRP-05 [P0] Site-restricted queries run on `duckduckgo` and their results are post-filtered to the requested domains. Google is never trusted to honour `site:` (the 2026-10-09 probe saw it ignored even for a single domain).
 
 ## Key pool
 - SPEC-KEY-01 [P0] `SERPAPI_API_KEYS` is a comma list (falls back to `SERPAPI_API_KEY`). A key appears anywhere only as its fingerprint, the first 8 hex chars of its sha256.
@@ -648,7 +650,7 @@ All checks implement `Check.run(claims, ctx) -> list[Signal]`. Absence of eviden
 
 ## VX: vendor x-ray (the Trafiksol test)
 - SPEC-VX-01 [P0] Quotation claims (vendor, item, amount, quote date) come from Objects of the Issue.
-- SPEC-VX-02 [P0] Registry lookup: one `google` query on the company-data sites; snippet parser reads CIN, status, incorporation date, authorised and paid-up capital, last balance-sheet date, last AGM date, and records which site and snippet gave each value.
+- SPEC-VX-02 [P0] Registry lookup: one `duckduckgo` query on the company-data sites (SPEC-SRP-05); snippet parser reads CIN, status, incorporation date, authorised and paid-up capital, last balance-sheet date, last AGM date, and records which site and snippet gave each value.
 - SPEC-VX-03 [P0] `quote_to_capital = quote / paid_up_capital`. INCONSISTENT when at least 100x and at or above the peer 90th percentile; CONSISTENT otherwise; capital unknown gives UNVERIFIED.
 - SPEC-VX-04 [P0] Filing staleness: INCONSISTENT when the last balance sheet is more than 18 months older than the cutoff, or the status is struck off, under strike-off or dormant.
 - SPEC-VX-05 [P0] Presence: `google_maps` for `<vendor> <city>`; a match with similarity at least 0.85 is CONSISTENT, a matched place marked permanently closed is INCONSISTENT, no match is UNVERIFIED.
@@ -971,6 +973,8 @@ The user records the video; Quaoar supplies the script and a warm ledger.
 
 [ORCHESTRA:RISKS]
 The P0 probe answers these before P3 starts; each answer is written into the probe audit.
+
+**Probe results (2026-10-09, `docs/benchmark-audits/probe-2026-10-09.md`):** R1 confirmed through DuckDuckGo (CIN, incorporation date, capital and status in snippets; no balance-sheet date). R2 partly confirmed (3 of 5 offices matched exactly; absence stays UNVERIFIED). R4 answered by Google's answer box. R5: news and video results are dated, registry and Maps evidence is not. New finding: Google ignores `site:`, so SPEC-SRP-05 routes site searches to DuckDuckGo. Credits used: 20 of 250, matching SerpApi's own count.
 | # | Risk | Probe question | Fallback |
 |---|---|---|---|
 | R1 | registry snippets lack fields for small private companies | do capital, status and last balance-sheet date appear for the Trafiksol vendor and two others? | VX-03/04 become UNVERIFIED; VX-05/06 carry the check |
