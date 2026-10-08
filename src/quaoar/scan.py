@@ -4,10 +4,11 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
 
+from quaoar.checks.banker import banker_check
 from quaoar.checks.base import SearchPort
 from quaoar.checks.vendor import vendor_xray
 from quaoar.clock import ClockPort
-from quaoar.domain.claims import QuoteClaim
+from quaoar.domain.claims import LeadManagerClaim, PastIssueClaim, QuoteClaim
 from quaoar.domain.findings import Signal
 from quaoar.domain.ids import stable_id
 from quaoar.events import Emitter
@@ -15,6 +16,7 @@ from quaoar.prospectus.acquire import Prospectus
 from quaoar.prospectus.extract import ClaimSource, Extraction, extract_claims
 from quaoar.prospectus.pdf import Page, read_pages
 from quaoar.prospectus.sections import SectionMap, locate_sections
+from quaoar.scoring.banker_rules import banker_signals
 from quaoar.scoring.card import Card, build_card
 from quaoar.scoring.rules import RULESET_VERSION, vendor_signals
 
@@ -71,11 +73,8 @@ def run_scan(
         stage,
     )
 
-    signals: list[Signal] = []
-    for quote in extraction.claims.get("quotes", []):
-        if isinstance(quote, QuoteClaim):
-            check = emit("stage", {"name": "vendor", "subject": quote.vendor}, root)
-            signals += vendor_signals(vendor_xray(quote, search, check), cutoff)
+    signals = vendor_stage(extraction, search, emit, root, cutoff)
+    signals += banker_stage(extraction, search, emit, root, cutoff)
     for signal in signals:
         emit(
             "signal",
@@ -94,6 +93,30 @@ def run_scan(
         root,
     )
     return ScanResult(scan_id, company, sections, extraction, signals, card)
+
+
+def vendor_stage(
+    extraction: Extraction, search: SearchPort, emit: Emitter, root: str, cutoff: date | None
+) -> list[Signal]:
+    signals: list[Signal] = []
+    for quote in extraction.claims.get("quotes", []):
+        if isinstance(quote, QuoteClaim):
+            check = emit("stage", {"name": "vendor", "subject": quote.vendor}, root)
+            signals += vendor_signals(vendor_xray(quote, search, check), cutoff)
+    return signals
+
+
+def banker_stage(
+    extraction: Extraction, search: SearchPort, emit: Emitter, root: str, cutoff: date | None
+) -> list[Signal]:
+    managers = [
+        c for c in extraction.claims.get("lead_managers", []) if isinstance(c, LeadManagerClaim)
+    ]
+    past = [c for c in extraction.claims.get("past_issues", []) if isinstance(c, PastIssueClaim)]
+    if not managers:
+        return []
+    check = emit("stage", {"name": "banker", "subject": managers[0].name}, root)
+    return banker_signals(banker_check(managers[0], past, search, check), cutoff)
 
 
 def timed[T](emit: Emitter, clock: ClockPort, parent: str, name: str, run: Callable[[], T]) -> T:

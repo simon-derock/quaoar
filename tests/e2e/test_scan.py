@@ -78,3 +78,34 @@ def test_scan_id_is_stable_for_the_same_pdf(tmp_path: Path) -> None:
 
 def test_issuer_name_falls_back_when_the_cover_has_none() -> None:
     assert issuer_name([Page(1, "nothing in capitals here", needs_ocr=False)]) == "Unnamed issuer"
+
+
+def test_scan_adds_banker_signals_when_a_lead_manager_is_found(tmp_path: Path) -> None:
+    from quaoar.domain.claims import LeadManagerClaim, LeadManagers
+
+    pages = [
+        PAGES[0],
+        ["Table of Contents", "GENERAL INFORMATION ............ 3", "OBJECTS OF THE ISSUE ............ 4", "DECLARATION ............ 5"],
+        ["3 | P a g e", "GENERAL INFORMATION", "Book Running Lead Manager", "FIRST DEMO CAPITAL PRIVATE LIMITED"],
+        PAGES[2],
+        PAGES[3],
+    ]  # fmt: skip
+    pdf = tmp_path / "demo.pdf"
+    pdf.write_bytes(make_pdf(pages))
+    clock = FixedClock()
+    search = FakeSearch({"duckduckgo": registry_body(ZAUBA, INSTA), "google_maps": maps_body()})
+    managers = LeadManagers(
+        items=[LeadManagerClaim(page=3, name="FIRST DEMO CAPITAL PRIVATE LIMITED")]
+    )
+    answers = {
+        "quotes": Quotes(items=[QUOTE.model_copy(update={"page": 4})]),
+        "lead_managers": managers,
+    }
+    result = run_scan(
+        from_path(pdf),
+        search=search,
+        claims=FakeSource(answers),
+        emit=Emitter("d", MemorySink(), clock),
+        clock=clock,
+    )
+    assert {"BK-04", "BK-05"} <= {s.rule for s in result.signals}
