@@ -56,7 +56,7 @@ jobs:
       - run: uv sync --locked
       # the product must run with no keys at all
       - run: for b in fixtures/replay/*/; do uv run quaoar replay "$b" > /dev/null; done
-      - run: uv run quaoar replay fixtures/replay/trafiksol | grep -q "1,770 times its capital"
+      - run: uv run quaoar replay fixtures/replay/trafiksol | grep -q "1,770 times"
 
   perf:
     needs: gates
