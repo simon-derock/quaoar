@@ -3,7 +3,8 @@ import pytest
 from pytest_benchmark.fixture import BenchmarkFixture
 
 from quaoar.domain.money import parse_inr
-from tests.perf.conftest import budget_seconds, median_seconds
+from tests.perf.conftest import median_seconds
+from tests.timing import budget_seconds
 
 
 @pytest.mark.perf

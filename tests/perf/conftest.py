@@ -1,13 +1,5 @@
-# timing budgets scale with QUAOAR_PERF_SCALE so slower CI runners do not flake
-import os
-
+# shared perf helpers; budgets come from tests.timing
 from pytest_benchmark.fixture import BenchmarkFixture
-
-SCALE = float(os.environ.get("QUAOAR_PERF_SCALE", "1"))
-
-
-def budget_seconds(seconds: float) -> float:
-    return seconds * SCALE
 
 
 def median_seconds(benchmark: BenchmarkFixture) -> float:
