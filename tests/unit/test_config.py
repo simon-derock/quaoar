@@ -31,7 +31,7 @@ def test_process_environment_beats_the_file(tmp_path: Path) -> None:
 def test_defaults_and_home_expansion() -> None:
     settings = load_settings({"QUAOAR_HOME": "~/.qtest"}, None)
     assert settings.home == Path("~/.qtest").expanduser()
-    assert settings.cohere_model == "command-a-plus-05-2026"
+    assert settings.cohere_model == "command-a-03-2025"
     assert settings.key_reserve == 5
 
 

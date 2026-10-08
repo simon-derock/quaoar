@@ -11,7 +11,7 @@ class Settings(BaseModel):
 
     serpapi_keys: tuple[SecretStr, ...] = ()
     cohere_keys: tuple[SecretStr, ...] = ()
-    cohere_model: str = "command-a-plus-05-2026"
+    cohere_model: str = "command-a-03-2025"
     home: Path = Path("~/.quaoar").expanduser()
     max_credits_per_scan: int = 45
     key_reserve: int = 5

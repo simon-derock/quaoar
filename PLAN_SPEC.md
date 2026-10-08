@@ -97,7 +97,7 @@ The banker -> past issues -> SEBI orders and promoter -> other companies relatio
 - MCP: **fastmcp** (stdio server, in-memory test client).
 - Dev: pytest, pytest-cov, pytest-benchmark, hypothesis, mypy (strict, pydantic plugin), ruff, vulture, bandit, pip-audit.
 - Web: TypeScript in strict mode compiled by `tsc` only (no framework), xterm.js, `node --test` for render functions.
-- LLM: Cohere, one model locked per scan (`COHERE_MODEL`, default `command-a-plus-05-2026`, fallback `command-a-03-2025`; both listed on our keys). Keys rotate on rate limits, the model never changes inside a scan.
+- LLM: Cohere, one model locked per scan (`COHERE_MODEL`, default `command-a-03-2025`). Keys rotate on rate limits, the model never changes inside a scan. Live check 2026-10-09: `command-a-plus-05-2026` rejects `tool_choice` (no tool output, no native JSON schema) and in prompted mode misread a quotation's unit; `command-a-03-2025` returned every field right through tool output in 1.4 s and supports the tool calling the agent needs.
 
 ## 7. Repository layout
 ```text
@@ -154,7 +154,7 @@ quaoar/
 SERPAPI_API_KEYS=
 # Cohere: comma separated keys rotate on rate limits; the model stays locked per scan
 COHERE_API_KEYS=
-COHERE_MODEL=command-a-plus-05-2026
+COHERE_MODEL=command-a-03-2025
 # shared ledger/cache for every run
 QUAOAR_HOME=~/.quaoar
 QUAOAR_MAX_CREDITS_PER_SCAN=45

@@ -8,7 +8,7 @@ decisions:
 - commits: conventional micro-commits, no trailers, no co-author, no agent ids
 - python 3.13 + uv 0.9.5; sqlite ledger; no graph database
 - agent: pydantic-ai + serpapi-search-tools (json mode, google engine) (ADR-0001); mcp: fastmcp
-- llm: cohere command-a-plus-05-2026 locked per scan, 2 keys rotate
+- llm: cohere command-a-03-2025 (plus model has no tool_choice), locked per scan, 2 keys rotate
 - site-restricted searches on duckduckgo, results post-filtered (google ignores site:)
 - public site is replay only (api on render, web on netlify)
 - history rewritten once (2026-10-09) to drop a real email from a test; force-pushed with lease
