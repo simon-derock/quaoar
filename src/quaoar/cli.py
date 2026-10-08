@@ -1,27 +1,20 @@
 # quaoar command line: scripted commands over the same core the mcp server and web console use
-import json
-from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
-import httpx
 import typer
 from rich.console import Console
 from rich.markup import escape
 
-from quaoar.clock import SystemClock
-from quaoar.config import Settings, all_secrets, load_settings
-from quaoar.events import Emitter, Event, EventSink, JournalSink
-from quaoar.guard.secrets import SecretRedactor
+from quaoar.config import all_secrets
+from quaoar.events import Event
 from quaoar.guard.text import clean_text
-from quaoar.llm.client import LlmClient
-from quaoar.prospectus.acquire import IntakeError, Prospectus, from_path, from_url
+from quaoar.prospectus.acquire import IntakeError
 from quaoar.replay import ReplayBundleError, export_scan, load_replay
-from quaoar.scan import ScanResult, run_scan, scan_id_for
 from quaoar.scoring.card import MARKS, Card, headline
-from quaoar.serp.client import CreditBudget, CreditBudgetExceededError, LedgerClient, account_lookup
+from quaoar.serp.client import CreditBudgetExceededError, account_lookup
 from quaoar.serp.keys import KeyPool, KeysExhaustedError
-from quaoar.serp.ledger import Ledger
+from quaoar.service import execute, intake, make_runtime
 
 app = typer.Typer(
     add_completion=False, no_args_is_help=True, help="Check every IPO before you apply."
@@ -33,13 +26,6 @@ app.add_typer(keys_app, name="keys")
 console = Console(highlight=False)
 
 EXIT_INPUT, EXIT_PARTIAL = 2, 3
-
-
-@dataclass(frozen=True, slots=True)
-class Runtime:
-    settings: Settings
-    ledger: Ledger
-    http: httpx.Client
 
 
 # --- commands ---
@@ -59,38 +45,22 @@ def scan(
         console.print(f"[red]can't use that input:[/red] {escape(str(exc))}")
         raise typer.Exit(EXIT_INPUT) from None
 
-    scan_id = scan_id_for(prospectus)
-    folder = runtime.settings.home / "scans" / scan_id
-    sinks: list[EventSink] = [JournalSink(folder / "events.jsonl"), ConsoleSink(raw=jsonl)]
-    clock = SystemClock()
-    redact = SecretRedactor(all_secrets(runtime.settings)).redact
-    emit = Emitter(scan_id, TeeSink(sinks), clock, scrub=lambda text: redact(text).text)
-
-    cap = max_credits or runtime.settings.max_credits_per_scan
-    search, budget = search_client(runtime, emit, scan_id, cap)
-    claims = LlmClient(
-        ledger=runtime.ledger,
-        clock=clock,
-        model_name=runtime.settings.cohere_model,
-        keys=runtime.settings.cohere_keys,
-        emit=emit,
-    )
     try:
-        result = run_scan(
+        done = execute(
             prospectus,
-            search=search,
-            claims=claims,
-            emit=emit,
-            clock=clock,
-            cutoff=date.fromisoformat(cutoff) if cutoff else None,
+            runtime,
+            [ConsoleSink(raw=jsonl)],
+            max_credits,
+            date.fromisoformat(cutoff) if cutoff else None,
         )
     except (KeysExhaustedError, CreditBudgetExceededError) as exc:
         console.print(f"[yellow]stopped early:[/yellow] {escape(str(exc))}")
         raise typer.Exit(EXIT_PARTIAL) from None
 
-    save(folder, result)
-    print_card(result.card)
-    console.print(f"\ncredits used: {budget.spent} · scan id: {scan_id} · saved to {folder}")
+    print_card(done.result.card)
+    console.print(
+        f"\ncredits used: {done.credits} · scan id: {done.result.scan_id} · saved to {done.folder}"
+    )
 
 
 @app.command()
@@ -159,45 +129,6 @@ def keys_status() -> None:
 # --- wiring ---
 
 
-def make_runtime() -> Runtime:
-    settings = load_settings(env_file=Path(".env"))
-    return Runtime(settings, Ledger(settings.home), httpx.Client())
-
-
-def intake(source: str, runtime: Runtime) -> Prospectus:
-    if source.startswith(("https://", "http://")):
-        return from_url(source, runtime.settings.home / "pdfs", runtime.http)
-    return from_path(Path(source))
-
-
-def search_client(
-    runtime: Runtime, emit: Emitter, scan_id: str, cap: int
-) -> tuple[LedgerClient, CreditBudget]:
-    budget = CreditBudget(cap)
-    pool = KeyPool(
-        runtime.settings.serpapi_keys, runtime.settings.key_reserve, account_lookup(runtime.http)
-    )
-    client = LedgerClient(
-        ledger=runtime.ledger,
-        http=runtime.http,
-        clock=SystemClock(),
-        budget=budget,
-        pool=pool,
-        emit=emit,
-        scan=scan_id,
-    )
-    return client, budget
-
-
-def save(folder: Path, result: ScanResult) -> None:
-    folder.mkdir(parents=True, exist_ok=True)
-    (folder / "card.json").write_text(result.card.model_dump_json(indent=2), encoding="utf-8")
-    claims = {
-        task: [c.model_dump() for c in items] for task, items in result.extraction.claims.items()
-    }
-    (folder / "claims.json").write_text(json.dumps(claims, indent=2, default=str), encoding="utf-8")
-
-
 def print_card(card: Card) -> None:
     colours = {"checks out": "green", "doesn't match": "yellow", "couldn't find": "bright_black"}
     console.print(f"\n[bold]QUAOAR · {escape(card.company)}[/bold]")
@@ -215,15 +146,6 @@ def print_card(card: Card) -> None:
 
 
 # --- event sinks ---
-
-
-class TeeSink:
-    def __init__(self, sinks: list[EventSink]) -> None:
-        self._sinks = sinks
-
-    def write(self, event: Event) -> None:
-        for sink in self._sinks:
-            sink.write(event)
 
 
 class ConsoleSink:

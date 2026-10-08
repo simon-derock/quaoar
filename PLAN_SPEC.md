@@ -384,7 +384,7 @@ Packages under `src/quaoar/` (SPEC-STY-02 checks this list): `domain`, `guard`, 
 
 ## Layers (SPEC-STY-05 checks imports against this list)
 A module may import only from its own layer or a lower one; dependencies point from domain outward to adapters, never back.
-Layer 0: `domain`, `config`, `clock`. Layer 1: `guard`, `events`. Layer 2: `serp`, `llm`, `prospectus`. Layer 3: `checks`, `agent`. Layer 4: `scoring`. Layer 5: `scan`, `backtest`, `replay`. Layer 6: `cli`, `mcp_server`, `api`.
+Layer 0: `domain`, `config`, `clock`. Layer 1: `guard`, `events`. Layer 2: `serp`, `llm`, `prospectus`. Layer 3: `checks`, `agent`. Layer 4: `scoring`. Layer 5: `scan`, `service`, `backtest`, `replay`. Layer 6: `cli`, `mcp_server`, `api`.
 
 ## Class diagram (core)
 ```mermaid
