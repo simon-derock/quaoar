@@ -88,3 +88,9 @@ def test_past_issuers_are_deduplicated_and_capped() -> None:
 def test_signal_text_is_neutral() -> None:
     f = banker_check(BANKER, PAST, RoutedSearch({}))
     assert all(banned_terms(s.text) == [] for s in banker_signals(f, date(2025, 12, 1)))
+
+
+def test_a_single_past_issuer_reads_naturally() -> None:
+    f = banker_check(BANKER, PAST[1:], FakeSearch({"duckduckgo": body(NEWS)}))
+    sig = {s.rule: s for s in banker_signals(f, None)}
+    assert "naming past issuer of" in sig["BK-05"].text

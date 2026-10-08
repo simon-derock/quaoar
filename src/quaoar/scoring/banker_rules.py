@@ -41,7 +41,9 @@ def past_issues_signal(f: BankerFindings, cutoff: date | None) -> Signal:
         text = f"SEBI orders naming past issuers of {f.banker} turned up in search: {names} ({observed})."
         proof = [h.evidence for hits in flagged.values() for h in hits[:1]][:3]
         return bk(f, "BK-05", Status.INCONSISTENT, text, proof, pit=cutoff, observed=observed)
-    text = f"No SEBI order naming {len(f.past_issuers)} past issuers of {f.banker} turned up in search."
+    count = len(f.past_issuers)
+    noun = "past issuer" if count == 1 else f"{count} past issuers"
+    text = f"No SEBI order naming {noun} of {f.banker} turned up in search."
     return bk(f, "BK-05", Status.CONSISTENT, text, [], pit=cutoff, observed=observed)
 
 
