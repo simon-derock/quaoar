@@ -1,0 +1,113 @@
+{
+  "scan_id": "q16129907970",
+  "company": "TRAFIKSOL ITS TECHNOLOGIES LIMITED",
+  "consistent": 2,
+  "inconsistent": 1,
+  "unverified": 1,
+  "top": [
+    {
+      "check": "vendor",
+      "rule": "VX-03",
+      "subject": "OASIS CORPCARE PRIVATE LIMITED",
+      "status": "inconsistent",
+      "text": "OASIS CORPCARE PRIVATE LIMITED quoted ₹17.70 Cr, but its paid-up capital on registry pages is ₹1.00 L: the quote is 1,770 times its capital.",
+      "observed": "quote ₹17.70 Cr vs paid-up ₹1.00 L (1,770x)",
+      "threshold": "100x",
+      "page": 89,
+      "evidence": [
+        {
+          "engine": "duckduckgo",
+          "request": "1601f88bdcd6d180",
+          "search_id": "6ac7fe400e285d07c1e956d5",
+          "url": "https://www.instafinancials.com/company/oasis-corpcare-private-limited-U74120MH2013PTC240744/company-overview",
+          "title": "Oasis corpcare private limited - U74120MH2013PTC240744",
+          "snippet": "OASIS CORPCARE PRIVATE LIMITED is a 12.7 Years old company, incorporated on 26 Feb 2013. The current status of the company is Active. It is classified as Private UnListed Indian Non-Government Company. Its authorized share capital is ₹1,00,000.00 ( ₹1.00 Lakhs ) and its paid up capital is ₹1,00,000.",
+          "published": "2025-09-24"
+        }
+      ],
+      "pit_ok": false
+    }
+  ],
+  "signals": [
+    {
+      "check": "vendor",
+      "rule": "VX-02",
+      "subject": "OASIS CORPCARE PRIVATE LIMITED",
+      "status": "consistent",
+      "text": "OASIS CORPCARE PRIVATE LIMITED is on public company-registry pages (CIN U74120MH2013PTC240744, incorporated 26 Feb 2013).",
+      "observed": "",
+      "threshold": "",
+      "page": 89,
+      "evidence": [
+        {
+          "engine": "duckduckgo",
+          "request": "1601f88bdcd6d180",
+          "search_id": "6ac7fe400e285d07c1e956d5",
+          "url": "https://www.zaubacorp.com/company/OASIS-CORPCARE-PRIVATE-LIMITED/U74120MH2013PTC240744",
+          "title": "OASIS CORPCARE PRIVATE LIMITED - ZaubaCorp",
+          "snippet": "OASIS CORPCARE is a 12 year old company with registered office in Mumbai, Maharashtra. 8 Key Management Personnel (KMPs) have been associated with the company since its inception.",
+          "published": null
+        }
+      ],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-03",
+      "subject": "OASIS CORPCARE PRIVATE LIMITED",
+      "status": "inconsistent",
+      "text": "OASIS CORPCARE PRIVATE LIMITED quoted ₹17.70 Cr, but its paid-up capital on registry pages is ₹1.00 L: the quote is 1,770 times its capital.",
+      "observed": "quote ₹17.70 Cr vs paid-up ₹1.00 L (1,770x)",
+      "threshold": "100x",
+      "page": 89,
+      "evidence": [
+        {
+          "engine": "duckduckgo",
+          "request": "1601f88bdcd6d180",
+          "search_id": "6ac7fe400e285d07c1e956d5",
+          "url": "https://www.instafinancials.com/company/oasis-corpcare-private-limited-U74120MH2013PTC240744/company-overview",
+          "title": "Oasis corpcare private limited - U74120MH2013PTC240744",
+          "snippet": "OASIS CORPCARE PRIVATE LIMITED is a 12.7 Years old company, incorporated on 26 Feb 2013. The current status of the company is Active. It is classified as Private UnListed Indian Non-Government Company. Its authorized share capital is ₹1,00,000.00 ( ₹1.00 Lakhs ) and its paid up capital is ₹1,00,000.",
+          "published": "2025-09-24"
+        }
+      ],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-04",
+      "subject": "OASIS CORPCARE PRIVATE LIMITED",
+      "status": "consistent",
+      "text": "Registry pages list OASIS CORPCARE PRIVATE LIMITED as active.",
+      "observed": "",
+      "threshold": "",
+      "page": 89,
+      "evidence": [
+        {
+          "engine": "duckduckgo",
+          "request": "1601f88bdcd6d180",
+          "search_id": "6ac7fe400e285d07c1e956d5",
+          "url": "https://www.instafinancials.com/company/oasis-corpcare-private-limited-U74120MH2013PTC240744/company-overview",
+          "title": "Oasis corpcare private limited - U74120MH2013PTC240744",
+          "snippet": "OASIS CORPCARE PRIVATE LIMITED is a 12.7 Years old company, incorporated on 26 Feb 2013. The current status of the company is Active. It is classified as Private UnListed Indian Non-Government Company. Its authorized share capital is ₹1,00,000.00 ( ₹1.00 Lakhs ) and its paid up capital is ₹1,00,000.",
+          "published": "2025-09-24"
+        }
+      ],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-05",
+      "subject": "OASIS CORPCARE PRIVATE LIMITED",
+      "status": "unverified",
+      "text": "Couldn't find OASIS CORPCARE PRIVATE LIMITED on Google Maps.",
+      "observed": "",
+      "threshold": "",
+      "page": 89,
+      "evidence": [],
+      "pit_ok": false
+    }
+  ],
+  "ruleset": "1",
+  "disclaimer": "Facts with sources. Not investment advice."
+}
