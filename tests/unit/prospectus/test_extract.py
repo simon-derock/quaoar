@@ -1,4 +1,6 @@
 # spec: SPEC-CLM-01, SPEC-CLM-02, SPEC-SAF-01, SPEC-SAF-04, SPEC-RT-09
+from collections.abc import Mapping
+
 from pydantic import BaseModel
 
 from quaoar.domain.claims import QuoteClaim, Quotes
@@ -29,7 +31,7 @@ def quote(**changes: object) -> QuoteClaim:
 
 
 class FakeSource:
-    def __init__(self, answers: dict[str, BaseModel]) -> None:
+    def __init__(self, answers: Mapping[str, BaseModel]) -> None:
         self.answers = answers
         self.texts: list[str] = []
 
