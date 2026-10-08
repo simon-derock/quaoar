@@ -8,7 +8,8 @@ class Grounded(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     page: int = Field(ge=1, description="pdf page number from the [[page N]] marker")
-    span: str = Field(min_length=3, max_length=400, description="exact words copied from that page")
+    # the stored span is cut from the page by code; whatever the model writes here is ignored
+    span: str = Field(default="", max_length=4000, description="optional short quote")
 
 
 class QuoteClaim(Grounded):

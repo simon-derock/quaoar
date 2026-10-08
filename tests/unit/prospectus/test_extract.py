@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from quaoar.domain.claims import QuoteClaim, Quotes
 from quaoar.events import Emitter, MemorySink
+from quaoar.llm.client import LlmError
 from quaoar.prospectus.extract import CHUNK_BYTES, chunks, extract_claims, is_grounded
 from quaoar.prospectus.pdf import Page
 from quaoar.prospectus.sections import Section, SectionMap
@@ -125,3 +126,29 @@ def test_grounding_tolerates_line_breaks_and_case_but_not_new_words() -> None:
     assert not is_grounded(
         quote(amount_text="17,700.00", item="", unit_text="", quote_date_text=""), page
     )
+
+
+def test_stored_span_is_cut_from_the_page_not_written_by_the_model() -> None:
+    pages = [Page(89, OBJECTS_PAGE, needs_ocr=False)]
+    invented = quote(span="Intelligent Traffic Management (a spelling the page never had)")
+    result = extract_claims(
+        pages, objects_only(pages), FakeSource({"quotes": Quotes(items=[invented])})
+    )
+    span = result.claims["quotes"][0].span
+    assert "OASIS CORPCARE PRIVATE LIMITED" in span
+    assert "Intelligent" not in span
+    assert len(span) <= 300
+
+
+class FailingSource(FakeSource):
+    def extract[T: BaseModel](
+        self, task: str, output: type[T], text: str, parent: str | None = None
+    ) -> T:
+        raise LlmError("quotes: output failed validation")
+
+
+def test_a_chunk_the_model_cannot_answer_is_counted_not_fatal() -> None:
+    pages = [Page(89, OBJECTS_PAGE, needs_ocr=False)]
+    result = extract_claims(pages, objects_only(pages), FailingSource({}))
+    assert result.failed["quotes"] == 1
+    assert result.claims["quotes"] == []
