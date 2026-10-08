@@ -28,6 +28,8 @@ ENGINES: dict[str, tuple[frozenset[str], tuple[str, ...], dict[str, str]]] = {
     "google_jobs": (frozenset({"q", "location", "gl", "hl"}), ("q",), {"gl": "in", "hl": "en"}),
     "google_patents": (frozenset({"q", "num", "page", "country", "assignee"}), ("q",), {}),
     "google_lens": (frozenset({"url", "hl", "country", "type"}), ("url",), {"hl": "en"}),
+    # google ignored site: in the 2026-10-09 probe; duckduckgo kept every result on the named sites
+    "duckduckgo": (frozenset({"q", "kl"}), ("q",), {"kl": "in-en"}),
 }
 SITE_ALLOWLIST = frozenset(
     {

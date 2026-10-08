@@ -26,6 +26,7 @@ def test_allowed_site_filters_pass() -> None:
     ("engine", "params", "rule"),
     [
         ("bing", {"q": "x"}, "engine"),
+        ("google", {"q": "x", "as_sitesearch": "sebi.gov.in"}, "param"),
         ("google", {"q": "x", "api_key": "k"}, "param"),
         ("google", {"q": "x", "engine": "google_news"}, "param"),
         ("google", {}, "required"),
@@ -50,3 +51,13 @@ def test_rejects_unsafe_or_unsupported_requests(
 def test_maps_reviews_accept_a_data_id() -> None:
     params = prepare_query("google_maps_reviews", {"data_id": "0x0:0x1", "sort_by": "newestFirst"})
     assert params["data_id"] == "0x0:0x1"
+
+
+def test_duckduckgo_takes_allowlisted_site_filters_with_india_defaults() -> None:
+    params = prepare_query("duckduckgo", {"q": '"x" (site:sebi.gov.in OR site:indiankanoon.org)'})
+    assert params["kl"] == "in-en"
+
+
+def test_duckduckgo_still_refuses_other_sites() -> None:
+    with pytest.raises(QueryRejectedError):
+        prepare_query("duckduckgo", {"q": "x site:evil.example"})
