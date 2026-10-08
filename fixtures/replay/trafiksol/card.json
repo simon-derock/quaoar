@@ -1,7 +1,7 @@
 {
   "scan_id": "q16129907970",
   "company": "TRAFIKSOL ITS TECHNOLOGIES LIMITED",
-  "consistent": 4,
+  "consistent": 5,
   "inconsistent": 1,
   "unverified": 1,
   "top": [
@@ -128,6 +128,18 @@
       "observed": "0 of 1 past issues",
       "threshold": "",
       "page": 80,
+      "evidence": [],
+      "pit_ok": true
+    },
+    {
+      "check": "litigation",
+      "rule": "LT-03",
+      "subject": "TRAFIKSOL ITS TECHNOLOGIES LIMITED",
+      "status": "consistent",
+      "text": "No court or SEBI matter naming the issuer or 3 promoters turned up in search before Sep 2024 beyond the 4 the prospectus discloses.",
+      "observed": "0 undisclosed of 4 found",
+      "threshold": "",
+      "page": 1,
       "evidence": [],
       "pit_ok": true
     }
