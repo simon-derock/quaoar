@@ -18,3 +18,4 @@ Quaoar needs one bounded agent that picks follow-up searches when a vendor, bank
 ## Consequences
 - Deterministic rules still set every status; the agent only proposes queries and entity matches.
 - If PydanticAI's Cohere support breaks on the pinned version, the fallback is the hand-written loop behind the same `Check` interface.
+- Verified 2026-10-09 (`tests/contract/test_search_tools.py`): the tools must be built with `response_format="json"` (their default Markdown mode asks the client for `output=md`) and `allowed_engines=["google"]` (their default `google_light` engine is outside our query guard). They send only `q`, `type` and `search_query`, which G3 already allows.
