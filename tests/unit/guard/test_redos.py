@@ -1,5 +1,6 @@
 # spec: SPEC-GRD-08
-# every guard and parser must stay linear: doubling the input may roughly double the time
+# every guard and parser must stay linear: 8x the input may cost about 8x the time,
+# quadratic code would cost about 64x and catastrophic backtracking far more
 import time
 from collections.abc import Callable
 
@@ -16,7 +17,8 @@ from quaoar.guard.text import clean_text
 from quaoar.guard.wording import banned_terms
 from tests.timing import budget_seconds
 
-SMALL, LARGE = 50_000, 100_000
+SMALL, LARGE = 25_000, 200_000
+MAX_GROWTH = 20
 SEEDS = {
     "spaces": " ",
     "letters": "a",
@@ -53,10 +55,10 @@ def test_runs_in_linear_time_on_adversarial_input(guard: str, seed: str) -> None
     run = GUARDS[guard]
     small = best_of_three(run, grow(SEEDS[seed], SMALL))
     large = best_of_three(run, grow(SEEDS[seed], LARGE))
-    assert large < budget_seconds(0.05)
+    assert large < budget_seconds(0.1)
 
     # sub-millisecond timings are mostly noise, so the base gets a floor
-    assert large < 3 * max(small, 1e-3)
+    assert large < MAX_GROWTH * max(small, 1e-3)
 
 
 def grow(seed: str, size: int) -> str:
