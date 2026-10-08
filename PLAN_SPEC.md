@@ -37,7 +37,7 @@
 - **Missing**: no implementation yet.
 - A number is only quoted as a result when a reproducible artifact in `results/` or `docs/benchmark-audits/` backs it. Targets are never written as results.
 
-Current state (2026-10-09): spec written, nothing implemented. Every SPEC below is **Missing** until its tests pass in CI.
+Current state (2026-10-09, v0.1.0): **Implemented** and green in CI: domain (ids, money, names, dates), guards G1-G3 and G5-G8, events and journal, SerpApi client with ledger, key pool, sanitizer and replay, prospectus intake, pdf worker, section locator, grounded claim extraction, vendor, banker and litigation checks with fixed rules, card, scan, CLI, replay bundles, MCP server, SKILL.md, replay API, web console. **Missing:** the point-in-time backtest (SPEC-BT-*; the only public copies of the other case prospectuses are on exchange hosts that forbid automated download, and n of 1-2 would prove nothing), site-visit check (SPEC-SV-*), promoter/customer/hype checks, the interactive agent terminal and the PydanticAI agent mode (SPEC-AG-*, SPEC-ACL-*): fixed mode only. Deploys on Render and Netlify are configured (`render.yaml`, `netlify.toml`) but need the owner's accounts.
 
 Accounts (checked 2026-10-09 through free endpoints, keys never printed):
 - SerpApi: one key, Free plan, 250 searches/month, 250 left, 250/hour rate limit.

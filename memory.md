@@ -1,6 +1,6 @@
 # memory (compact live state; PLAN_SPEC.md is canonical)
 updated: 2026-10-09T02:05+05:30
-phase: vendor, banker, litigation checks, cli, replay, mcp, skill, api, web done; next backtest, site visit, README, video, deploy
+phase: v0.1.0 candidate; checks, cli, replay, mcp, skill, api, web, README, video script done
 deadline: 2026-10-10 23:59 IST (aim to submit by 21:00)
 
 decisions:
@@ -21,8 +21,8 @@ blocked:
 
 next:
 - user deploys: render blueprint (render.yaml) + netlify (netlify.toml, set QUAOAR_API_URL and QUAOAR_CORS_ORIGIN)
-- SV site visit (optional)
-- backtest (needs more prospectuses), README, video script, tag v0.1.0
+- owner: deploy render + netlify, record video, submit
+- optional if time: SV site visit, agent mode, backtest (needs prospectuses downloaded by hand; exchange hosts forbid automation)
 
 numbers:
 - trafiksol card: 6 lines (banker and litigation consistent, vendor 1,770x capital flagged), 8 searches in total; replay is byte-identical
