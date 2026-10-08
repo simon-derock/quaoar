@@ -1,0 +1,96 @@
+# quaoar: SME IPO prospectus reality check built on SerpApi
+
+[project]
+name = "quaoar"
+version = "0.1.0"
+description = "Check every IPO before you apply: SME prospectus claims checked against SerpApi evidence."
+readme = "README.md"
+requires-python = ">=3.13"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Philip Simon Derock" }]
+dependencies = [
+    "fastapi>=0.120,<1",
+    "fastmcp>=4.0,<5",
+    "httpx>=0.28,<1",
+    "pydantic>=2.11,<3",
+    "pydantic-ai-slim[cohere]>=2.54,<3",
+    "pypdfium2>=5.14,<6",
+    "rapidfuzz>=3.14,<4",
+    "rich>=14,<16",
+    "serpapi-search-tools>=1.0,<2",
+    "typer>=0.27,<1",
+    "uvicorn>=0.38,<1",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.5,<0.10"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "bandit>=1.8,<2",
+    "hypothesis>=6.150,<7",
+    "mypy>=1.18,<2",
+    "pip-audit>=2.9,<3",
+    "pytest>=9,<10",
+    "pytest-benchmark>=5,<6",
+    "pytest-cov>=7,<8",
+    "ruff>=0.14,<1",
+    "vulture>=2.14,<3",
+]
+
+# --- lint and format ---
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# S = bandit rules (S608 catches string-built SQL), ERA = commented-out code, T20 = print
+select = [
+    "E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "RET", "PTH",
+    "RUF", "S", "PT", "T20", "ERA", "TID", "PERF", "FBT",
+]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# tests assert freely and use obviously fake secrets
+"tests/**" = ["S101", "S105", "S106", "FBT"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+# --- types ---
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["src", "tests"]
+plugins = ["pydantic.mypy"]
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = ["pypdfium2.*", "serpapi_search_tools.*", "serpapi.*"]
+ignore_missing_imports = true
+
+# --- tests ---
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers --strict-config"
+markers = [
+    "perf: timing budgets, run in the perf job",
+    "live: calls real SerpApi or Cohere, never runs in CI",
+]
+
+[tool.coverage.run]
+source = ["quaoar"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+skip_covered = true
+exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError"]
