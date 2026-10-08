@@ -25,7 +25,7 @@ next:
 - backtest (needs more prospectuses), README, video script, tag v0.1.0
 
 numbers:
-- trafiksol card: 6 lines (2 consistent banker, vendor 1,770x capital flagged), 2 credits; replay is byte-identical
+- trafiksol card: 6 lines (banker and litigation consistent, vendor 1,770x capital flagged), 8 searches in total; replay is byte-identical
 - Trafiksol: sections located (375 pages, 23 ms), 15 llm calls, vendor quote 1,770x paid-up capital flagged, 2 credits
 - probe: 20 credits, ledger count == SerpApi usage (docs/benchmark-audits/probe-2026-10-09.md)
 - parse_inr 3.6 us, request hash 7.8 us, cache hit 0.12 ms, section locator 23.8 ms

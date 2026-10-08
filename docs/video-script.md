@@ -9,7 +9,7 @@ Record at a readable font size, light or dark terminal. Warm the ledger first wi
 ```
 uv run quaoar scan cases/pdfs/<trafiksol>.pdf --cutoff 2024-09-03
 ```
-Narrate as lines stream: pages, sections found in milliseconds, claims read, then each SerpApi search with its engine, credits and time. "Four searches. Everything else came from the prospectus."
+Narrate as lines stream: pages, sections found in milliseconds, claims read, then each SerpApi search with its engine, credits and time. "Eight searches. Everything else came from the prospectus."
 
 **1:20 – 1:55 The card**
 Read the "doesn't match" line out loud: "The vendor quoted ₹17.70 crore, but its paid-up capital is ₹1 lakh: the quote is 1,770 times its capital." Show the proof link and the SerpApi search id. Point at "couldn't find" and say it is never held against a company.

@@ -36,7 +36,7 @@ This replays a real recorded scan of the Trafiksol prospectus. On it, Quaoar rep
 
 > OASIS CORPCARE PRIVATE LIMITED quoted ₹17.70 Cr, but its paid-up capital on registry pages is ₹1.00 L: the quote is 1,770 times its capital.
 
-The scan cost **2 SerpApi searches for the vendor check, 4 searches in total**, and re-running it costs 0 (everything is cached in a local, hash-checked ledger).
+The whole scan uses **8 SerpApi searches** (2 for the vendor, 2 for the banker, 4 for litigation), and re-running it costs 0 because everything is cached in a local, hash-checked ledger.
 
 ## Run a live scan
 ```bash
