@@ -42,6 +42,22 @@ jobs:
       - run: uv run bandit -q -r src
       - run: uv run pip-audit
 
+  replay:
+    needs: gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - run: uv python install ${{ env.PYTHON_VERSION }}
+      - run: uv sync --locked
+      # the product must run with no keys at all
+      - run: for b in fixtures/replay/*/; do uv run quaoar replay "$b" > /dev/null; done
+      - run: uv run quaoar replay fixtures/replay/trafiksol | grep -q "1,770 times its capital"
+
   perf:
     needs: gates
     runs-on: ubuntu-latest
