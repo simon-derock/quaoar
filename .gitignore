@@ -1,0 +1,46 @@
+# secrets: only the names template is tracked
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# prospectus PDFs stay on the machine that downloaded them
+*.pdf
+!tests/fixtures/pdf/*.pdf
+
+# ledger, cache and raw runs never ship
+.quaoar/
+*.sqlite3
+*.sqlite3-*
+*.db
+results/
+
+# python build and tool caches
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+build/
+dist/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+.benchmarks/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+perf.json
+
+# web build output and deps
+web/node_modules/
+web/dist/
+
+# editors, os, local agent settings
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+.claude/settings.local.json

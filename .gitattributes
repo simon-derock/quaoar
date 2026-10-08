@@ -1,0 +1,8 @@
+# one line ending everywhere so hashes of text fixtures stay stable
+* text=auto eol=lf
+
+# recorded responses are compressed and must not be touched by git
+*.gz binary
+*.pdf binary
+
+uv.lock linguist-generated=true
