@@ -1,0 +1,8 @@
+# netlify builds the static console; the api address comes from QUAOAR_API_URL at build time
+[build]
+  base = "web"
+  command = "npm ci && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
