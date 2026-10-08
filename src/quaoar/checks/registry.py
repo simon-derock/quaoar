@@ -34,6 +34,12 @@ CITY = re.compile(r"(?:registered office|located) in ([A-Z][A-Za-z ]{2,30}),", r
 BALANCE_SHEET = re.compile(rf"balance sheet[^.]{{0,40}}?(?:on|dated|as on)\s+{DATE}", re.I)
 
 
+FIELDS = (
+    "cin", "incorporated", "status", "authorised_paise", "paid_up_paise",
+    "business_line", "last_agm", "last_balance_sheet", "city",
+)  # fmt: skip
+
+
 @dataclass(slots=True)
 class RegistryFacts:
     matched_urls: list[str] = field(default_factory=list)
@@ -46,6 +52,8 @@ class RegistryFacts:
     last_agm: date | None = None
     last_balance_sheet: date | None = None
     city: str | None = None
+    # which page stated each fact, so "show proof" opens the right snippet
+    sources: dict[str, str] = field(default_factory=dict)
 
 
 def registry_core(name: str) -> str:
@@ -66,7 +74,11 @@ def read_facts(company: str, results: Sequence[Mapping[str, object]]) -> Registr
         if not is_registry_url(url) or not names_match(company, title, snippet):
             continue
         facts.matched_urls.append(url)
+        before = {k: getattr(facts, k) for k in FIELDS}
         fill(facts, snippet + " " + title + " " + url)
+        for key in FIELDS:
+            if before[key] is None and getattr(facts, key) is not None:
+                facts.sources[key] = url
     return facts
 
 
