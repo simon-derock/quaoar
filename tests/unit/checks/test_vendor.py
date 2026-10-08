@@ -61,6 +61,8 @@ def test_the_trafiksol_pattern_is_flagged_on_capital() -> None:
     assert findings.quote_paise == 17_70_00_000_00
     assert found["VX-03"].status is Status.INCONSISTENT
     assert "1,770 times" in found["VX-03"].text
+    assert [e.url for e in found["VX-03"].evidence] == [INSTA["link"]]
+    assert [e.url for e in found["VX-02"].evidence] == [ZAUBA["link"]]
     assert found["VX-02"].status is Status.CONSISTENT
     assert found["VX-04"].status is Status.CONSISTENT
     assert found["VX-05"].status is Status.CONSISTENT

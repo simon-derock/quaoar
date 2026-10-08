@@ -2,11 +2,12 @@
 from datetime import date
 
 from quaoar.checks.vendor import VendorFindings
-from quaoar.domain.findings import Signal, Status
+from quaoar.domain.findings import Evidence, Signal, Status
 from quaoar.domain.money import format_inr
 
 RULESET_VERSION = "1"
 CAPITAL_RATIO_LIMIT = 100
+PAID = "paid_up_paise"
 STALE_MONTHS = 18
 STRUCK_OFF = frozenset(
     {"strike off", "struck off", "under process of striking off", "dormant", "dissolved",
@@ -34,7 +35,7 @@ def registry_signal(f: VendorFindings) -> Signal:
     text = f"{f.vendor} is on public company-registry pages" + (
         f" ({details})." if details else "."
     )
-    return vx(f, "VX-02", Status.CONSISTENT, text, registry=True)
+    return vx(f, "VX-02", Status.CONSISTENT, text, registry=True, fact="cin")
 
 
 def capital_signal(f: VendorFindings) -> Signal:
@@ -51,11 +52,13 @@ def capital_signal(f: VendorFindings) -> Signal:
             f"{f.vendor} quoted {format_inr(quote, 'short')}, but its paid-up capital on registry "
             f"pages is {format_inr(paid, 'short')}: the quote is {ratio:,.0f} times its capital."
         )
-        return vx(f, "VX-03", Status.INCONSISTENT, text, observed=observed, registry=True)
+        return vx(
+            f, "VX-03", Status.INCONSISTENT, text, observed=observed, registry=True, fact=PAID
+        )
     text = (
         f"{f.vendor}'s paid-up capital ({format_inr(paid, 'short')}) is in proportion to its quote."
     )
-    return vx(f, "VX-03", Status.CONSISTENT, text, observed=observed, registry=True)
+    return vx(f, "VX-03", Status.CONSISTENT, text, observed=observed, registry=True, fact=PAID)
 
 
 def status_signal(f: VendorFindings, cutoff: date | None) -> Signal:
@@ -67,10 +70,11 @@ def status_signal(f: VendorFindings, cutoff: date | None) -> Signal:
             Status.INCONSISTENT,
             f"Registry pages list {f.vendor} as '{status}'.",
             registry=True,
+            fact="status",
         )
     if sheet and cutoff and months_between(sheet, cutoff) > STALE_MONTHS:
         text = f"{f.vendor}'s last balance sheet on record is dated {sheet:%d %b %Y}, over {STALE_MONTHS} months before the prospectus."
-        return vx(f, "VX-04", Status.INCONSISTENT, text, registry=True)
+        return vx(f, "VX-04", Status.INCONSISTENT, text, registry=True, fact="last_balance_sheet")
     if status == "active":
         return vx(
             f,
@@ -78,6 +82,7 @@ def status_signal(f: VendorFindings, cutoff: date | None) -> Signal:
             Status.CONSISTENT,
             f"Registry pages list {f.vendor} as active.",
             registry=True,
+            fact="status",
         )
     return vx(f, "VX-04", Status.UNVERIFIED, f"Couldn't read {f.vendor}'s registry status.")
 
@@ -100,8 +105,9 @@ def vx(
     *,
     observed: str = "",
     registry: bool = False,
+    fact: str | None = None,
 ) -> Signal:
-    evidence = f.registry_evidence if registry else f.maps_evidence
+    evidence = proof(f, fact) if registry else f.maps_evidence
     threshold = f"{CAPITAL_RATIO_LIMIT}x" if rule == "VX-03" else ""
     return Signal(
         check="vendor",
@@ -115,6 +121,13 @@ def vx(
         evidence=tuple(evidence if status is not Status.UNVERIFIED else ()),
         pit_ok=False,
     )
+
+
+def proof(f: VendorFindings, fact: str | None) -> list[Evidence]:
+    # show the page that stated this fact; fall back to the first registry page
+    source = f.registry.sources.get(fact) if fact else None
+    stated = [e for e in f.registry_evidence if e.url == source]
+    return stated or f.registry_evidence[:1]
 
 
 def months_between(earlier: date, later: date) -> int:
