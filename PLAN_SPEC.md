@@ -16,6 +16,7 @@
 - [ORCHESTRA:SERP]        : engine catalog, client, key pool, ledger, cache, replay, sanitizer
 - [ORCHESTRA:CHECKS]      : vendor x-ray, banker track record, litigation diff, site visit, more
 - [ORCHESTRA:AGENT]       : PydanticAI + serpapi-search-tools loop, budgets, fixed-vs-agent ablation
+- [ORCHESTRA:RUNTIME]     : tool pipeline, policy, bounded concurrency, event journal, recovery, chaos tests
 - [ORCHESTRA:SCORING]     : signal rules, peer baseline, card, dossier, comment draft
 - [ORCHESTRA:BACKTEST]    : labelled SEBI cases, point-in-time mode, metrics, audit
 - [ORCHESTRA:INTERFACES]  : CLI, MCP server, SKILL.md, API, web console
@@ -381,6 +382,10 @@ flowchart LR
 ```
 Packages under `src/quaoar/` (SPEC-STY-02 checks this list): `domain`, `guard`, `prospectus`, `serp`, `llm`, `checks`, `agent`, `scoring`, `backtest`, `api`.
 
+## Layers (SPEC-STY-05 checks imports against this list)
+A module may import only from its own layer or a lower one; dependencies point from domain outward to adapters, never back.
+Layer 0: `domain`, `config`, `clock`. Layer 1: `guard`, `events`. Layer 2: `serp`, `llm`, `prospectus`. Layer 3: `checks`, `agent`. Layer 4: `scoring`. Layer 5: `scan`, `backtest`. Layer 6: `cli`, `mcp_server`, `api`.
+
 ## Class diagram (core)
 ```mermaid
 classDiagram
@@ -699,6 +704,40 @@ All checks implement `Check.run(claims, ctx) -> list[Signal]`. Absence of eviden
 
 ---
 
+[ORCHESTRA:RUNTIME]
+Borrowed from the go-agent runtime design (2026-10-09): the runtime is the authority, the model only proposes. What does not apply to one bounded agent is left out: scheduler, mailboxes, daemon, leases, sharding, worktrees.
+
+## Laws we keep
+- LLM output is never authoritative state; code validates and executes every proposed action.
+- Every expensive resource is bounded; every important action is an event and attributable.
+- Large data is referenced by hash, never copied into events or prompts.
+- At-least-once plus idempotency beats exactly-once; caches are disposable; failure is recoverable.
+- Measure before optimizing.
+
+## Specs
+- SPEC-RT-01 [P0] One tool pipeline for every call, agent or fixed: request, capability check, budget check, schema validation, G3 query guard, execute through `LedgerClient` with a timeout, normalize, persist, emit event. No other code path reaches SerpApi.
+- SPEC-RT-02 [P0] Deterministic capability policy per surface returns ALLOW, DENY or REQUIRE_APPROVAL:
+
+  | Capability | cli | mcp | backtest | public api |
+  |---|---|---|---|---|
+  | live search | ALLOW within budget, REQUIRE_APPROVAL above it | ALLOW within budget | ALLOW within budget | DENY |
+  | llm call | ALLOW | ALLOW | ALLOW | DENY |
+  | read local pdf | ALLOW | ALLOW (path guard) | ALLOW | DENY |
+  | download url | ALLOW (url guard) | ALLOW (url guard) | DENY | DENY |
+  | replay read | ALLOW | ALLOW | ALLOW | ALLOW |
+- SPEC-RT-03 [P0] Bounded concurrency and queues: at most 4 SerpApi calls and 2 Cohere calls in flight, 1 PDF parse; a scan over its credit cap becomes REQUIRE_APPROVAL in the interactive CLI and Partial everywhere else.
+- SPEC-RT-04 [P0] The causal chain scan -> check -> tool call -> SerpApi search -> evidence -> signal is rebuilt from event `parent` links alone.
+- SPEC-RT-05 [P0] Each scan's events append to `$QUAOAR_HOME/events/<scan_id>.jsonl`, flushed per event; an event stays under 4 KB and points to blobs by sha256 for anything larger.
+- SPEC-RT-06 [P0] Tool calls are keyed by request hash and ledger writes are idempotent, so a resumed scan reuses every recorded search for 0 credits.
+- SPEC-RT-07 [P0] Recovery acceptance test: kill a scan midway, resume it, and get the same card as an uninterrupted run with no repeated paid search (fake ports, deterministic).
+- SPEC-RT-08 [P0] The cache is disposable: emptying it changes credits spent, never the card (fake SearchPort test).
+- SPEC-RT-09 [P0] Progressive context: prompts are assembled from fragments (L0 rules, L1 check goal, L2 claim, L3 section excerpt, L4 compact observations), never the whole prospectus; each LLM call has a 24 KB context cap that is enforced and logged.
+- SPEC-RT-10 [P0] Fault injection in `tests/chaos/`: SerpApi timeout, 429, malformed JSON and empty results; Cohere 429, timeout and invalid JSON; duplicate events; a failed ledger write. Each ends in a defined outcome (retry, key rotation, Partial or UNVERIFIED), never a crash or a wrong status.
+- SPEC-RT-11 [P1] Peak RSS of a replay scan is recorded by the perf job (budget 300 MB).
+[/ORCHESTRA:RUNTIME]
+
+---
+
 [ORCHESTRA:SCORING]
 - SPEC-SC-01 [P0] Signal fields: check, rule_id, status, claim_id (page), evidence ids, observed value, threshold, peer percentile, `pit_ok`, plain English text.
 - SPEC-SC-02 [P0] Rules are pure functions under `RULESET_VERSION`; the ruleset hash is recorded and frozen before any labelled backtest run (pre-registration: no tuning to cases).
@@ -732,7 +771,7 @@ Small n is stated plainly: every rate comes with its interval.
 
 [ORCHESTRA:INTERFACES]
 ## Events (shared by CLI, API and web)
-- SPEC-EVT-01 [P0] JSONL events `{"v":1,"t_ns":int,"scan":str,"type":str,"data":{}}` with types `stage`, `serp`, `llm`, `guard`, `claim`, `signal`, `card`, `warn`, `done`; each stage reports its duration in ns.
+- SPEC-EVT-01 [P0] JSONL events `{"v":1,"id":str,"parent":str|null,"scan":str,"t_ns":int,"type":str,"data":{}}` (`parent` is the causing event, `scan` the trace) with types `stage`, `serp`, `llm`, `guard`, `claim`, `signal`, `card`, `warn`, `done`; each stage reports its duration in ns.
 
 ## CLI (`quaoar`)
 - SPEC-CLI-01 [P0] `quaoar scan <pdf|url> [--mode fixed|agent] [--replay DIR] [--max-credits N] [--events pretty|jsonl] [--out DIR]` streams events, then prints the card and "credits used, wall time, LLM tokens".
@@ -774,7 +813,11 @@ Small n is stated plainly: every rate comes with its interval.
 
 ## Interaction
 - Plain language: "check trafiksol.pdf", "who brought this IPO and what happened to their past issues?", "show proof for 2", "draft a public comment", "card in Hindi".
-- Slash commands: `/scan <pdf|url>`, `/card`, `/proof <n>`, `/dossier`, `/comment`, `/vendor`, `/banker`, `/cases`, `/replay on|off`, `/mode fixed|agent`, `/budget <credits>`, `/keys`, `/credits`, `/lang en|hi`, `/export md|json`, `/clear`, `/help`, `/quit`.
+- Slash commands: `/scan <pdf|url>`, `/card`, `/proof <n>`, `/dossier`, `/comment`, `/vendor`, `/banker`, `/cases`, `/replay on|off`, `/mode fixed|agent`, `/budget <credits>`, `/keys`, `/credits`, `/trace`, `/doctor`, `/lang en|hi`, `/export md|json`, `/clear`, `/help`, `/quit`.
+- Budget approval (SPEC-RT-02): "this scan needs about 38 credits, 212 left. Continue? [y/N]" before any scan that would pass the cap.
+- `quaoar doctor`: checks `.env` names, each key's validity and searches left (free endpoints), Cohere model availability, ledger integrity, disk space, Python and uv versions.
+- `quaoar trace <scan_id>`: prints the causal tree of a scan (checks, tool calls, searches, evidence, signals) with credits and milliseconds per node.
+- `quaoar resume <scan_id>`: finishes an interrupted scan from its event journal at no extra cost for steps already done.
 - Every step streams as one line: tool, engine, credits, milliseconds. Ctrl-C cancels only the running step and keeps partial results.
 - Status bar: model, mode, replay on/off, credits used and left per key fingerprint, scan id.
 - Input passes G1, G2 and G8; output passes G5, G6 and G7.
@@ -897,6 +940,7 @@ CI writes every median in ns and ms to the job summary and uploads `perf.json`.
 - SPEC-STY-02 [P0] Every package under `src/quaoar/` is in the UML package list; under `QUAOAR_TRACE_STRICT=1` the two lists must be equal.
 - SPEC-STY-03 [P0] No test cites an unknown id; under `QUAOAR_TRACE_STRICT=1` every P0 id needs a test.
 - SPEC-STY-04 [P0] No function longer than 60 lines.
+- SPEC-STY-05 [P0] No module imports from a higher layer than its own (layer list in [ORCHESTRA:UML]).
 [/ORCHESTRA:PERF]
 
 ---
