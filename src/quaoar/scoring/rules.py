@@ -16,6 +16,13 @@ STRUCK_OFF = frozenset(
 
 
 def vendor_signals(f: VendorFindings, cutoff: date | None) -> list[Signal]:
+    if not f.registered:
+        text = (
+            f"{f.vendor} has no company form in its name (no 'Private Limited', 'Limited' or 'LLP'), so it may be a "
+            "proprietorship or partnership. The company registry doesn't list those, and a registered company "
+            "with the same name would be a different business, so no registry or court check was made."
+        )
+        return [vx(f, "VX-02", Status.UNVERIFIED, text), presence_signal(f)]
     return [
         registry_signal(f),
         capital_signal(f),

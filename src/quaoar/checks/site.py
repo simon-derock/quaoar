@@ -33,7 +33,8 @@ def site_visit(
     parent: str | None = None,
     investigator: Investigator | None = None,
 ) -> SiteFindings:
-    query = f"{issuer} {place.locality} {place.city}".strip()
+    locality = "" if is_blank(place.locality) else place.locality
+    query = f"{issuer} {locality} {place.city}".strip()
     found = SiteFindings(issuer, place.role, place.locality, place.city, place.page, MapsFacts())
     result = search.query("google_maps", {"q": query, "type": "search"}, parent)
     candidates = [
@@ -43,8 +44,8 @@ def site_visit(
 
     if investigator is not None and not found.maps.found:
         known = {"role": f"the issuer's own {place.role.replace('_', ' ')}", "city": place.city}
-        if place.locality:
-            known["locality"] = place.locality
+        if locality:
+            known["locality"] = locality
         book = investigator.run(
             Goal("place", issuer, known, ("maps",), (f"maps: {query}",), SITE_TOOLS), parent
         )
@@ -52,6 +53,15 @@ def site_visit(
         fill(found, issuer, candidates)
         found.handoff = book.handoff
     return found
+
+
+def is_blank(text: str) -> bool:
+    # prospectuses print "NIL" or "N.A." where an address field is empty
+    return text.strip().strip(".").lower() in {"", "nil", "na", "n/a", "none", "-"}
+
+
+def usable(place: PlaceClaim) -> bool:
+    return not is_blank(place.city)
 
 
 def fill(

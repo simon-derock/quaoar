@@ -1,4 +1,5 @@
 # vendor x-ray (the Trafiksol test): is the company quoting for the IPO money real and sized for it
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
@@ -22,6 +23,9 @@ from quaoar.domain.names import normalize_company, similarity
 from quaoar.serp.client import SerpResult
 
 PLACE_MATCH = 0.85
+# only companies, LLPs and one-person companies are on the company registry; a bare trade name is
+# likely a proprietorship or partnership, and a registered company of the same name is someone else
+COMPANY_FORM = re.compile(r"\b(private limited|pvt\.?\s*ltd\.?|limited|ltd\.?|llp|opc)\b", re.I)
 VENDOR_TOOLS = ("search_registry", "search_maps", "search_web")
 
 
@@ -54,6 +58,7 @@ class VendorFindings:
     legal: list[VendorMatter] = field(default_factory=list)
     handoff: Handoff | None = None
     agent_searches: int = 0
+    registered: bool = True
 
 
 @dataclass(slots=True)
@@ -82,20 +87,25 @@ def vendor_xray(
 ) -> VendorFindings:
     core = registry_core(quote.vendor)
     pool = Pool()
+    registered = has_company_form(quote.vendor)
 
     # fixed queries first: cheap, cached, and often enough
-    registry = search.query("duckduckgo", {"q": f'"{core}" {REGISTRY_QUERY}'}, parent)
-    pool.registry += [(registry, r) for r in results(registry, "organic_results")]
-    city = read_facts(quote.vendor, [r for _, r in pool.registry]).city
+    city = None
+    if registered:
+        registry = search.query("duckduckgo", {"q": f'"{core}" {REGISTRY_QUERY}'}, parent)
+        pool.registry += [(registry, r) for r in results(registry, "organic_results")]
+        city = read_facts(quote.vendor, [r for _, r in pool.registry]).city
     place_query = f"{quote.vendor} {city}" if city else quote.vendor
     maps = search.query("google_maps", {"q": place_query, "type": "search"}, parent)
     pool.maps += [
         (maps, r) for r in results(maps, "local_results") + results(maps, "place_results")
     ]
-    legal = search.query("duckduckgo", {"q": f'"{core}" {LEGAL_SITES}'}, parent)
-    pool.legal += [(legal, r) for r in results(legal, "organic_results")]
+    if registered:
+        legal = search.query("duckduckgo", {"q": f'"{core}" {LEGAL_SITES}'}, parent)
+        pool.legal += [(legal, r) for r in results(legal, "organic_results")]
 
     found = assemble(quote, pool)
+    found.registered = registered
     gaps = vendor_gaps(found)
     if investigator is not None and gaps:
         done = (f'registry: "{core}"', f"maps: {place_query}", f'legal: "{core}"')
@@ -103,6 +113,7 @@ def vendor_xray(
         book = investigator.run(goal, parent)
         pool.take(book.hits)
         found = assemble(quote, pool)
+        found.registered = registered
         found.handoff, found.agent_searches = book.handoff, len(book.calls)
     return found
 
@@ -131,7 +142,8 @@ def assemble(quote: QuoteClaim, pool: Pool) -> VendorFindings:
 def vendor_gaps(found: VendorFindings) -> tuple[str, ...]:
     gaps = []
     facts = found.registry
-    if not facts.matched_urls or facts.paid_up_paise is None or facts.status is None:
+    registry_missing = not facts.matched_urls or facts.paid_up_paise is None or facts.status is None
+    if found.registered and registry_missing:
         gaps.append("registry")
     if not found.maps.found:
         gaps.append("maps")
@@ -148,6 +160,10 @@ def known_facts(found: VendorFindings) -> dict[str, str]:
     if facts.business_line:
         known["line of business"] = facts.business_line
     return known
+
+
+def has_company_form(name: str) -> bool:
+    return COMPANY_FORM.search(name) is not None
 
 
 def quote_paise(quote: QuoteClaim) -> int | None:

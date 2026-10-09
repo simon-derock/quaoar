@@ -205,3 +205,33 @@ def test_agent_evidence_off_the_registry_sites_cannot_create_registry_facts() ->
     fake = Hit("search_web", result, dict(ELSEWHERE))
     found = vendor_xray(QUOTE, FakeSearch({}), investigator=FakeInvestigator([fake]))
     assert found.registry.paid_up_paise is None
+
+
+NO_FORM = QuoteClaim(
+    page=89,
+    vendor="Krishna Enterprises",
+    item="goods",
+    amount_text="46.00",
+    unit_text="Lakhs",
+    quote_date_text="",
+)
+SAME_NAME_COMPANY = {
+    "title": "KRISHNA ENTERPRISES PRIVATE LIMITED - ZaubaCorp",
+    "link": "https://www.zaubacorp.com/company/KRISHNA-ENTERPRISES/U16000DL1989PTC037800",
+    "snippet": "paid up capital is ₹15,000.00 The current status of the company is Active.",
+}
+
+
+def test_a_vendor_with_no_company_form_is_never_matched_to_a_same_named_company() -> None:
+    own: dict[str, JsonValue] = {
+        "local_results": [{"title": "Krishna Enterprises", "address": "Shop 4, Mira Road, Mumbai"}]
+    }
+    search = FakeSearch({"duckduckgo": registry_body(SAME_NAME_COMPANY), "google_maps": own})
+    found = vendor_xray(NO_FORM, search)
+    assert [engine for engine, _ in search.calls] == ["google_maps"]
+    assert not found.registered
+    by_rule = {s.rule: s for s in vendor_signals(found, date(2024, 7, 18))}
+    assert by_rule["VX-02"].status is Status.UNVERIFIED
+    assert "no company form" in by_rule["VX-02"].text
+    assert {"VX-03", "VX-04", "VX-06"}.isdisjoint(by_rule)
+    assert by_rule["VX-05"].status is Status.CONSISTENT
