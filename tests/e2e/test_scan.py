@@ -15,7 +15,7 @@ from tests.unit.checks.test_vendor import FakeSearch, maps_body, registry_body
 from tests.unit.prospectus.test_extract import FakeSource
 
 PAGES = [
-    ["DRAFT PROSPECTUS", "DEMO SOFTWARE LIMITED", "Our Company was incorporated in 2015"],
+    ["DRAFT PROSPECTUS", "DEMO SOFTWARE LIMITED", "Public issue of Equity Shares", "Our Company was incorporated in 2015"],
     ["Table of Contents", "OBJECTS OF THE ISSUE ............ 3", "DECLARATION ............ 4"],
     ["3 | P a g e", "OBJECTS OF THE ISSUE", "Quotation from: - OASIS CORPCARE PRIVATE LIMITED",
      "Amount (In Lakhs) 1,770.00 Quotation Date: - May 16, 2024"],

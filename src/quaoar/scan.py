@@ -26,7 +26,7 @@ from quaoar.domain.names import normalize_company
 from quaoar.events import Emitter
 from quaoar.prospectus.acquire import Prospectus
 from quaoar.prospectus.extract import ClaimSource, Extraction, extract_claims
-from quaoar.prospectus.meta import prospectus_date
+from quaoar.prospectus.meta import prospectus_date, require_prospectus
 from quaoar.prospectus.pdf import Page, read_pages
 from quaoar.prospectus.sections import SectionMap, locate_sections
 from quaoar.scoring.banker_rules import banker_signals
@@ -68,6 +68,7 @@ def run_scan(
         "stage", {"name": "intake", "bytes": prospectus.size, "sha256": prospectus.sha256[:16]}
     )
     pages = timed(emit, clock, root, "pages", lambda: read_pages(prospectus.path))
+    require_prospectus(pages)
     company = issuer_name(pages)
     cutoff = choose_cutoff(pages, cutoff, emit, root, point_in_time=point_in_time)
     sections = timed(emit, clock, root, "sections", lambda: locate_sections(pages))

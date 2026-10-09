@@ -86,15 +86,15 @@ def add_scan_tool(mcp: FastMCP, runtime_factory: RuntimeFactory, *, read_only: b
         runtime = runtime_factory()
         try:
             prospectus = intake(source, runtime)
+            done = execute(
+                prospectus,
+                runtime,
+                max_credits=min(max(max_credits, 1), MAX_MCP_CREDITS),
+                cutoff=date.fromisoformat(cutoff) if cutoff else None,
+                mode=mode,
+            )
         except IntakeError as exc:
             raise ValueError(f"can't use that input: {exc}") from None
-        done = execute(
-            prospectus,
-            runtime,
-            max_credits=min(max(max_credits, 1), MAX_MCP_CREDITS),
-            cutoff=date.fromisoformat(cutoff) if cutoff else None,
-            mode=mode,
-        )
         return {"credits": done.credits, "card": done.result.card.model_dump(mode="json")}
 
 

@@ -71,6 +71,9 @@ def scan(
             mode=mode,
             point_in_time=not now,
         )
+    except IntakeError as exc:
+        console.print(f"[red]can't use that input:[/red] {escape(str(exc))}")
+        raise typer.Exit(EXIT_INPUT) from None
     except (KeysExhaustedError, CreditBudgetExceededError) as exc:
         console.print(f"[yellow]stopped early:[/yellow] {escape(str(exc))}")
         raise typer.Exit(EXIT_PARTIAL) from None
