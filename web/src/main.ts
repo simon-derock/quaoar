@@ -2,6 +2,7 @@
 import { MARKS, caseBlurb, caseLabel, clean, headline, host, parseEvents, rowParts, safeLink, shares } from "./render.js";
 import { startScroll } from "./scroll.js";
 import { storyFrame } from "./story.js";
+import { deviceFrame } from "./device.js";
 import type { Card, QEvent, Signal } from "./render.js";
 
 declare global {
@@ -195,17 +196,25 @@ function tabs(names: string[]): void {
   );
 }
 
+let selected = "trafiksol";
+
 async function start(): Promise<void> {
   const names = await caseNames();
   const ordered = ["trafiksol", ...names.filter((name) => name !== "trafiksol")];
   tabs(ordered);
-  let selected = ordered[0] ?? "trafiksol";
+  selected = ordered[0] ?? selected;
   el("run").addEventListener("click", () => {
     const tab = document.querySelector<HTMLElement>('#cases [aria-selected="true"]');
     selected = tab?.dataset["case"] ?? selected;
     play(selected);
   });
-  play(selected);
+}
+
+const loaded = start();
+
+// the first case plays when the laptop has opened, so the visitor sees it run
+function openFirst(): void {
+  void loaded.then(() => play(selected)).catch(() => notice("Couldn't load the recorded cases. Reload the page to try again."));
 }
 
 function bubble(text: string, who: "me" | "bot"): void {
@@ -258,6 +267,5 @@ function arrive(): void {
 }
 
 arrive();
-startScroll([storyFrame()]);
+startScroll([deviceFrame(openFirst), storyFrame()]);
 chat();
-start().catch(() => notice("Couldn't load the recorded cases. Reload the page to try again."));

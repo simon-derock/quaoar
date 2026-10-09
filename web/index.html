@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#0e0f11">
+  <meta name="theme-color" content="#0a0b0c">
   <title>Quaoar · Check every IPO before you apply</title>
   <meta name="description" content="Quaoar reads an SME IPO prospectus, checks its claims against public search results and shows the proof behind every line.">
   <link rel="preload" href="fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
@@ -12,13 +12,11 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="glow" aria-hidden="true"><i data-depth="-0.16"></i><i data-depth="-0.08"></i></div>
-  <div class="side left" aria-hidden="true"></div>
-  <div class="side right" aria-hidden="true"></div>
+  <div class="glow" aria-hidden="true"><i data-depth="-0.16"></i><i data-depth="-0.08"></i><i data-depth="-0.24"></i></div>
   <div class="grain" aria-hidden="true"></div>
 
   <header class="top">
-    <a class="word" href="#top" aria-label="Quaoar, back to top">QUAOAR</a>
+    <a class="word" href="#product" aria-label="Quaoar, back to top">QUAOAR</a>
     <nav aria-label="Sections">
       <a href="#product">Product</a>
       <a href="#how">How it works</a>
@@ -29,38 +27,53 @@
     <p class="credit">Built by Philip Simon Derock<br>for the <a href="https://serpapi.com" rel="noopener noreferrer" target="_blank">SerpApi</a> India Hackathon 2026</p>
   </header>
 
-  <main id="top">
-    <section class="hero" data-depth="0.1">
-      <h1 class="enter">Check every IPO<br>before you apply.</h1>
-      <p class="lede enter">Quaoar reads an SME IPO prospectus and checks its claims against public search results. Every line comes with its source.</p>
-      <div class="actions enter">
-        <a class="btn primary" href="#product">Watch a recorded scan</a>
-        <a class="btn ghost" href="#how">See how a check works</a>
+  <main>
+    <section class="intro" id="product" aria-label="Quaoar">
+      <div class="intro-pin" id="introPin">
+        <div class="intro-copy" id="introCopy">
+          <h1 class="enter">Check every IPO<br><em>before you apply.</em></h1>
+          <p class="lede enter">Quaoar reads an SME IPO prospectus and checks its claims against public search results. Every line comes with its source.</p>
+          <div class="actions enter">
+            <a class="btn primary" href="#how">See how a check works</a>
+            <a class="btn ghost" href="#ask">New to IPOs?</a>
+          </div>
+        </div>
+
+        <div class="device enter" id="device">
+          <div class="lid">
+            <div class="screen">
+              <div class="window">
+                <div class="chrome">
+                  <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                  <span class="title">quaoar — replay</span>
+                  <button id="run" type="button" class="again">Replay</button>
+                </div>
+                <div class="tabs" id="cases" role="tablist" aria-label="Recorded cases"></div>
+                <div class="split">
+                  <div id="terminal" class="log" tabindex="0" role="log" aria-label="Scan log"></div>
+                  <div class="card" aria-live="polite">
+                    <p class="kicker" id="blurb"></p>
+                    <h2 id="company"></h2>
+                    <div class="meter" id="meter" aria-hidden="true"><i class="ok"></i><i class="bad"></i><i class="none"></i></div>
+                    <p id="headline" class="counts"></p>
+                    <ul id="signals"></ul>
+                    <p id="context" class="small"></p>
+                    <p id="disclaimer" class="small"></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="base" aria-hidden="true"><i></i></div>
+          <p class="caption">A recorded scan of a real prospectus. Search data by SerpApi.</p>
+        </div>
       </div>
     </section>
 
-    <section class="product enter" id="product" aria-label="A recorded scan">
-      <div class="window">
-        <div class="chrome">
-          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="title">quaoar — replay</span>
-          <button id="run" type="button" class="again">Replay</button>
-        </div>
-        <div class="tabs" id="cases" role="tablist" aria-label="Recorded cases"></div>
-        <div class="split">
-          <div id="terminal" class="log" tabindex="0" role="log" aria-label="Scan log"></div>
-          <div class="card" aria-live="polite">
-            <p class="kicker" id="blurb"></p>
-            <h2 id="company"></h2>
-            <div class="meter" id="meter" aria-hidden="true"><i class="ok"></i><i class="bad"></i><i class="none"></i></div>
-            <p id="headline" class="counts"></p>
-            <ul id="signals"></ul>
-            <p id="context" class="small"></p>
-            <p id="disclaimer" class="small"></p>
-          </div>
-        </div>
-      </div>
-      <p class="caption">A recorded scan of a real prospectus. Search data by SerpApi.</p>
+    <section class="numbers" aria-label="Why it exists">
+      <div><b>1,770×</b><span>vendor quote against paid-up capital, in the Trafiksol prospectus</span></div>
+      <div><b>5</b><span>checks on every prospectus</span></div>
+      <div><b>0</b><span>verdicts. Every line has a source</span></div>
     </section>
 
     <section class="story" id="how" aria-label="How a check works">
@@ -108,19 +121,19 @@
       </div>
     </section>
 
-    <section class="block" id="checks">
-      <h2>Five checks on every prospectus</h2>
-      <dl class="checks">
-        <div><dt>Vendor</dt><dd>Is the company quoting for the IPO money on the registry, active, and big enough for the quote?</dd></div>
-        <div><dt>Premises</dt><dd>Does the registered office or factory exist on Google Maps, and is it open?</dd></div>
-        <div><dt>Lead manager</dt><dd>Has SEBI issued an order naming the banker or the companies it brought to market?</dd></div>
-        <div><dt>Litigation</dt><dd>Are there court or SEBI matters that the prospectus doesn't list?</dd></div>
-        <div><dt>News</dt><dd>Was there adverse coverage before the prospectus date? Promotion volume is shown only as context.</dd></div>
-      </dl>
+    <section class="band" id="checks">
+      <h2>Five checks on every prospectus.</h2>
+      <div class="tiles bento">
+        <article><h3>Vendor</h3><p>Is the company quoting for the IPO money on the registry, active, and big enough for the quote?</p></article>
+        <article><h3>Premises</h3><p>Does the office or factory exist on Google Maps, and is it open?</p></article>
+        <article><h3>Lead manager</h3><p>Has SEBI issued an order naming the banker?</p></article>
+        <article class="half"><h3>Litigation</h3><p>Court or SEBI matters that the prospectus doesn't list.</p></article>
+        <article class="half"><h3>News</h3><p>Coverage before the prospectus date. Promotion is shown only as context.</p></article>
+      </div>
     </section>
 
-    <section class="block" id="ask">
-      <h2>New to IPOs? Ask.</h2>
+    <section class="band ask" id="ask">
+      <h2>New to IPOs? Just ask.</h2>
       <p class="sub">Plain answers, written in advance. Quaoar explains, and never says whether to apply.</p>
       <div class="chat">
         <ol id="thread" aria-live="polite"><li class="bot">Ask anything about SME IPOs, or pick a question below.</li></ol>
@@ -132,8 +145,8 @@
       </div>
     </section>
 
-    <section class="block" id="questions">
-      <h2>Questions</h2>
+    <section class="band" id="questions">
+      <h2>Questions.</h2>
       <div class="faq">
         <details open><summary>What is Quaoar?</summary><p>A reality check for SME IPOs. It reads the company's prospectus, picks out the claims that can be checked, such as who quoted for the IPO money and where the factory is, and checks each one against public search results. Every line comes back as checks out, doesn't match or couldn't find, with its source.</p></details>
         <details><summary>Who is it for?</summary><p>Anyone about to apply to a small-company IPO on NSE Emerge or BSE SME, and the analysts and journalists who read prospectuses for a living.</p></details>

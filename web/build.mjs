@@ -5,6 +5,7 @@ mkdirSync("dist/fonts", { recursive: true });
 for (const file of ["index.html", "style.css", "_headers"]) copyFileSync(file, `dist/${file}`);
 const FONTS = {
   "fraunces.woff2": "@fontsource-variable/fraunces/files/fraunces-latin-full-normal.woff2",
+  "fraunces-italic.woff2": "@fontsource-variable/fraunces/files/fraunces-latin-full-italic.woff2",
   "geist-400.woff2": "@fontsource/geist-sans/files/geist-sans-latin-400-normal.woff2",
   "geist-500.woff2": "@fontsource/geist-sans/files/geist-sans-latin-500-normal.woff2",
   "geist-600.woff2": "@fontsource/geist-sans/files/geist-sans-latin-600-normal.woff2",
