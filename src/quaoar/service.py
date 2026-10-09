@@ -14,7 +14,10 @@ from quaoar.events import Emitter, Event, EventSink, JournalSink
 from quaoar.guard.secrets import SecretRedactor
 from quaoar.llm.client import LlmClient
 from quaoar.prospectus.acquire import Prospectus, from_path, from_url
-from quaoar.scan import ScanResult, run_scan, scan_id_for
+from quaoar.prospectus.extract import Extraction
+from quaoar.prospectus.pdf import read_pages
+from quaoar.prospectus.sections import locate_sections
+from quaoar.scan import ScanResult, read_claims, run_scan, scan_id_for
 from quaoar.serp.client import CreditBudget, LedgerClient, account_lookup
 from quaoar.serp.keys import KeyPool
 from quaoar.serp.ledger import Ledger
@@ -108,6 +111,22 @@ def save(folder: Path, result: ScanResult) -> None:
         task: [c.model_dump() for c in items] for task, items in result.extraction.claims.items()
     }
     (folder / "claims.json").write_text(json.dumps(claims, indent=2, default=str), encoding="utf-8")
+
+
+def read_only(prospectus: Prospectus, runtime: Runtime) -> Extraction:
+    # claims only, no searches: what a prospectus says, for comparing two versions of it
+    clock = SystemClock()
+    emit = Emitter("diff", Tee([]), clock)
+    claims = LlmClient(
+        ledger=runtime.ledger,
+        clock=clock,
+        model_name=runtime.settings.cohere_model,
+        keys=runtime.settings.cohere_keys,
+        emit=emit,
+    )
+    pages = read_pages(prospectus.path)
+    root = emit("stage", {"name": "diff"})
+    return read_claims(pages, locate_sections(pages), claims, emit, root)
 
 
 class Tee:

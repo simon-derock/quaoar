@@ -234,4 +234,7 @@ def test_a_vendor_with_no_company_form_is_never_matched_to_a_same_named_company(
     assert by_rule["VX-02"].status is Status.UNVERIFIED
     assert "no company form" in by_rule["VX-02"].text
     assert {"VX-03", "VX-04", "VX-06"}.isdisjoint(by_rule)
-    assert by_rule["VX-05"].status is Status.CONSISTENT
+    # a name alone doesn't confirm a bare trade name is the vendor, so the listing is shown but not counted
+    assert by_rule["VX-05"].status is Status.UNVERIFIED
+    assert "name alone doesn't confirm" in by_rule["VX-05"].text
+    assert by_rule["VX-05"].evidence

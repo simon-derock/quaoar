@@ -22,7 +22,7 @@ def vendor_signals(f: VendorFindings, cutoff: date | None) -> list[Signal]:
             "proprietorship or partnership. The company registry doesn't list those, and a registered company "
             "with the same name would be a different business, so no registry or court check was made."
         )
-        return [vx(f, "VX-02", Status.UNVERIFIED, text), presence_signal(f)]
+        return [vx(f, "VX-02", Status.UNVERIFIED, text), bare_name_presence(f)]
     return [
         registry_signal(f),
         capital_signal(f),
@@ -108,6 +108,18 @@ def presence_signal(f: VendorFindings) -> Signal:
         return vx(f, "VX-05", Status.INCONSISTENT, text)
     where = f" ({f.maps.city_area})" if f.maps.city_area else ""
     return vx(f, "VX-05", Status.CONSISTENT, f"{f.vendor} has a Google Maps listing{where}.")
+
+
+def bare_name_presence(f: VendorFindings) -> Signal:
+    # a trade name with no company form can match any shop of that name, so a listing is shown but never counted
+    found = presence_signal(f)
+    if found.status is not Status.CONSISTENT:
+        return found
+    text = (
+        f"{f.vendor} has a Google Maps listing{f' ({f.maps.city_area})' if f.maps.city_area else ''}, "
+        "but a name alone doesn't confirm it is the same business."
+    )
+    return found.model_copy(update={"status": Status.UNVERIFIED, "text": text})
 
 
 def legal_signal(f: VendorFindings, cutoff: date | None) -> Signal:

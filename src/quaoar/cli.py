@@ -11,11 +11,12 @@ from quaoar.config import all_secrets
 from quaoar.events import Event
 from quaoar.guard.text import clean_text
 from quaoar.prospectus.acquire import IntakeError
+from quaoar.prospectus.diff import Change, diff_claims
 from quaoar.replay import ReplayBundleError, export_scan, load_replay
 from quaoar.scoring.card import MARKS, Card, headline
 from quaoar.serp.client import CreditBudgetExceededError, account_lookup
 from quaoar.serp.keys import KeyPool, KeysExhaustedError
-from quaoar.service import execute, intake, make_runtime
+from quaoar.service import execute, intake, make_runtime, read_only
 
 app = typer.Typer(add_completion=False, help="Check every IPO before you apply.")
 ledger_app = typer.Typer(no_args_is_help=True, help="The local evidence ledger.")
@@ -111,6 +112,30 @@ def replay(bundle: Path) -> None:
     for event in events:
         sink.write(event)
     print_card(saved)
+
+
+@app.command()
+def diff(earlier: str, later: str) -> None:
+    # draft vs red herring vs final: what the company changed between versions (no searches, no credits)
+    runtime = make_runtime()
+    try:
+        old = read_only(intake(earlier, runtime), runtime).claims
+        new = read_only(intake(later, runtime), runtime).claims
+    except IntakeError as exc:
+        console.print(f"[red]can't use that input:[/red] {escape(str(exc))}")
+        raise typer.Exit(EXIT_INPUT) from None
+    for line in render_changes(diff_claims(old, new)):
+        console.print(escape(line))
+
+
+def render_changes(changes: list[Change]) -> list[str]:
+    if not changes:
+        return [
+            "no differences in vendors, matters, promoters, group companies, places or lead managers"
+        ]
+    return [
+        f"{c.kind} · {c.text} (page {c.page_old or '-'} → {c.page_new or '-'})" for c in changes
+    ]
 
 
 @app.command()

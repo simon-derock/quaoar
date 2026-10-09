@@ -63,3 +63,31 @@ def test_pretty_lines_escape_markup_from_untrusted_text() -> None:
     line = pretty(event)
     assert "\\[red]" in line
     assert "\x1b" not in line
+
+
+def test_diff_needs_two_readable_pdfs(tmp_path: Path) -> None:
+    result = runner.invoke(app, ["diff", "missing-a.pdf", "missing-b.pdf"])
+    assert result.exit_code == 2
+    assert "can't use that input" in result.output
+
+
+def test_diff_prints_changes_between_two_claim_sets() -> None:
+    from quaoar.cli import render_changes
+    from quaoar.prospectus.diff import Change
+
+    lines = render_changes(
+        [
+            Change(
+                "changed",
+                "quotes",
+                "vendor quotation from ACME changed: ₹1.00 Cr earlier, ₹2.00 Cr later",
+                10,
+                12,
+            )
+        ]
+    )
+    assert "changed" in lines[0]
+    assert "page 10 → 12" in lines[0]
+    assert render_changes([]) == [
+        "no differences in vendors, matters, promoters, group companies, places or lead managers"
+    ]
