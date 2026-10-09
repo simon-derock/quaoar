@@ -22,7 +22,7 @@
 - [ORCHESTRA:INTERFACES]  : CLI, MCP server, SKILL.md, API, web console
 - [ORCHESTRA:SECURITY]    : threat model, prompt and SQL injection, SSRF, XSS, secrets, supply chain
 - [ORCHESTRA:GUARDRAILS]  : ten regex and rule guards (G1-G10) on every input, query and output
-- [ORCHESTRA:AGENT_CLI]   : interactive agent terminal (PROPOSED, awaiting user confirmation)
+- [ORCHESTRA:AGENT_CLI]   : interactive terminal (implemented)
 - [ORCHESTRA:PERF]        : nanosecond/millisecond budgets and how CI measures them
 - [ORCHESTRA:DELIVERABLES]: README, video script, submission checklist
 - [ORCHESTRA:RISKS]       : what the probe must confirm, and the fallback for each
@@ -37,7 +37,7 @@
 - **Missing**: no implementation yet.
 - A number is only quoted as a result when a reproducible artifact in `results/` or `docs/benchmark-audits/` backs it. Targets are never written as results.
 
-Current state (2026-10-09, v0.1.0): **Implemented** and green in CI: domain (ids, money, names, dates), guards G1-G3 and G5-G8, events and journal, SerpApi client with ledger, key pool, sanitizer and replay, prospectus intake, pdf worker, section locator, grounded claim extraction, vendor, banker and litigation checks with fixed rules, card, scan, CLI, replay bundles, MCP server, SKILL.md, replay API, web console. **Missing:** the point-in-time backtest (SPEC-BT-*; the only public copies of the other case prospectuses are on exchange hosts that forbid automated download, and n of 1-2 would prove nothing), site-visit check (SPEC-SV-*), promoter/customer/hype checks, the interactive agent terminal and the PydanticAI agent mode (SPEC-AG-*, SPEC-ACL-*): fixed mode only. Deploys on Render and Netlify are configured (`render.yaml`, `netlify.toml`) but need the owner's accounts.
+Current state (2026-10-09, afternoon): **Implemented** and green in CI: domain (ids, money, names, dates), guards G1-G3 and G5-G8, events and journal, SerpApi client with ledger, key pool, sanitizer and replay, prospectus intake, pdf worker, section locator, cover-date detection (default point-in-time cutoff), grounded claim extraction, **the ReAct investigator** (PydanticAI, five budgeted search tools, replayable traces; ADR-0002), vendor (with legal footprint), site-visit, banker, litigation and news/hype-context checks with fixed rules, card with context lines, scan, CLI, replay bundles, MCP server, SKILL.md, replay API, web console, evaluation maths and the pre-registered control run. **Missing:** the full point-in-time backtest over many SEBI-ordered cases (SPEC-BT-*; most positive prospectuses sit on exchange hosts that forbid automated download), promoter-network and customer checks, Hindi card, draft-vs-final prospectus diff. Deploys on Render and Netlify are configured (`render.yaml`, `netlify.toml`) but need the owner's accounts.
 
 Accounts (checked 2026-10-09 through free endpoints, keys never printed):
 - SerpApi: one key, Free plan, 250 searches/month, 250 left, 250/hour rate limit.
@@ -384,7 +384,7 @@ Packages under `src/quaoar/` (SPEC-STY-02 checks this list): `domain`, `guard`, 
 
 ## Layers (SPEC-STY-05 checks imports against this list)
 A module may import only from its own layer or a lower one; dependencies point from domain outward to adapters, never back.
-Layer 0: `domain`, `config`, `clock`. Layer 1: `guard`, `events`. Layer 2: `serp`, `llm`, `prospectus`. Layer 3: `checks`, `agent`. Layer 4: `scoring`. Layer 5: `scan`, `service`, `backtest`, `replay`. Layer 6: `cli`, `mcp_server`, `api`.
+Layer 0: `domain`, `config`, `clock`. Layer 1: `guard`, `events`. Layer 2: `serp`, `llm`, `prospectus`. Layer 3: `checks`, `agent`. Layer 4: `scoring`. Layer 5: `scan`, `service`, `backtest`, `replay`. Layer 6: `cli`, `terminal`, `doctor`, `mcp_server`, `api`.
 
 ## Class diagram (core)
 ```mermaid
@@ -683,6 +683,7 @@ All checks implement `Check.run(claims, ctx) -> list[Signal]`. Absence of eviden
 - SPEC-PR-01 [P1] Promoter and group-company registry sweep: a group company described as active but struck off in the registry before the cutoff is INCONSISTENT.
 - SPEC-CU-01 [P1] Named customers (the DroneAcharya pattern): a large contract with a customer whose only footprint is a residence or small shop is INCONSISTENT; anonymised customers are NOT_APPLICABLE.
 - SPEC-HY-01 [P1] Hype vs substance: YouTube promotion videos in the 30 days before issue open, grey-market news mentions and the Trends spike, shown against the share of claims that checked out. Informational only.
+- SPEC-DIFF-01 [P1] `quaoar diff <earlier.pdf> <later.pdf>` compares the grounded claims of two versions of one prospectus (draft, red herring, final): added, removed and changed vendor quotations (compared as money, not text), matters (by reference), promoters, group companies, places, lead managers and past issues. Neutral wording; no search credits.
 - SPEC-CM-01 [P1] Public comment draft for the 21-day window, built from INCONSISTENT signals only, template first, with page references and source links. The user sends it; Quaoar never submits anything.
 - SPEC-RD-01 [P2] Radar: recent SME draft prospectus filings found via `google` and `google_news`, queued for scanning.
 - P2 extras: patents (PT), Lens photo reuse (LN), Ads Transparency (AD), Play Store (PS), Jobs headcount (JB), auditor orders (AU).
@@ -811,7 +812,7 @@ Small n is stated plainly: every rate comes with its interval.
 ---
 
 [ORCHESTRA:AGENT_CLI]
-**Status: PROPOSED. No code until the user confirms this section.**
+**Status: Implemented (2026-10-09) as `quaoar` with no arguments: slash commands plus a deterministic intent router, no extra LLM call.**
 
 ## What it is
 `quaoar` with no arguments opens an interactive agent terminal, like Claude Code but only for IPO checks. The scripted subcommands in [ORCHESTRA:INTERFACES], the MCP server and the web console all run the same core, so the web page replays exactly what this terminal shows.
