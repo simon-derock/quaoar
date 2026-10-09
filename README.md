@@ -1,5 +1,9 @@
+<h1 align="center">Quaoar</h1>
+
+<p align="center"><b>Check every IPO before you apply.</b></p>
+
 <p align="center">
-  <img src="docs/assets/banner.png" alt="Quaoar. Check every IPO before you apply." width="100%">
+  <img src="docs/assets/demo.gif" alt="Quaoar's web console: the recorded Trafiksol scan plays, then a check is traced from page 89 of the prospectus to a SerpApi search and a 1,770x mismatch" width="100%">
 </p>
 
 <p align="center">
