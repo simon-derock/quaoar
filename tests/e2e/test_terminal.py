@@ -128,3 +128,41 @@ def test_the_loop_reads_until_quit_and_ends_on_eof() -> None:
 
     run(session, console, read=eof)
     assert Path(REPLAYS).is_dir()
+
+
+def test_a_beginner_is_guided_instead_of_hitting_a_dead_end() -> None:
+    session, console, out = make()
+    for line in ("hi", "what is an SME IPO", "is Trafiksol ipo safe", "scan Zomato for me"):
+        handle(line, session, console)
+    text = out.getvalue()
+    assert "checks an SME IPO" in text
+    assert "NSE Emerge" in text
+    assert "doesn't say whether an IPO is safe" in text
+    assert "lead manager" in text
+    assert "Type /help" not in text
+
+
+def test_asking_for_an_example_or_a_case_name_replays_it() -> None:
+    session, console, out = make()
+    handle("show me an example", session, console)
+    assert "TRAFIKSOL" in out.getvalue().upper()
+    assert "1,770 times" in out.getvalue()
+    handle("let me see the aelea one", session, console)
+    assert "AELEA COMMODITIES" in out.getvalue().upper()
+
+
+def test_line_n_means_proof_for_line_n() -> None:
+    session, console, out = make()
+    handle("/replay trafiksol", session, console)
+    handle("why is line 2 like that", session, console)
+    assert "SerpApi search id" in out.getvalue()
+
+
+def test_an_advice_question_gets_the_facts_or_a_way_to_get_them() -> None:
+    session, console, out = make()
+    handle("should I apply", session, console)
+    assert "investment advice" in out.getvalue()
+    assert "/replay trafiksol" in out.getvalue()
+    handle("/replay trafiksol", session, console)
+    handle("should I apply", session, console)
+    assert out.getvalue().count("Not investment advice") >= 2

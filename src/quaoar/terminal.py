@@ -12,6 +12,7 @@ from quaoar.events import Event
 from quaoar.guard.advice import ADVICE_REPLY, advice_request
 from quaoar.guard.injection import scan_injection
 from quaoar.guard.text import clean_text
+from quaoar.primer import answer
 from quaoar.prospectus.acquire import IntakeError
 from quaoar.replay import ReplayBundleError, load_replay
 from quaoar.scoring.card import MARKS, Card
@@ -21,7 +22,8 @@ from quaoar.serp.keys import KeysExhaustedError
 
 BANNER = "QUAOAR · check every IPO before you apply"
 PDF_IN_TEXT = re.compile(r"(\S+\.pdf|https://\S+)", re.I)
-PROOF = re.compile(r"\bproof\b.*?(\d+)", re.I)
+PROOF = re.compile(r"\b(?:proof|evidence|source)\b.*?(\d+)|\bline\s*(\d+)", re.I)
+EXAMPLE = re.compile(r"\b(?:example|demo|sample)\b", re.I)
 HELP = """\
 type a prospectus path or https url to scan it, or use:
   /scan <pdf|url>   scan a prospectus (uses SerpApi credits)
@@ -61,6 +63,10 @@ def handle(line: str, session: Session, console: Console) -> bool:
         return True
     if advice_request(text) is not None:
         console.print(ADVICE_REPLY)
+        if session.card is not None:
+            print_card(session.card, console)
+        else:
+            console.print("Give me a prospectus pdf, or try /replay trafiksol.")
         return True
     return intent(text, session, console)
 
@@ -68,12 +74,32 @@ def handle(line: str, session: Session, console: Console) -> bool:
 def intent(text: str, session: Session, console: Console) -> bool:
     proof = PROOF.search(text)
     if proof:
-        return command(f"/proof {proof.group(1)}", session, console)
+        return command(f"/proof {proof.group(1) or proof.group(2)}", session, console)
     source = PDF_IN_TEXT.search(text)
     if source:
         return command(f"/scan {source.group(1)}", session, console)
-    console.print("I can scan a prospectus pdf or url, or replay a recorded case. Type /help.")
+    reply = answer(text)
+    case = recorded_case(text, session)
+    if reply:
+        console.print(escape(reply))
+    if case:
+        return command(f"/replay {case}", session, console)
+    if not reply:
+        console.print(
+            "I can explain IPOs, scan a prospectus pdf, or replay a recorded case. "
+            "Try: what is an SME IPO, or /replay trafiksol, or /help."
+        )
     return True
+
+
+def recorded_case(text: str, session: Session) -> str | None:
+    # a case named in plain words ("show me the aelea one") or any "example" request replays it
+    lowered = text.lower()
+    names = sorted(p.name for p in session.replay_dir.glob("*") if p.is_dir())
+    for name in names:
+        if name.replace("-", " ") in lowered or name in lowered:
+            return name
+    return "trafiksol" if EXAMPLE.search(text) and "trafiksol" in names else None
 
 
 def command(text: str, session: Session, console: Console) -> bool:
@@ -129,7 +155,7 @@ def replay(name: str, session: Session, console: Console) -> None:
     for event in events:
         sink.write(event)
     session.card, session.events = card, events
-    print_card(card)
+    print_card(card, console)
 
 
 def live_scan(source: str, session: Session, console: Console) -> None:
@@ -142,7 +168,7 @@ def live_scan(source: str, session: Session, console: Console) -> None:
         console.print(f"[yellow]stopped:[/yellow] {escape(str(exc))}")
         return
     session.card, session.events = card, events
-    print_card(card)
+    print_card(card, console)
 
 
 def letter(session: Session, console: Console) -> None:
@@ -157,7 +183,7 @@ def show_card(session: Session, console: Console) -> None:
     if session.card is None:
         console.print("no card yet: scan something or /replay a case")
         return
-    print_card(session.card)
+    print_card(session.card, console)
 
 
 def proof(arg: str, session: Session, console: Console) -> None:

@@ -24,6 +24,7 @@ keys_app = typer.Typer(no_args_is_help=True, help="SerpApi key status.")
 app.add_typer(ledger_app, name="ledger")
 app.add_typer(keys_app, name="keys")
 console = Console(highlight=False)
+CONSOLE = console  # default output of print_card
 
 EXIT_INPUT, EXIT_PARTIAL = 2, 3
 
@@ -213,7 +214,8 @@ def keys_status() -> None:
 # --- wiring ---
 
 
-def print_card(card: Card) -> None:
+def print_card(card: Card, out: Console | None = None) -> None:
+    console = out or CONSOLE
     colours = {"checks out": "green", "doesn't match": "yellow", "couldn't find": "bright_black"}
     console.print(f"\n[bold]QUAOAR · {escape(card.company)}[/bold]")
     console.print(headline(card))
