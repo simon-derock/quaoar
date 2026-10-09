@@ -1,4 +1,4 @@
-# spec: SPEC-API-01, SPEC-API-02, SPEC-SAF-05, SPEC-SAF-13, SPEC-SAF-14, SPEC-SAF-15
+# spec: SPEC-API-01, SPEC-API-02, SPEC-API-03, SPEC-SAF-05, SPEC-SAF-13, SPEC-SAF-14, SPEC-SAF-15
 import json
 
 import pytest
@@ -62,3 +62,20 @@ def test_cors_allows_only_the_configured_origin() -> None:
     other = c.get("/health", headers={"Origin": "https://evil.example"})
     assert ok.headers["access-control-allow-origin"] == "https://quaoar.netlify.app"
     assert "access-control-allow-origin" not in other.headers
+
+
+def test_ask_answers_beginner_questions_from_fixed_text() -> None:
+    c = client()
+    reply = c.get("/api/ask", params={"q": "what is an SME IPO"}).json()["answer"]
+    assert "NSE Emerge" in reply
+    verdict = c.get("/api/ask", params={"q": "is Trafiksol ipo safe"}).json()["answer"]
+    assert "doesn't say whether an IPO is safe" in verdict
+
+
+def test_ask_declines_advice_and_unknown_questions_and_bounds_input() -> None:
+    c = client()
+    assert "investment advice" in c.get("/api/ask", params={"q": "should I apply"}).json()["answer"]
+    other = c.get("/api/ask", params={"q": "tell me a joke"}).json()["answer"]
+    assert "prospectus" in other
+    assert c.get("/api/ask", params={"q": "x" * 301}).status_code == 422
+    assert c.get("/api/ask").status_code == 422

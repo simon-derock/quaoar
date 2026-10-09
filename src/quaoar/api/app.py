@@ -4,12 +4,15 @@ import re
 import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from quaoar.events import Event
+from quaoar.guard.advice import advice_request
+from quaoar.primer import answer
 from quaoar.replay import ReplayBundleError, load_replay
 from quaoar.scoring.card import Card
 
@@ -20,6 +23,15 @@ HEADERS = {
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
     "Cache-Control": "no-store",
 }
+ASK_MAX = 300
+NOT_UNDERSTOOD = (
+    "I can explain SME IPOs and prospectuses, and show recorded checks. Try: what is an SME IPO, "
+    "where do I get a prospectus, or what does couldn't find mean."
+)
+NO_ADVICE = (
+    "Quaoar doesn't give investment advice. It shows what a prospectus claims and what public "
+    "sources say; pick a recorded case to see one."
+)
 RATE_PER_MINUTE = 30
 EVENT_DELAY_S = 0.12
 
@@ -96,6 +108,13 @@ def add_routes(app: FastAPI, replay_dir: Path, event_delay: float) -> None:
     def card(case: str) -> JSONResponse:
         _, saved = load_or_404(find_bundle(replay_dir, case))
         return JSONResponse(saved.model_dump(mode="json"))
+
+    @app.get("/api/ask")
+    def ask(q: Annotated[str, Query(min_length=1, max_length=ASK_MAX)]) -> dict[str, str]:
+        # fixed text only: no model, no search, nothing the visitor typed is stored
+        if advice_request(q) is not None:
+            return {"answer": NO_ADVICE}
+        return {"answer": answer(q, web=True) or NOT_UNDERSTOOD}
 
     @app.get("/api/scan/stream")
     def stream(case: str) -> StreamingResponse:

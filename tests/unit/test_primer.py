@@ -43,3 +43,12 @@ def test_no_answer_gives_a_view_or_uses_accusing_words() -> None:
         reply = answer(text) or ""
         assert banned_terms(reply) == []
         assert "you should buy" not in reply.lower()
+
+
+def test_web_answers_name_no_terminal_commands_and_stay_neutral() -> None:
+    for text in ("hi", "how do I check an ipo", "where do i get the prospectus", "is it safe"):
+        reply = answer(text, web=True) or ""
+        assert "/" not in reply
+        assert banned_terms(reply) == []
+    assert "recorded case" in (answer("hi", web=True) or "")
+    assert "/replay" in (answer("hi") or "")

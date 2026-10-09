@@ -46,6 +46,26 @@ VERDICT = (
 )
 THANKS = "You're welcome. Facts with sources. Not investment advice."
 
+# the web page has no terminal, so the answers that name commands get a version without them
+WEB: dict[str, str] = {
+    INTRO: INTRO.rsplit("\n", 1)[0]
+    + "\nPick a recorded case above to watch a check, or ask me anything about SME IPOs.",
+    WHERE: (
+        "Download the prospectus from the website of the lead manager (the merchant banker named "
+        "on its cover) or from SEBI's filings page. NSE and BSE forbid automated downloads, so "
+        "save the PDF yourself. To check one, run Quaoar from your terminal (the steps are in the "
+        "GitHub README); this page only replays recorded cases."
+    ),
+    HOW: (
+        "1. Download the prospectus PDF (ask me where).\n"
+        "2. Run Quaoar on it from your terminal; a live scan uses SerpApi credits.\n"
+        "3. Read the card: every line links to the page and source behind it.\n"
+        "To see a finished example first, pick a recorded case above."
+    ),
+    VERDICT: VERDICT.rsplit("\n", 1)[0]
+    + "\nPick a recorded case above to see what a check looks like.",
+}
+
 RULES: tuple[tuple[re.Pattern[str], str], ...] = tuple(
     (re.compile(pattern, re.I), reply)
     for pattern, reply in (
@@ -79,10 +99,10 @@ RULES: tuple[tuple[re.Pattern[str], str], ...] = tuple(
 )
 
 
-def answer(text: str) -> str | None:
+def answer(text: str, *, web: bool = False) -> str | None:
     if text.startswith("/"):
         return None
     for pattern, reply in RULES:
         if pattern.search(text):
-            return reply
+            return WEB.get(reply, reply) if web else reply
     return None

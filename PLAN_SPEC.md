@@ -799,6 +799,7 @@ Small n is stated plainly: every rate comes with its interval.
 
 ## API (Render)
 - SPEC-API-01 [P0] `GET /health`, `GET /api/cases`, `GET /api/scan/stream?case=<id>` (SSE of the replay events), `GET /api/dossier/<case>`.
+- SPEC-API-03 [P1] `GET /api/ask?q=` answers beginner questions from fixed text (no model, no search, input capped at 300 characters, advice questions get the plain disclaimer).
 - SPEC-API-02 [P0] Public mode is replay only with no keys on the server; CORS allows the Netlify origin only; per-IP token-bucket rate limit.
 
 ## Web console (Netlify)
