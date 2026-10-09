@@ -3,32 +3,130 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Quaoar</title>
-  <meta name="description" content="Check every IPO before you apply.">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#06070a">
+  <title>Quaoar · Check every IPO before you apply</title>
+  <meta name="description" content="Quaoar reads an SME IPO prospectus, checks its claims against public search results and shows the proof behind every line.">
+  <link rel="preload" href="fonts/instrument-serif-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Quaoar</h1>
-    <p class="tag">Check every IPO before you apply. <span lang="hi">Pehle jaanch, phir apply.</span></p>
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+
+  <header class="nav" id="top">
+    <a class="logo" href="#top" aria-label="Quaoar">
+      <svg viewBox="0 0 40 40" width="34" height="34" aria-hidden="true">
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#9d8cff"/><stop offset="1" stop-color="#4de1ff"/>
+          </linearGradient>
+        </defs>
+        <ellipse cx="20" cy="21" rx="18" ry="6.2" transform="rotate(-18 20 21)" fill="none" stroke="url(#lg)" stroke-width="1.4" opacity=".55"/>
+        <circle cx="20" cy="20" r="9" fill="url(#lg)"/>
+        <path d="M3.2 26.4C12 30.6 30 25 36.8 15.6" fill="none" stroke="url(#lg)" stroke-width="1.4" stroke-linecap="round" clip-path="inset(50% 0 0 0)"/>
+      </svg>
+      <span>QUAOAR</span>
+    </a>
+    <nav class="pill" aria-label="Sections">
+      <a href="#product">Product</a>
+      <a href="#how">How it works</a>
+      <a href="#checks">Checks</a>
+      <a href="#ask">Ask</a>
+      <a href="#limits">Limits</a>
+    </nav>
+    <a class="gh" href="https://github.com/simon-derock/quaoar" rel="noopener noreferrer" target="_blank">GitHub <span aria-hidden="true">↗</span></a>
   </header>
+
   <main>
-    <section aria-label="Terminal">
-      <div class="bar">
-        <label for="case">Case</label>
-        <select id="case"></select>
-        <button id="run" type="button">Replay</button>
+    <section class="hero">
+      <p class="eyebrow reveal">SME IPO prospectus reality check</p>
+      <h1 class="reveal">Check every IPO<br><em>before you apply.</em></h1>
+      <p class="lede reveal">Quaoar reads the prospectus, checks what it claims against public search results, and shows the proof behind every line. No verdicts. No advice. Just facts with sources.</p>
+      <div class="actions reveal">
+        <a class="btn primary" href="#product">Watch a real scan</a>
+        <a class="btn ghost" href="#ask">New to IPOs? Ask</a>
       </div>
-      <pre id="terminal" tabindex="0"></pre>
     </section>
-    <section aria-label="Card">
-      <h2 id="company"></h2>
-      <p id="headline"></p>
-      <ul id="signals"></ul>
-      <p id="context" class="small"></p>
-      <p id="disclaimer" class="small"></p>
+
+    <section class="stage reveal" id="product" aria-label="Product">
+      <div class="window">
+        <div class="chrome">
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="title">quaoar · replay</span>
+          <button id="run" type="button" class="again">Replay ↻</button>
+        </div>
+        <div class="tabs" id="cases" role="tablist" aria-label="Recorded cases"></div>
+        <div class="split">
+          <pre id="terminal" tabindex="0" aria-label="Scan log"></pre>
+          <div class="card" aria-live="polite">
+            <p class="kicker" id="blurb"></p>
+            <h2 id="company"></h2>
+            <div class="meter" id="meter" aria-hidden="true"><i class="ok"></i><i class="bad"></i><i class="none"></i></div>
+            <p id="headline" class="counts"></p>
+            <ul id="signals"></ul>
+            <p id="context" class="small"></p>
+            <p id="disclaimer" class="small"></p>
+          </div>
+        </div>
+      </div>
+      <p class="caption">A recorded scan of a real prospectus, streamed from the public API. No keys, no uploads, no live search on this page.</p>
+    </section>
+
+    <section class="numbers reveal" aria-label="Why it exists">
+      <div><b>1,770×</b><span>Trafiksol's software vendor quoted ₹17.70 Cr against ₹1 lakh of paid-up capital</span></div>
+      <div><b>₹44.87 Cr</b><span>went back to investors after the 2024 SEBI action</span></div>
+      <div><b>5</b><span>checks: vendor, premises, merchant banker, litigation, news</span></div>
+      <div><b>0</b><span>verdicts. Every line is a fact with a source link</span></div>
+    </section>
+
+    <section class="band" id="how">
+      <h2 class="reveal">From a PDF to proof, in a few minutes.</h2>
+      <div class="steps">
+        <article class="reveal"><span class="n">01</span><h3>Read</h3><p>The prospectus is split into sections and its checkable claims are pulled out. A claim only counts if it is found on the page it cites.</p></article>
+        <article class="reveal"><span class="n">02</span><h3>Check</h3><p>Each claim is searched through SerpApi: company registry, Maps, SEBI orders, court records, news. Evidence is read as of the prospectus date.</p></article>
+        <article class="reveal"><span class="n">03</span><h3>Prove</h3><p>Fixed rules, not a language model, set every status. Each line links to its source with the search id, so anyone can repeat the check.</p></article>
+      </div>
+    </section>
+
+    <section class="band" id="checks">
+      <h2 class="reveal">What it looks at.</h2>
+      <div class="bento">
+        <article class="reveal wide"><h3>Vendor</h3><p>The company quoting for the IPO money: is it on the registry, active, is its paid-up capital in proportion to the quote, does any court or SEBI page name it.</p><small>Registry pages · Google Maps</small></article>
+        <article class="reveal"><h3>Premises</h3><p>Does the registered office or factory exist on Maps, and is it open?</p><small>Google Maps</small></article>
+        <article class="reveal"><h3>Merchant banker</h3><p>SEBI orders naming the lead manager or the issuers it brought before.</p><small>SEBI orders</small></article>
+        <article class="reveal wide"><h3>Litigation</h3><p>Court or SEBI matters naming the issuer that the prospectus does not list.</p><small>SEBI · Indian Kanoon · IBBI</small></article>
+        <article class="reveal wide"><h3>News and hype</h3><p>Dated coverage before the prospectus date. Promotion volume is shown as context, never as a finding.</p><small>Google News · YouTube</small></article>
+      </div>
+    </section>
+
+    <section class="band ask" id="ask">
+      <h2 class="reveal">New to IPOs? Just ask.</h2>
+      <p class="sub reveal">Plain answers, no jargon, no model. Quaoar explains and shows evidence; it never says whether to apply.</p>
+      <div class="chat reveal">
+        <ol id="thread" aria-live="polite"></ol>
+        <div class="chips" id="chips"></div>
+        <form id="ask-form" autocomplete="off">
+          <input id="question" type="text" maxlength="300" placeholder="What is an SME IPO?" aria-label="Your question">
+          <button type="submit" class="btn primary">Ask</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="band limits" id="limits">
+      <h2 class="reveal">Honest about its limits.</h2>
+      <ul class="reveal">
+        <li><b>Absence is not a finding.</b> Small private companies barely appear online, so “couldn't find” is common and is never held against a company.</li>
+        <li><b>A screen, not a verdict.</b> The 100× vendor-capital rule is a reason to look closer, not a conclusion.</li>
+        <li><b>A very small evaluation.</b> One positive case in two versions and three controls. No accuracy claim is made.</li>
+      </ul>
     </section>
   </main>
+
+  <footer>
+    <span class="mark">QUAOAR</span>
+    <span>Facts with sources. Not investment advice.</span>
+    <span>Built by Philip Simon Derock · SerpApi India Hackathon 2026</span>
+  </footer>
   <script src="config.js"></script>
   <script type="module" src="main.js"></script>
 </body>

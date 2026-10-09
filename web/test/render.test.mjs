@@ -36,3 +36,38 @@ test("events become terminal lines and unknown types are skipped", () => {
 test("status marks use the plain words", () => {
   assert.equal(MARKS.inconsistent, "doesn't match");
 });
+
+import { caseBlurb, caseLabel, host, lineKind, shares } from "../dist/render.js";
+
+test("lines are coloured by what produced them", () => {
+  assert.equal(lineKind({ type: "serp", data: {} }), "serp");
+  assert.equal(lineKind({ type: "agent", data: {} }), "agent");
+  assert.equal(lineKind({ type: "stage", data: {} }), "stage");
+  assert.equal(lineKind({ type: "signal", data: {} }), "stage");
+});
+
+test("a proof chip shows the host, and only for https links", () => {
+  assert.equal(host("https://www.zaubacorp.com/company/X"), "zaubacorp.com");
+  assert.equal(host("javascript:alert(1)"), "");
+});
+
+test("the meter shares add up and an empty card gives zeros", () => {
+  const card = { company: "X", consistent: 8, inconsistent: 1, unverified: 1, signals: [], disclaimer: "d" };
+  assert.deepEqual(shares(card), { ok: 80, bad: 10, none: 10 });
+  assert.deepEqual(shares({ ...card, consistent: 0, inconsistent: 0, unverified: 0 }), { ok: 0, bad: 0, none: 0 });
+});
+
+test("case names get readable labels, unknown ones pass through", () => {
+  assert.equal(caseLabel("tbi-corn"), "TBI Corn");
+  assert.equal(caseLabel("new-case"), "new-case");
+  assert.equal(caseBlurb("trafiksol"), "The case that made the news");
+  assert.equal(caseBlurb("new-case"), "Recorded case");
+});
+
+import { titleCase } from "../dist/render.js";
+
+test("issuer names are shown in title case with initials kept", () => {
+  assert.equal(titleCase("TRAFIKSOL ITS TECHNOLOGIES LIMITED"), "Trafiksol ITS Technologies Limited");
+  assert.equal(titleCase("TBI CORN LIMITED"), "TBI Corn Limited");
+  assert.equal(titleCase("BANK OF INDIA"), "Bank of India");
+});

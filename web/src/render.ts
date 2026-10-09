@@ -83,3 +83,60 @@ export function safeLink(url: string): string | null {
     return null;
   }
 }
+
+export type LineKind = "stage" | "serp" | "llm" | "agent";
+
+// the terminal colours a line by what produced it
+export function lineKind(event: QEvent): LineKind {
+  return event.type === "serp" || event.type === "llm" || event.type === "agent" ? event.type : "stage";
+}
+
+// a proof chip shows the site it points to, not the whole address
+export function host(url: string): string {
+  const link = safeLink(url);
+  return link === null ? "" : new URL(link).hostname.replace(/^www\./, "");
+}
+
+export function shares(card: Card): { ok: number; bad: number; none: number } {
+  const total = card.consistent + card.inconsistent + card.unverified;
+  const pct = (n: number): number => (total === 0 ? 0 : (n / total) * 100);
+  return { ok: pct(card.consistent), bad: pct(card.inconsistent), none: pct(card.unverified) };
+}
+
+const LABELS: Record<string, string> = {
+  trafiksol: "Trafiksol",
+  aelea: "Aelea Commodities",
+  "indian-emulsifier": "Indian Emulsifier",
+  "tbi-corn": "TBI Corn",
+  teamtech: "Teamtech Formwork",
+};
+
+const BLURBS: Record<string, string> = {
+  trafiksol: "The case that made the news",
+  aelea: "Control · no known problem",
+  "indian-emulsifier": "Control · no known problem",
+  "tbi-corn": "Control · no known problem",
+  teamtech: "Unseen prospectus · no ground truth",
+};
+
+export function caseLabel(name: string): string {
+  return LABELS[name] ?? name;
+}
+
+export function caseBlurb(name: string): string {
+  return BLURBS[name] ?? "Recorded case";
+}
+
+const SMALL = new Set(["and", "of", "the", "for"]);
+
+// prospectus covers print the issuer in capitals; short words stay capitals because they are usually initials
+export function titleCase(name: string): string {
+  return name
+    .split(/\s+/)
+    .map((word) => {
+      const lower = word.toLowerCase();
+      if (SMALL.has(lower)) return lower;
+      return word.length <= 3 ? word.toUpperCase() : lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(" ");
+}
