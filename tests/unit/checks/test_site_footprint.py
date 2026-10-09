@@ -89,12 +89,14 @@ NEWS: dict[str, JsonValue] = {
         {
             "title": "Brightwell Polymers IPO opens on 12 Sept",
             "link": "https://n.example/1",
-            "date": "Sep 9, 2024",
+            "date": "09/09/2024, 07:00 AM, +0000 UTC",
+            "iso_date": "2024-09-09T07:00:00Z",
         },
         {
             "title": "SEBI probe into Brightwell Polymers IPO funds",
             "link": "https://n.example/2",
-            "date": "Jan 20, 2025",
+            "date": "12/04/2024, 08:00 AM, +0000 UTC",
+            "iso_date": "2024-12-04T08:00:00Z",
         },
         {"title": "Unrelated company news", "link": "https://n.example/3", "date": "Sep 1, 2024"},
     ]
@@ -130,3 +132,18 @@ def test_promotion_volume_is_context_and_never_a_verdict() -> None:
     assert (found.videos, found.promo_videos) == (2, 1)
     assert "2 YouTube video(s) (1 about price" in volume.text
     assert "Context, not a verdict" in volume.text
+
+
+def test_month_first_news_dates_never_leak_a_december_story_into_april() -> None:
+    # the display date 12/04/2024 is 4 December; read day-first it would pass a September cutoff
+    found = footprint("BRIGHTWELL POLYMERS LIMITED", Routed({}))
+    adverse = [a for a in found.articles if a.adverse]
+    assert [a.when for a in adverse] == [date(2024, 12, 4)]
+    assert footprint_signals(found, date(2024, 9, 12))[0].status is Status.CONSISTENT
+
+
+def test_a_place_type_given_as_a_list_is_joined() -> None:
+    found = site_visit(
+        ISSUER, FACTORY, FakeSearch({"google_maps": place(type=["Factory", "Manufacturer"])})
+    )
+    assert found.place_type == "Factory, Manufacturer"

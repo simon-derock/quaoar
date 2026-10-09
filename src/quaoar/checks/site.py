@@ -62,5 +62,6 @@ def fill(
         return
     owner = next(res for res, p in candidates if p is best)
     found.maps = maps_facts(best)
-    found.place_type = str(best.get("type", "") or "")
+    kind = best.get("type") or ""
+    found.place_type = ", ".join(str(k) for k in kind) if isinstance(kind, list) else str(kind)
     found.evidence = [evidence(owner, best)]

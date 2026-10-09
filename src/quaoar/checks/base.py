@@ -1,5 +1,6 @@
 # what every check needs: a search port and a way to turn results into evidence
 from collections.abc import Mapping
+from datetime import date
 from typing import Protocol
 
 from pydantic import JsonValue
@@ -22,7 +23,6 @@ class SearchPort(Protocol):
 def evidence(result: SerpResult, item: Mapping[str, object]) -> Evidence:
     # third-party text is cleaned and masked before anyone can see it
     snippet = safe(str(item.get("snippet") or item.get("address") or ""))[:SNIPPET_CHARS]
-    raw_date = item.get("date")
     return Evidence(
         engine=result.engine,
         request=result.request_hash[:16],
@@ -30,7 +30,7 @@ def evidence(result: SerpResult, item: Mapping[str, object]) -> Evidence:
         url=str(item.get("link") or item.get("website") or ""),
         title=safe(str(item.get("title", "")))[:200],
         snippet=snippet,
-        published=parse_date(raw_date) if isinstance(raw_date, str) else None,
+        published=item_date(item),
     )
 
 
@@ -45,3 +45,15 @@ def results(result: SerpResult, key: str) -> list[dict[str, JsonValue]]:
     if isinstance(found, list):
         return [item for item in found if isinstance(item, dict)]
     return []
+
+
+def item_date(item: Mapping[str, object]) -> date | None:
+    # serpapi's news "date" is month-first (12/04/2024 is 4 December), so the iso field wins
+    iso = item.get("iso_date")
+    if isinstance(iso, str) and len(iso) >= 10:
+        try:
+            return date.fromisoformat(iso[:10])
+        except ValueError:
+            return None
+    raw = item.get("date")
+    return parse_date(raw) if isinstance(raw, str) else None

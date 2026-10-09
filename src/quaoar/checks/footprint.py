@@ -3,9 +3,8 @@ import re
 from dataclasses import dataclass, field
 from datetime import date
 
-from quaoar.checks.base import SearchPort, evidence, results
+from quaoar.checks.base import SearchPort, evidence, item_date, results
 from quaoar.checks.registry import registry_core
-from quaoar.domain.dates import parse_date
 from quaoar.domain.findings import Evidence
 from quaoar.domain.names import normalize_company
 
@@ -43,10 +42,9 @@ def footprint(issuer: str, search: SearchPort, parent: str | None = None) -> Foo
         title = str(item.get("title", ""))
         if key.split()[0] not in normalize_company(title):
             continue
-        raw = item.get("date")
         found.articles.append(
-            Article(title, parse_date(raw) if isinstance(raw, str) else None, bool(ADVERSE.search(title)), evidence(news, item))
-        )  # fmt: skip
+            Article(title, item_date(item), bool(ADVERSE.search(title)), evidence(news, item))
+        )
 
     clips = search.query("youtube", {"search_query": f"{core} IPO"}, parent)
     for item in results(clips, "video_results"):
