@@ -148,3 +148,21 @@ def test_the_issuer_is_the_name_repeated_on_the_cover_not_the_first_company_list
         needs_ocr=False,
     )
     assert issuer_name([cover, second]) == "TBI CORN LIMITED"
+
+
+def test_a_prospectus_whose_sections_cant_be_located_says_so_on_the_card(tmp_path: Path) -> None:
+    # no contents list: nothing can be located, so only news is checked, and the card must not look complete
+    pdf = tmp_path / "flat.pdf"
+    pdf.write_bytes(make_pdf([PAGES[0], ["1 | P a g e", "Some body text about the company."]]))
+    clock = FixedClock()
+    result = run_scan(
+        from_path(pdf),
+        search=FakeSearch({}),
+        claims=FakeSource({}),
+        emit=Emitter("flat", MemorySink(), clock),
+        clock=clock,
+        cutoff=date(2024, 9, 3),
+    )
+    notes = [c.text for c in result.card.context]
+    assert any("couldn't locate" in note for note in notes)
+    assert all("fraud" not in note.lower() for note in notes)

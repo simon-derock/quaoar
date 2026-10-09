@@ -76,7 +76,8 @@ def run_scan(
     sections = timed(emit, clock, root, "sections", lambda: locate_sections(pages))
     extraction = read_claims(pages, sections, claims, emit, root)
 
-    signals = vendor_stage(extraction, search, emit, root, cutoff, investigator)
+    signals = unread_note(company, sections)
+    signals += vendor_stage(extraction, search, emit, root, cutoff, investigator)
     signals += site_stage(company, extraction, search, emit, root, investigator)
     signals += banker_stage(extraction, search, emit, root, cutoff)
     signals += litigation_stage(company, extraction, search, emit, root, cutoff)
@@ -100,6 +101,25 @@ def run_scan(
         root,
     )
     return ScanResult(scan_id, company, sections, extraction, signals, card)
+
+
+def unread_note(company: str, sections: SectionMap) -> list[Signal]:
+    # with no section located nothing was read, so the card must not read as a complete check
+    if sections.sections:
+        return []
+    text = (
+        "Quaoar couldn't locate this prospectus's sections, so the vendor, premises, lead manager "
+        "and litigation checks were not run; only news coverage was checked."
+    )
+    return [
+        Signal(
+            check="sections",
+            rule="SC-01",
+            subject=company,
+            status=Status.NOT_APPLICABLE,
+            text=text,
+        )
+    ]
 
 
 def choose_cutoff(

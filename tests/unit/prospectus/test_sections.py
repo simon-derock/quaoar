@@ -118,3 +118,73 @@ def test_title_variants_seen_in_real_prospectuses_map_to_the_same_section(
     title: str, name: str | None
 ) -> None:
     assert target_name(title) == name
+
+
+def test_a_contents_list_without_dotted_leaders_is_read() -> None:
+    # "TITLE 81": the page number follows the title after a space, as in some SME prospectuses
+    toc = [
+        "TABLE OF CONTENTS",
+        "SECTION CONTENTS PAGE NO.",
+        "I. GENERAL",
+        "GENERAL INFORMATION 81",
+        "OBJECTS OF THE OFFER 112",
+        "OUR BUSINESS 164",
+    ]
+    pages = [
+        Page(1, "cover page with enough text to not be empty", needs_ocr=False),
+        Page(2, "\n".join(toc), needs_ocr=False),
+        page(3, "GENERAL INFORMATION"),
+        page(4, "OBJECTS OF THE OFFER"),
+        page(5, "OUR BUSINESS"),
+    ]
+    found = locate_sections(pages)
+    assert set(found.sections) == {"general_information", "objects", "business"}
+
+
+def test_a_list_headed_index_with_page_headers_that_say_page_n_of_m_is_read() -> None:
+    toc = [
+        "INDEX",
+        "SECTION III- INTRODUCTION..........................57",
+        "GENERAL INFORMATION..........................82",
+        "OBJECTS OF THE ISSUE.........................97",
+    ]
+
+    def numbered(number: int, *lines: str) -> Page:
+        text = "\n".join([f"Page {number - 2} of 346", *lines, "body text " * 8])
+        return Page(number, text, needs_ocr=False)
+
+    pages = [
+        Page(1, "cover page with enough text to not be empty", needs_ocr=False),
+        Page(2, "\n".join(toc), needs_ocr=False),
+        numbered(3, "SECTION III- INTRODUCTION", "x", "y", "z"),
+        numbered(4, "GENERAL INFORMATION"),
+        numbered(5, "OBJECTS OF THE ISSUE"),
+    ]
+    found = locate_sections(pages)
+    assert {n: (s.start, s.end) for n, s in found.sections.items()} == {
+        "general_information": (4, 4),
+        "objects": (5, 5),
+    }
+
+
+def test_body_text_ending_in_a_number_is_not_mistaken_for_a_contents_line() -> None:
+    toc = ["CONTENTS", "The company has 12 offices and sells 40", "GENERAL INFORMATION 81"]
+    pages = [Page(2, "\n".join(toc), needs_ocr=False), page(3, "GENERAL INFORMATION")]
+    assert set(locate_sections(pages).sections) == {"general_information"}
+
+
+def test_ampersand_and_plural_wording_differences_between_contents_and_heading_are_bridged() -> (
+    None
+):
+    toc = [
+        "TABLE OF CONTENTS",
+        "OUR PROMOTERS & PROMOTER GROUP 4",
+        "OUTSTANDING LITIGATIONS AND OTHER MATERIAL DEVELOPMENTS 5",
+    ]
+    pages = [
+        Page(1, "\n".join(toc), needs_ocr=False),
+        page(3, "OUR PROMOTERS AND PROMOTER GROUP"),
+        page(4, "OUTSTANDING LITIGATION AND MATERIAL DEVELOPMENTS"),
+    ]
+    found = locate_sections(pages)
+    assert set(found.sections) == {"promoters", "litigation"}

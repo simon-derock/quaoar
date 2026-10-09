@@ -17,9 +17,15 @@ TARGETS: dict[str, re.Pattern[str]] = {
     "litigation": re.compile(r"^OUTSTANDING LITIGATIONS? AND MATERIAL DEVELOP\w*$"),
     "regulatory": re.compile(r"^OTHER REGULATORY AND STATUTORY DISCLOSURES$"),
 }
-TOC_TITLE = re.compile(r"^(TABLE OF )?CONTENTS$")
+TOC_TITLE = re.compile(r"^((TABLE OF )?CONTENTS|INDEX( OF CONTENTS)?)$")
 LEADER = re.compile(r"^(?P<title>.+?)\s*\.{3,}\s*\d{0,4}$")
-PAGE_HEADER = re.compile(r"^(\d{1,4}\s*\|\s*P\s*A\s*G\s*E|PAGE\s+\d{1,4}|\d{1,4})$")
+# some filings print no dotted leaders: "GENERAL INFORMATION 81"; a title carries no digits, which keeps body text out
+# a part heading ("I. GENERAL", "SECTION III - INTRODUCTION") is its own line, never the first half of a wrapped title
+PART = re.compile(r"^([IVXL]+[.:]\s|SECTION\s)")
+PLAIN = re.compile(r"^(?P<title>[A-Z][^\d]*?[A-Z)])\s+\d{1,4}$")
+PAGE_HEADER = re.compile(
+    r"^(\d{1,4}\s*\|\s*P\s*A\s*G\s*E|PAGE\s+\d{1,4}(\s+OF\s+\d{1,4})?|\d{1,4})$"
+)
 TOP_LINES = 4
 TOC_SEARCH_PAGES = 15
 
@@ -74,11 +80,13 @@ def toc_titles(lines: list[str]) -> list[str]:
     titles: list[str] = []
     pending = ""
     for line in lines:
-        match = LEADER.match(line)
+        match = LEADER.match(line) or PLAIN.match(line)
         if match:
             titles.append(normal(f"{pending} {match.group('title')}"))
             pending = ""
-        elif line.isupper() and not TOC_TITLE.match(line):
+        elif PART.match(line):
+            pending = ""
+        elif line.isupper() and not TOC_TITLE.match(line) and not any(c.isdigit() for c in line):
             # a long title wraps: its first half has no dotted leader
             pending = f"{pending} {line}".strip()
     return titles
@@ -120,4 +128,10 @@ def normal(text: str) -> str:
     # en and em dashes and the curly apostrophe all read as their plain forms
     text = text.upper().replace("\u2013", "-").replace("\u2014", "-").replace("\u2019", "'")
     text = re.sub(r"\s*-\s*", " - ", text)
+    # a contents list and the heading it points to often differ in these small ways only
+    text = (
+        text.replace(" & ", " AND ")
+        .replace("LITIGATIONS", "LITIGATION")
+        .replace(" OTHER MATERIAL", " MATERIAL")
+    )
     return " ".join(text.split()).strip(" .")
