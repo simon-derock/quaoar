@@ -78,7 +78,7 @@ Quaoar reads an SME IPO prospectus, pulls out the claims that can be checked aga
 - Analyst / developer: CLI, MCP tools inside their own agent, backtest numbers.
 
 ## 3. Brand
-- Name: **Quaoar**. Tagline: **"Check every IPO before you apply."** Hindi line: **"Pehle jaanch, phir apply."**
+- Name: **Quaoar**. Tagline: **"Check every IPO before you apply."**
 - Story: Quaoar's ring was found where theory said no ring could exist, and it was found without looking at it, by watching starlight dim. Quaoar finds what sits around an IPO the same way: from indirect public evidence.
 - Theme stays on the dwarf planet. No deity imagery.
 - Card language: "checks out" / "doesn't match" / "couldn't find", plus "Facts with sources. Not investment advice."

@@ -23,4 +23,4 @@ Read the "doesn't match" line: "The vendor quoted ₹17.70 crore, but its paid-u
 `› /comment` for the neutral public-comment letter, then the MCP tool from Claude Code (`replay_card trafiksol`), then the Netlify page replaying the same case.
 
 **2:45 - 3:00 Close**
-"Evidence as of the prospectus date, so later news can't change the card. Check every IPO before you apply. Pehle jaanch, phir apply."
+"Evidence as of the prospectus date, so later news can't change the card. Check every IPO before you apply."

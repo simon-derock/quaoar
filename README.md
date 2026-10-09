@@ -1,20 +1,47 @@
-# Quaoar
+<p align="center">
+  <img src="docs/assets/banner.png" alt="Quaoar. Check every IPO before you apply." width="100%">
+</p>
 
-**Check every IPO before you apply.** *Pehle jaanch, phir apply.*
+<p align="center">
+  <a href="https://github.com/simon-derock/quaoar/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/simon-derock/quaoar/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="Python 3.13" src="https://img.shields.io/badge/python-3.13-4c6ef5">
+  <img alt="Tests 900+" src="https://img.shields.io/badge/tests-900%2B-3ddc97">
+  <img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-8b7bff">
+  <img alt="Powered by SerpApi" src="https://img.shields.io/badge/powered%20by-SerpApi-4de1ff">
+</p>
 
-Quaoar reads an SME IPO prospectus, pulls out the claims that can be checked against the outside world, and checks them through [SerpApi](https://serpapi.com) before anyone applies. Every line of its card says one of three things, with a source link:
+<p align="center">
+  <b>Quaoar reads an SME IPO prospectus and checks what it claims against the outside world.</b><br>
+  Every line of its card says <b>checks out</b>, <b>doesn't match</b> or <b>couldn't find</b>, with a source link.<br>
+  No verdicts. No advice. <i>Facts with sources.</i>
+</p>
 
-- **checks out**
-- **doesn't match**
-- **couldn't find**
-
-It never says fraud, and it never says buy or sell. *Facts with sources. Not investment advice.*
+<p align="center">
+  <a href="#try-it-in-60-seconds">Try it</a> ·
+  <a href="#what-it-checks">What it checks</a> ·
+  <a href="#proof-that-it-works">Results</a> ·
+  <a href="#use-it-from-your-own-agent">MCP</a> ·
+  <a href="#honest-limits">Limits</a>
+</p>
 
 > Built for the SerpApi India Hackathon 2026, track Commerce & Market Intelligence.
 
-## Why
+## Why it exists
 
 In 2024 an investors' group noticed that the software vendor named in Trafiksol's IPO prospectus had not filed accounts. SEBI then found the vendor's office locked, and the IPO money was refunded. The prospectus is *required* to name that vendor (ICDR Schedule VI clause 7(b)), so the check can be automated. Quaoar does that check, plus several more, in a few minutes.
+
+## Four ways in
+
+| | | |
+|---|---|---|
+| **Terminal** | `uv run quaoar` | A chat-style console. Plain language works, even if you know nothing about IPOs. |
+| **CLI** | `quaoar scan rhp.pdf` | Scripted scans, `diff` between prospectus versions, ledger and key tools. |
+| **Web console** | `quaoar serve` + `web/` | A product page that replays recorded scans. No keys, no uploads. |
+| **Your agent** | `quaoar mcp` | Six MCP tools and a skill, so Claude Code can run the check for you. |
+
+<p align="center">
+  <img src="docs/assets/console.png" alt="The Quaoar console replaying the Trafiksol scan: terminal on the left, card with proof links on the right" width="100%">
+</p>
 
 ## What it checks
 
@@ -41,7 +68,7 @@ When a fixed search comes back empty, a ReAct investigator (PydanticAI on Cohere
 
 Prompt structure and the measured behaviour are in [ADR-0002](docs/decisions/ADR-0002-investigator-prompt.md). How much it actually helped is reported below, unvarnished.
 
-## Results
+## Proof that it works
 
 The first test is Trafiksol, the case that made the news. Quaoar flags the vendor with no human help: Oasis Corpcare quoted ₹17.70 Cr against ₹1 lakh of paid-up capital (1,770 times), on the red herring prospectus and on the final one.
 
@@ -63,7 +90,9 @@ Then the question that matters: does it cry wolf? Three prospectuses with no kno
 `quaoar diff earlier.pdf later.pdf` compares two versions of a prospectus (draft, red herring, final) and lists vendors, matters and lead managers that were added, removed or changed. It reads claims only, no searches. The promoter list is noisy when a draft lists promoter-group members.
 
 
-## Try it with no keys
+## Try it in 60 seconds
+No API keys needed.
+
 ```bash
 git clone https://github.com/simon-derock/quaoar && cd quaoar
 uv sync
@@ -71,7 +100,7 @@ uv run quaoar replay fixtures/replay/trafiksol
 ```
 This replays a recorded scan of the Trafiksol red herring prospectus. Other recorded cases are in `fixtures/replay/` (`uv run quaoar` then `/cases`). `teamtech` is a prospectus never seen before, downloaded from sebi.gov.in and scanned live to test user documents; it has no ground truth and is not part of the evaluation.
 
-## The terminal
+## Inside the terminal
 ```
 $ uv run quaoar
 QUAOAR · check every IPO before you apply
@@ -81,11 +110,11 @@ QUAOAR · check every IPO before you apply
 › /scan path/to/rhp.pdf  a live scan (uses SerpApi credits; /mode, /budget)
 › /trace  /credits  /help
 ```
-Plain language works too ("show proof for 2"). Advice questions ("should I apply?") get the facts and a plain disclaimer, not a view.
+Plain language works too ("show proof for 2"). A complete beginner can type "hi", "what is an SME IPO" or "where do I get a prospectus" and get a plain answer, in English or basic Hinglish. Advice questions ("should I apply?") get the facts and a plain disclaimer, not a view.
 
 Other commands: `quaoar scan`, `card`, `comment`, `diff`, `doctor` (checks keys, model access and the ledger without spending credits), `ledger stats|verify`, `keys status`, `export`, `replay`, `serve`, `mcp`.
 
-## Run a live scan
+## Run a live scan on your own prospectus
 ```bash
 cp .env.example .env     # add SERPAPI_API_KEYS and COHERE_API_KEYS
 uv run quaoar doctor
@@ -94,7 +123,7 @@ uv run quaoar ledger stats                           # credits by engine and key
 ```
 Exchange sites (NSE, BSE) forbid automated downloads, so Quaoar refuses their URLs: download the PDF yourself, or use the lead manager's own website.
 
-## Use it from your own agent (MCP + skill)
+## Use it from your own agent
 ```bash
 claude mcp add quaoar -- uvx --from git+https://github.com/simon-derock/quaoar quaoar mcp
 ```
