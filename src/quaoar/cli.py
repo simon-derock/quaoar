@@ -1,4 +1,5 @@
 # quaoar command line: scripted commands over the same core the mcp server and web console use
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -16,9 +17,7 @@ from quaoar.serp.client import CreditBudgetExceededError, account_lookup
 from quaoar.serp.keys import KeyPool, KeysExhaustedError
 from quaoar.service import execute, intake, make_runtime
 
-app = typer.Typer(
-    add_completion=False, no_args_is_help=True, help="Check every IPO before you apply."
-)
+app = typer.Typer(add_completion=False, help="Check every IPO before you apply.")
 ledger_app = typer.Typer(no_args_is_help=True, help="The local evidence ledger.")
 keys_app = typer.Typer(no_args_is_help=True, help="SerpApi key status.")
 app.add_typer(ledger_app, name="ledger")
@@ -29,6 +28,13 @@ EXIT_INPUT, EXIT_PARTIAL = 2, 3
 
 
 # --- commands ---
+
+
+@app.callback(invoke_without_command=True)
+def main(ctx: typer.Context) -> None:
+    # `quaoar` on its own opens the interactive terminal; subcommands still work as before
+    if ctx.invoked_subcommand is None:
+        start_terminal()
 
 
 @app.command()
@@ -124,6 +130,32 @@ def serve(host: str = "127.0.0.1", port: int = 8000) -> None:
     uvicorn.run(create_app(Path("fixtures/replay"), settings.cors_origin), host=host, port=port)
 
 
+@app.command()
+def comment(scan_id: str) -> None:
+    from quaoar.scoring.comment import draft_comment
+
+    path = make_runtime().settings.home / "scans" / scan_id / "card.json"
+    if not path.is_file():
+        console.print(f"no saved card for {escape(scan_id)}")
+        raise typer.Exit(EXIT_INPUT)
+    letter = draft_comment(Card.model_validate_json(path.read_text(encoding="utf-8")))
+    if letter is None:
+        console.print("nothing to comment on: no line in this card failed to match")
+        return
+    sys.stdout.write(letter)
+
+
+@app.command()
+def doctor() -> None:
+    from quaoar.doctor import diagnose
+
+    rows = diagnose(make_runtime())
+    for ok, text in rows:
+        console.print(f"[green]ok[/]  {escape(text)}" if ok else f"[red]!![/]  {escape(text)}")
+    if not all(ok for ok, _ in rows):
+        raise typer.Exit(1)
+
+
 @ledger_app.command("stats")
 def ledger_stats() -> None:
     stats = make_runtime().ledger.stats()
@@ -174,6 +206,37 @@ def print_card(card: Card) -> None:
     console.print(f"\n{card.disclaimer}")
 
 
+# --- terminal ---
+
+
+def start_terminal() -> None:
+    from quaoar.terminal import Session, run
+
+    runtime = make_runtime()
+
+    def live(source: str, mode: str, budget: int) -> tuple[Card, list[Event]]:
+        done = execute(
+            intake(source, runtime), runtime, [ConsoleSink(raw=False)], budget, mode=mode
+        )
+        lines = (done.folder / "events.jsonl").read_text(encoding="utf-8").splitlines()
+        return done.result.card, [Event.model_validate_json(line) for line in lines if line.strip()]
+
+    def key_rows() -> list[str]:
+        pool = KeyPool(
+            runtime.settings.serpapi_keys,
+            runtime.settings.key_reserve,
+            account_lookup(runtime.http),
+        )
+        stats = runtime.ledger.stats()
+        rows = [f"key {k.fingerprint}: {k.left} searches left" for k in pool.status()]
+        return [
+            *rows,
+            f"cache hit rate {stats.hit_rate:.0%} · live latency p50 {stats.live_p50_ms} ms",
+        ]
+
+    run(Session(live, Path("fixtures/replay"), key_rows), console)
+
+
 # --- event sinks ---
 
 
@@ -183,7 +246,7 @@ class ConsoleSink:
 
     def write(self, event: Event) -> None:
         if self._raw:
-            console.print(escape(event.model_dump_json()))
+            sys.stdout.write(event.model_dump_json() + "\n")
             return
         line = pretty(event)
         if line:
