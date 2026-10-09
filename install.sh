@@ -1,6 +1,7 @@
 #!/bin/sh
 # installs the quaoar command line tool:
-#   curl -LsSf https://raw.githubusercontent.com/simon-derock/quaoar/main/install.sh | sh
+#   curl -fsSL quaoar.philipsimonderock.com/install | sh
+#   curl -fsSL https://raw.githubusercontent.com/simon-derock/quaoar/main/install.sh | sh
 # it needs uv (Astral's Python tool manager); if uv is missing it runs Astral's own installer first
 set -eu
 

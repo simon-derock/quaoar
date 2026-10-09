@@ -85,7 +85,8 @@ h1 em { font-style: italic; color: var(--green); text-shadow: 0 0 46px color-mix
 @media (hover: hover) { .btn.primary:hover { background: #fff; border-color: #fff; } .btn.ghost:hover { background: rgba(238, 240, 242, 0.07); } }
 
 .shot { position: absolute; left: 50%; top: 50%; width: 1180px; transform: translate(-50%, -50%) translateY(var(--rise, 0px)) rotateX(var(--tilt, 0deg)) scale(var(--scale, 1)); transform-origin: 50% 0%; transform-style: preserve-3d; }
-.halo { position: absolute; inset: 8% 10% -6%; z-index: -1; border-radius: 50%; background: var(--deep); filter: blur(90px); opacity: calc(0.25 + 0.45 * var(--halo, 0)); }
+.halo { position: absolute; inset: 8% 10% -6%; z-index: -1; border-radius: 50%; background: var(--deep); filter: blur(90px); }
+.ready .shot .halo { opacity: calc(0.25 + 0.45 * var(--halo, 0)); }
 .window { position: relative; border: 1px solid #343a40; border-radius: 22px; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.6), 0 60px 140px -40px rgba(0, 0, 0, 0.95); }
 .caption { margin-top: 24px; text-align: center; font-size: 13px; color: var(--dim); opacity: var(--cap, 1); }
 
@@ -232,9 +233,23 @@ footer a:hover { color: var(--green); }
 /* one load sequence: headline, text, actions, laptop, 90 ms apart */
 .enter { opacity: 0; transition: opacity 1000ms var(--ease-out-expo); transition-delay: var(--d, 0ms); }
 .ready .enter { opacity: 1; }
+/* the console pops in from blank as soon as the page is ready: a short rise and fade, once */
+.shot .window, .shot .halo, .shot .caption { opacity: 0; }
+.ready .shot .window { animation: pop 900ms var(--ease-out-expo) 120ms both; }
+.ready .shot .halo, .ready .shot .caption { animation: glow-in 1200ms var(--ease-out-quart) 200ms both; }
+@keyframes pop { from { opacity: 0; transform: translateY(18px) scale(0.97); } }
+.ready .shot .window { opacity: 1; }
+.ready .shot .caption { opacity: var(--cap, 1); }
+@keyframes glow-in { from { opacity: 0; } }
+/* the agent integrations, one quiet line under the install command */
+.agents { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+.agents a { display: inline-flex; align-items: baseline; gap: 8px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; color: var(--muted); background: rgba(8, 9, 10, 0.5); transition: border-color 150ms ease, color 150ms ease; }
+.agents a b { font-weight: 500; color: var(--fg); }
+.agents a:hover { border-color: color-mix(in srgb, var(--green) 55%, transparent); color: var(--soft); }
 
 @media (prefers-reduced-motion: reduce) {
   .enter { opacity: 1; transition: none; }
+  .shot .window, .shot .halo, .shot .caption { opacity: 1; animation: none; }
   .grain, .cursor, .caret, .card li, #thread li, .faq details[open] p { animation: none; }
   [data-depth] { translate: none; }
   .meter i { transition: none; }

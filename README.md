@@ -30,6 +30,15 @@
   <a href="#honest-limits">Limits</a>
 </p>
 
+```bash
+curl -fsSL quaoar.philipsimonderock.com/install | sh      # then: quaoar
+```
+
+**In your own agent.** An **MCP server** with 7 tools (`replay_card`, `ask_card`, `scan_prospectus`, …) and an **[agent skill](skills/quaoar/SKILL.md)** with playbooks and language rules:
+```bash
+claude mcp add quaoar -- uvx --from git+https://github.com/simon-derock/quaoar quaoar mcp
+```
+
 > Built for the SerpApi India Hackathon 2026, track Commerce & Market Intelligence.
 
 ## Why it exists
@@ -120,8 +129,9 @@ Then the question that matters: does it cry wolf? Three prospectuses with no kno
 No API keys needed. One line on macOS or Linux (it installs [uv](https://docs.astral.sh/uv/) first if you don't have it):
 
 ```bash
-curl -LsSf https://raw.githubusercontent.com/simon-derock/quaoar/main/install.sh | sh   # then run: quaoar
+curl -fsSL quaoar.philipsimonderock.com/install | sh   # then run: quaoar
 ```
+The same script straight from GitHub: `curl -fsSL https://raw.githubusercontent.com/simon-derock/quaoar/main/install.sh | sh`.
 Already have uv: `uv tool install git+https://github.com/simon-derock/quaoar`. Run it once without installing: `uvx --from git+https://github.com/simon-derock/quaoar quaoar replay trafiksol`. Full guide: [docs](https://quaoar.philipsimonderock.com/docs.html).
 
 From a clone:

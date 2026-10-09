@@ -4,6 +4,10 @@
   Referrer-Policy: no-referrer
   Strict-Transport-Security: max-age=31536000; includeSubDomains
 
+/install
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: no-cache
+
 /install.sh
   Content-Type: text/plain; charset=utf-8
   Cache-Control: no-cache

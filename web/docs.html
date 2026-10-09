@@ -62,7 +62,9 @@
 
       <h2 id="install">Install</h2>
       <p>One line on macOS or Linux. It installs <a href="https://docs.astral.sh/uv/" rel="noopener noreferrer" target="_blank">uv</a> first if you don't have it, then the <code>quaoar</code> command (Python 3.13 is fetched if needed).</p>
-      <pre><code>curl -LsSf https://raw.githubusercontent.com/simon-derock/quaoar/main/install.sh | sh</code></pre>
+      <pre><code>curl -fsSL quaoar.philipsimonderock.com/install | sh</code></pre>
+      <p>The same script, straight from GitHub:</p>
+      <pre><code>curl -fsSL https://raw.githubusercontent.com/simon-derock/quaoar/main/install.sh | sh</code></pre>
       <p>Already have uv:</p>
       <pre><code>uv tool install git+https://github.com/simon-derock/quaoar</code></pre>
       <p>Try it once without installing anything:</p>

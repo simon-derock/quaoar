@@ -55,7 +55,7 @@ Every line of the card keeps its SerpApi search id so anyone can repeat the chec
 
 ## Running it locally
 ```bash
-curl -LsSf https://raw.githubusercontent.com/simon-derock/quaoar/main/install.sh | sh
+curl -fsSL quaoar.philipsimonderock.com/install | sh
 quaoar            # then: /replay trafiksol, /proof 2, "why was this flagged?"
 ```
 No keys are needed to replay recorded cases. A live scan needs SerpApi and Cohere keys in `.env`.
