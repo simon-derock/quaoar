@@ -1,17 +1,19 @@
 # spec: SPEC-CLM-04, SPEC-KEY-05, SPEC-AG-06, SPEC-RT-09, SPEC-SAF-01
 from pathlib import Path
 
+import httpx
 import pytest
 from pydantic import SecretStr
-from pydantic_ai.exceptions import ModelHTTPError
-from pydantic_ai.messages import ModelMessage, ModelResponse
+from pydantic_ai.exceptions import ModelAPIError, ModelHTTPError
+from pydantic_ai.messages import ModelMessage, ModelResponse, ToolCallPart
 from pydantic_ai.models import Model
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 from pydantic_ai.models.test import TestModel
+from pydantic_ai.settings import ModelSettings
 
 from quaoar.domain.claims import Quotes
 from quaoar.events import Emitter, MemorySink
-from quaoar.llm.client import ContextTooLargeError, LlmClient, LlmError
+from quaoar.llm.client import REQUEST_TIMEOUT_S, ContextTooLargeError, LlmClient, LlmError
 from quaoar.llm.prompts import RULES, instructions, wrap_data
 from quaoar.serp.keys import fingerprint
 from quaoar.serp.ledger import Ledger
@@ -165,3 +167,40 @@ def test_a_key_that_keeps_failing_hands_over_to_the_next_key(tmp_path: Path) -> 
     assert client.extract("quotes", Quotes, "text").items[0].page == 89
     assert factory.calls.count(KEYS[0].get_secret_value()) == 3
     assert sink.events[-1].data["key"] == fingerprint(KEYS[1].get_secret_value())
+
+
+class TimesOutOnce:
+    def __init__(self, error: Exception) -> None:
+        self.error, self.calls = error, 0
+        self.settings: list[ModelSettings | None] = []
+
+    def __call__(self, model_name: str, api_key: str) -> Model:
+        self.calls += 1
+        broken = self.calls == 1
+
+        def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+            self.settings.append(info.model_settings)
+            if broken:
+                raise self.error
+            return ModelResponse(parts=[ToolCallPart(info.output_tools[0].name, QUOTE)])
+
+        return FunctionModel(respond)
+
+
+@pytest.mark.parametrize(
+    "error", [httpx.ReadTimeout("slow"), httpx.ConnectError("down"), ModelAPIError("m", "boom")]
+)
+def test_a_timeout_or_dropped_connection_is_retried_not_hung_on(
+    tmp_path: Path, error: Exception
+) -> None:
+    factory = TimesOutOnce(error)
+    client, _ = make(tmp_path, factory)  # type: ignore[arg-type]
+    assert client.extract("quotes", Quotes, "text").items[0].page == 89
+    assert factory.calls == 2
+
+
+def test_every_model_call_carries_an_explicit_timeout(tmp_path: Path) -> None:
+    factory = TimesOutOnce(httpx.ReadTimeout("slow"))
+    client, _ = make(tmp_path, factory)  # type: ignore[arg-type]
+    client.extract("quotes", Quotes, "text")
+    assert all(s is not None and s.get("timeout") == REQUEST_TIMEOUT_S for s in factory.settings)

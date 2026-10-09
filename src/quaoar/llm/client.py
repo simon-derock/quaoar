@@ -3,10 +3,17 @@ import os
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 
+import httpx
 from pydantic import BaseModel, SecretStr
 from pydantic_ai import Agent, AgentRunResult, Tool, ToolOutput
-from pydantic_ai.exceptions import ModelHTTPError, UnexpectedModelBehavior, UsageLimitExceeded
+from pydantic_ai.exceptions import (
+    ModelAPIError,
+    ModelHTTPError,
+    UnexpectedModelBehavior,
+    UsageLimitExceeded,
+)
 from pydantic_ai.models import Model
+from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import UsageLimits
 
 from quaoar.clock import ClockPort
@@ -25,6 +32,10 @@ ROTATE_ON = frozenset({429})
 # cohere answers 422 INVALID_TOOL_GENERATION now and then; a fresh try usually works
 RETRY_ON = frozenset({422, 500, 502, 503, 504})
 RETRIES_PER_KEY = 2
+# a hung request must fail fast and be retried, never wait for minutes
+REQUEST_TIMEOUT_S = 75.0
+TRANSIENT = (httpx.TransportError, ModelAPIError)
+SETTINGS = ModelSettings(timeout=REQUEST_TIMEOUT_S)
 
 ModelFactory = Callable[[str, str], Model]
 
@@ -181,6 +192,9 @@ class LlmClient:
                 raise LlmError(f"{task}: model error {exc.status_code}") from None
             except UnexpectedModelBehavior as exc:
                 raise LlmError(f"{task}: output failed validation") from exc
+            except TRANSIENT:
+                # a stalled or dropped connection counts against this key; the next key gets a go
+                continue
         raise LlmError(f"{task}: every Cohere key is rate limited or failing")
 
     def run_agent[T: BaseModel](
@@ -222,6 +236,7 @@ class LlmClient:
                 instructions=system,
                 tools=list(tools),
                 retries=1,
+                model_settings=SETTINGS,
             )
             try:
                 done = agent.run_sync(brief, usage_limits=limits)
@@ -231,6 +246,10 @@ class LlmClient:
                 return AgentRun(None, 0, 0)
             except ModelHTTPError as exc:
                 if exc.status_code not in RETRY_ON or tries >= RETRIES_PER_KEY:
+                    raise
+                tries += 1
+            except TRANSIENT:
+                if tries >= RETRIES_PER_KEY:
                     raise
                 tries += 1
 
@@ -244,11 +263,16 @@ class LlmClient:
                 output_type=ToolOutput(output),
                 instructions=instructions(task),
                 retries=1,
+                model_settings=SETTINGS,
             )
             try:
                 return agent.run_sync(data)
             except ModelHTTPError as exc:
                 if exc.status_code not in RETRY_ON or attempt >= RETRIES_PER_KEY:
+                    raise
+                attempt += 1
+            except TRANSIENT:
+                if attempt >= RETRIES_PER_KEY:
                     raise
                 attempt += 1
 
