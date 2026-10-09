@@ -1,7 +1,19 @@
 // ultra smooth scrolling and parallax: wheel input is eased, touch and keyboard stay native
-import { clamp, ease, shift, wheelPixels } from "./motion.js";
+import { clamp, ease, inOut, shift, wheelPixels } from "./motion.js";
 
 const RATE = 14;
+
+interface Tween {
+  from: number;
+  to: number;
+  start: number;
+  ms: number;
+}
+
+// a menu jump is a move between two known points, so it eases in and out over a time set by its distance
+function jumpMs(distance: number): number {
+  return clamp(Math.abs(distance) * 0.3, 450, 1000);
+}
 
 interface Layer {
   node: HTMLElement;
@@ -47,6 +59,7 @@ export function startScroll(hooks: Hook[] = []): void {
   let target = current;
   let last = performance.now();
   let lastY = current;
+  let tween: Tween | null = null;
   const limit = (): number => document.documentElement.scrollHeight - window.innerHeight;
 
   window.addEventListener(
@@ -54,6 +67,7 @@ export function startScroll(hooks: Hook[] = []): void {
     (event) => {
       if (still || event.ctrlKey || event.deltaY === 0 || innerScroller(event.target, event.deltaY > 0)) return;
       event.preventDefault();
+      tween = null;
       target = clamp(target + wheelPixels(event.deltaY, event.deltaMode, window.innerHeight), 0, limit());
     },
     { passive: false },
@@ -70,7 +84,8 @@ export function startScroll(hooks: Hook[] = []): void {
       const goal = document.querySelector<HTMLElement>(link.getAttribute("href") ?? "");
       if (goal === null || still) return;
       event.preventDefault();
-      target = clamp(goal.getBoundingClientRect().top + window.scrollY - 24, 0, limit());
+      const to = clamp(goal.getBoundingClientRect().top + window.scrollY - 24, 0, limit());
+      tween = { from: window.scrollY, to, start: performance.now(), ms: jumpMs(to - window.scrollY) };
     });
   });
   window.addEventListener("resize", () => {
@@ -83,7 +98,13 @@ export function startScroll(hooks: Hook[] = []): void {
   const frame = (now: number): void => {
     const seconds = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (!still && current !== target) {
+    if (tween !== null) {
+      const t = Math.min(1, (now - tween.start) / tween.ms);
+      current = tween.from + (tween.to - tween.from) * inOut(t);
+      target = current;
+      window.scrollTo(0, current);
+      if (t === 1) tween = null;
+    } else if (!still && current !== target) {
       current = ease(current, target, seconds, RATE);
       window.scrollTo(0, current);
     }

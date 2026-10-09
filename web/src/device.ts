@@ -1,8 +1,8 @@
-// the product shot: it lies tilted under the headline and flattens toward the viewer as the intro scrolls,
+// the product shot: it waits below the headline and rises and grows into view as the intro scrolls,
 // always sized to fit the window; the recorded case starts playing on it straight away
 import { phase } from "./motion.js";
 
-const TILT_DEG = 32;
+const TILT_DEG = 0;
 const MARGIN_X = 96;
 const MARGIN_Y = 150;
 
@@ -36,7 +36,7 @@ export function deviceFrame(onOpen: () => void): (scroll: number) => void {
     const fit = Math.min(1, (window.innerWidth - MARGIN_X) / pane.offsetWidth, (window.innerHeight - MARGIN_Y) / pane.offsetHeight);
     const flat = phase(p, 0, 0.6);
     shot.style.setProperty("--tilt", `${(TILT_DEG * (1 - flat)).toFixed(2)}deg`);
-    shot.style.setProperty("--rise", `${((1 - flat) * window.innerHeight * 0.42 + 20).toFixed(1)}px`);
+    shot.style.setProperty("--rise", `${((1 - flat) * window.innerHeight * 0.56 + 20).toFixed(1)}px`);
     shot.style.setProperty("--scale", (fit * (0.8 + 0.2 * flat)).toFixed(4));
     shot.style.setProperty("--halo", flat.toFixed(3));
     shot.style.setProperty("--cap", phase(p, 0.7, 0.95).toFixed(3));

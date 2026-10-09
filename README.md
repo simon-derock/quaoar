@@ -91,12 +91,18 @@ Then the question that matters: does it cry wolf? Three prospectuses with no kno
 
 
 ## Try it in 60 seconds
-No API keys needed.
+No API keys needed. With [uv](https://docs.astral.sh/uv/) installed, one line:
 
+```bash
+uv tool install git+https://github.com/simon-derock/quaoar   # then run: quaoar
+```
+Or run it once without installing: `uvx --from git+https://github.com/simon-derock/quaoar quaoar replay trafiksol`.
+
+From a clone:
 ```bash
 git clone https://github.com/simon-derock/quaoar && cd quaoar
 uv sync
-uv run quaoar replay fixtures/replay/trafiksol
+uv run quaoar replay trafiksol
 ```
 This replays a recorded scan of the Trafiksol red herring prospectus. Other recorded cases are in `fixtures/replay/` (`uv run quaoar` then `/cases`). `teamtech` is a prospectus never seen before, downloaded from sebi.gov.in and scanned live to test user documents; it has no ground truth and is not part of the evaluation.
 

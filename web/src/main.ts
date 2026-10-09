@@ -266,6 +266,22 @@ function arrive(): void {
   window.setTimeout(go, 1200);
 }
 
+// the install line copies with one click and says so
+function copier(): void {
+  const button = el<HTMLButtonElement>("copy");
+  button.addEventListener("click", () => {
+    void navigator.clipboard.writeText(el("install-cmd").textContent ?? "").then(() => {
+      button.textContent = "Copied";
+      button.classList.add("done");
+      window.setTimeout(() => {
+        button.textContent = "Copy";
+        button.classList.remove("done");
+      }, 1600);
+    });
+  });
+}
+
 arrive();
+copier();
 startScroll([deviceFrame(openFirst), storyFrame()]);
 chat();
