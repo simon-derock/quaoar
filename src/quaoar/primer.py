@@ -59,7 +59,10 @@ RULES: tuple[tuple[re.Pattern[str], str], ...] = tuple(
             r"(?:couldn'?t|could\s+not)\s+find|doesn'?t\s+match|does\s+not\s+match|checks?\s+out",
             STATUSES,
         ),
-        (r"\b(?:where|kahan)\b.*\b(?:get|find|download|prospectus|pdf)\b", WHERE),
+        (
+            r"(?=.*\b(?:where|kahan|kahaan)\b)(?=.*\b(?:get|find|download|prospectus|pdf|milega|milta)\b)",
+            WHERE,
+        ),
         (r"^\W*(?:please\s+)?(?:can\s+you\s+)?(?:check|scan|analy[sz]e|verify)\b", WHERE),
         (r"\bsme\b.*\b(?:what|kya|explain|mean)\b|\b(?:what|explain)\b.*\bsme\b", SME),
         (
@@ -69,7 +72,7 @@ RULES: tuple[tuple[re.Pattern[str], str], ...] = tuple(
         (r"\bhow\b.*\b(?:check|use|work|start|begin)\b|\bkaise\b|\bsteps?\b", HOW),
         (
             r"^\W*(?:hi+|hello|hey|namaste)\b|what\s+is\s+this|who\s+are\s+you|what\s+(?:is|does)\s+quaoar"
-            r"|know\s+nothing|help\s+me|beginner|new\s+to|\bkya\s+hai\b|\bmadad\b|what\s+can\s+you\s+do",
+            r"|know\s+nothing|help\s+me|beginner|new\s+to|\bkya\s+hai\b|\bmadad\b|nahi\s+pata|kuch\s+nahi|samajh\s+nahi|what\s+can\s+you\s+do",
             INTRO,
         ),
     )
