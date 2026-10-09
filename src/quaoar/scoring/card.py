@@ -24,6 +24,7 @@ class Card(BaseModel):
     unverified: int
     top: tuple[Signal, ...]
     signals: tuple[Signal, ...]
+    context: tuple[Signal, ...] = ()
     ruleset: str = RULESET_VERSION
     disclaimer: str = DISCLAIMER
 
@@ -40,6 +41,7 @@ def build_card(scan_id: str, company: str, signals: list[Signal]) -> Card:
         unverified=sum(s.status is Status.UNVERIFIED for s in counted),
         top=tuple(s for s in counted if s.status is Status.INCONSISTENT)[:TOP],
         signals=tuple(counted),
+        context=tuple(s for s in signals if s.status is Status.NOT_APPLICABLE),
     )
 
 
@@ -55,5 +57,6 @@ def card_lines(card: Card) -> list[str]:
     lines = [f"QUAOAR · {card.company}", headline(card), ""]
     for number, signal in enumerate(card.signals, start=1):
         lines.append(f"{number:>2}. [{MARKS[signal.status]}] {signal.text}")
+    lines += [f"    {c.text}" for c in card.context]
     lines += ["", card.disclaimer]
     return lines

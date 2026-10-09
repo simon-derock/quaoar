@@ -163,6 +163,8 @@ def print_card(card: Card) -> None:
             console.print(
                 f"    proof: {escape(proof.url)} (search {escape(proof.search_id or '-')})"
             )
+    for note in card.context:
+        console.print(f"[bright_black]{escape(safe(note.text))}[/]")
     console.print(f"\n{card.disclaimer}")
 
 

@@ -27,6 +27,7 @@ function showCard(card: Card): void {
   el("headline").textContent = headline(card);
   const list = el("signals");
   list.replaceChildren(...card.signals.map(row));
+  el("context").textContent = (card.context ?? []).map((note) => clean(note.text)).join(" ");
   el("disclaimer").textContent = card.disclaimer;
 }
 

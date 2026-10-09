@@ -34,3 +34,17 @@ def test_card_has_no_score_and_always_the_disclaimer() -> None:
 def test_top_is_capped_at_three() -> None:
     card = build_card("q1", "X", [sig(f"R-{i}", Status.INCONSISTENT) for i in range(5)])
     assert len(card.top) == 3
+
+
+def test_context_lines_are_shown_but_never_counted() -> None:
+    note = Signal(
+        check="footprint",
+        rule="HY-01",
+        subject="V",
+        status=Status.NOT_APPLICABLE,
+        text="Context, not a verdict: 3 videos",
+    )
+    card = build_card("q1", "DEMO LIMITED", [sig("VX-02", Status.CONSISTENT), note])
+    assert (card.consistent, card.inconsistent, card.unverified) == (1, 0, 0)
+    assert [c.rule for c in card.context] == ["HY-01"]
+    assert card_lines(card)[-3].strip().startswith("Context, not a verdict")

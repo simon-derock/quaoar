@@ -21,6 +21,7 @@ export interface Card {
   inconsistent: number;
   unverified: number;
   signals: Signal[];
+  context?: Signal[];
   disclaimer: string;
 }
 

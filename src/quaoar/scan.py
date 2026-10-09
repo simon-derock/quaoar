@@ -7,13 +7,16 @@ from datetime import date
 from quaoar.checks.banker import banker_check
 from quaoar.checks.base import SearchPort
 from quaoar.checks.book import Investigator
+from quaoar.checks.footprint import footprint
 from quaoar.checks.litigation import litigation_check
+from quaoar.checks.site import MAX_PLACES, site_visit
 from quaoar.checks.vendor import vendor_xray
 from quaoar.clock import ClockPort
 from quaoar.domain.claims import (
     DisclosedCaseClaim,
     LeadManagerClaim,
     PastIssueClaim,
+    PlaceClaim,
     PromoterClaim,
     QuoteClaim,
 )
@@ -26,8 +29,10 @@ from quaoar.prospectus.pdf import Page, read_pages
 from quaoar.prospectus.sections import SectionMap, locate_sections
 from quaoar.scoring.banker_rules import banker_signals
 from quaoar.scoring.card import Card, build_card
+from quaoar.scoring.footprint_rules import footprint_signals
 from quaoar.scoring.litigation_rules import litigation_signals
 from quaoar.scoring.rules import RULESET_VERSION, vendor_signals
+from quaoar.scoring.site_rules import site_signals
 
 ISSUER_LINE = re.compile(r"^[A-Z][A-Z0-9&.,' ()-]{2,80}\bLIMITED$")
 
@@ -84,8 +89,11 @@ def run_scan(
     )
 
     signals = vendor_stage(extraction, search, emit, root, cutoff, investigator)
+    signals += site_stage(company, extraction, search, emit, root, investigator)
     signals += banker_stage(extraction, search, emit, root, cutoff)
     signals += litigation_stage(company, extraction, search, emit, root, cutoff)
+    check = emit("stage", {"name": "footprint", "subject": company}, root)
+    signals += footprint_signals(footprint(company, search, check), cutoff)
     for signal in signals:
         emit(
             "signal",
@@ -119,6 +127,22 @@ def vendor_stage(
         if isinstance(quote, QuoteClaim):
             check = emit("stage", {"name": "vendor", "subject": quote.vendor}, root)
             signals += vendor_signals(vendor_xray(quote, search, check, investigator), cutoff)
+    return signals
+
+
+def site_stage(
+    company: str,
+    extraction: Extraction,
+    search: SearchPort,
+    emit: Emitter,
+    root: str,
+    investigator: Investigator | None,
+) -> list[Signal]:
+    signals: list[Signal] = []
+    places = [c for c in extraction.claims.get("places", []) if isinstance(c, PlaceClaim)]
+    for place in places[:MAX_PLACES]:
+        check = emit("stage", {"name": "site", "subject": f"{place.role} {place.city}"}, root)
+        signals += site_signals(site_visit(company, place, search, check, investigator))
     return signals
 
 
