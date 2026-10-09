@@ -4,13 +4,14 @@ from datetime import date
 
 from pydantic import JsonValue
 
+from quaoar.checks.book import EvidenceBook, Goal, Hit, ToolCall
 from quaoar.checks.vendor import vendor_xray
 from quaoar.domain.claims import QuoteClaim
 from quaoar.domain.findings import Status
 from quaoar.guard.wording import banned_terms
 from quaoar.scoring.rules import vendor_signals
 from quaoar.serp.client import SerpResult
-from tests.unit.checks.test_registry import INSTA, ZAUBA
+from tests.unit.checks.test_registry import ELSEWHERE, INSTA, ZAUBA
 
 QUOTE = QuoteClaim(
     page=89,
@@ -71,14 +72,18 @@ def test_the_trafiksol_pattern_is_flagged_on_capital() -> None:
 def test_searches_use_duckduckgo_for_sites_and_the_registry_city_for_maps() -> None:
     search = FakeSearch({"duckduckgo": registry_body(ZAUBA, INSTA), "google_maps": maps_body()})
     vendor_xray(QUOTE, search)
-    (engine1, params1), (engine2, params2) = search.calls
+    (engine1, params1), (engine2, params2), (engine3, params3) = search.calls
     assert engine1 == "duckduckgo"
     assert str(params1["q"]).startswith('"OASIS CORPCARE" (site:zaubacorp.com')
     assert (engine2, params2["q"]) == ("google_maps", "OASIS CORPCARE PRIVATE LIMITED Mumbai")
+    assert engine3 == "duckduckgo"
+    assert str(params3["q"]).startswith('"OASIS CORPCARE" (site:sebi.gov.in')
 
 
 def test_absence_is_never_a_mismatch() -> None:
-    assert set(signals(FakeSearch({})).values()) == {Status.UNVERIFIED}
+    result = signals(FakeSearch({}))
+    assert Status.INCONSISTENT not in result.values()
+    assert {result[r] for r in ("VX-02", "VX-03", "VX-04", "VX-05")} == {Status.UNVERIFIED}
 
 
 def test_struck_off_or_closed_vendors_do_not_match() -> None:
@@ -111,3 +116,92 @@ def test_every_signal_text_passes_the_wording_guard() -> None:
     for bodies in ({}, {"duckduckgo": registry_body(ZAUBA, INSTA), "google_maps": maps_body()}):
         for signal in vendor_signals(vendor_xray(QUOTE, FakeSearch(bodies)), date(2024, 9, 3)):
             assert banned_terms(signal.text) == []
+
+
+LEGAL_HIT = {
+    "title": "Order in the matter of Oasis Corpcare Private Limited",
+    "link": "https://www.sebi.gov.in/enforcement/orders/dec-2024/order-oasis_1.html",
+    "snippet": "SEBI order",
+}
+
+
+class LegalRouted(FakeSearch):
+    def query(self, engine, params, parent=None):  # type: ignore[no-untyped-def]
+        legal = "site:sebi.gov.in" in str(params.get("q", ""))
+        body = registry_body(LEGAL_HIT) if legal else self.bodies.get(engine, {})
+        self.bodies = {**self.bodies, engine: body}
+        return super().query(engine, params, parent)
+
+
+def test_a_legal_page_naming_the_vendor_before_the_cutoff_does_not_match() -> None:
+    search = LegalRouted({"duckduckgo": {}, "google_maps": maps_body()})
+    found = vendor_xray(QUOTE, search)
+    signal = {s.rule: s for s in vendor_signals(found, date(2025, 1, 1))}["VX-06"]
+    assert signal.status is Status.INCONSISTENT
+    assert "worth a closer look" in signal.text
+    assert banned_terms(signal.text) == []
+
+
+def test_a_legal_page_dated_after_the_cutoff_is_ignored_in_point_in_time_mode() -> None:
+    found = vendor_xray(QUOTE, LegalRouted({"duckduckgo": {}, "google_maps": maps_body()}))
+    assert {s.rule: s.status for s in vendor_signals(found, date(2024, 9, 3))}[
+        "VX-06"
+    ] is Status.CONSISTENT
+
+
+class FakeInvestigator:
+    def __init__(self, hits: list[Hit]) -> None:
+        self.hits, self.goals = hits, []  # type: ignore[var-annotated]
+
+    def run(self, goal: Goal, parent: str | None = None) -> EvidenceBook:
+        self.goals.append(goal)
+        return EvidenceBook(
+            hits=self.hits, calls=[ToolCall(tool="search_maps", args={"terms": "x"}, why="gap")]
+        )
+
+
+def maps_hit() -> Hit:
+    result = SerpResult("m" * 20, "google_maps", "ok", "sid-m", {}, 1, False, 1)
+    return Hit(
+        "search_maps",
+        result,
+        {"title": "Oasis Corpcare Pvt Ltd", "address": "Shop 4, Mira Road, Mumbai"},
+    )
+
+
+def test_the_agent_runs_only_when_a_gap_remains_and_fills_it() -> None:
+    search = FakeSearch({"duckduckgo": registry_body(ZAUBA, INSTA), "google_maps": {}})
+    agent = FakeInvestigator([maps_hit()])
+    found = vendor_xray(QUOTE, search, investigator=agent)
+    assert [g.gaps for g in agent.goals] == [("maps",)]
+    assert found.maps.found
+    assert found.agent_searches == 1
+    assert {s.rule: s.status for s in vendor_signals(found, date(2024, 9, 3))}[
+        "VX-05"
+    ] is Status.CONSISTENT
+
+
+def test_with_no_gap_the_agent_is_never_called() -> None:
+    search = FakeSearch({"duckduckgo": registry_body(ZAUBA, INSTA), "google_maps": maps_body()})
+    agent = FakeInvestigator([])
+    vendor_xray(QUOTE, search, investigator=agent)
+    assert agent.goals == []
+
+
+def test_the_brief_carries_known_facts_and_the_queries_already_done() -> None:
+    search = FakeSearch({"duckduckgo": registry_body(ZAUBA), "google_maps": {}})
+    agent = FakeInvestigator([])
+    vendor_xray(QUOTE, search, investigator=agent)
+    goal = agent.goals[0]
+    assert goal.kind == "vendor"
+    assert goal.gaps == ("registry", "maps")
+    assert any(d.startswith("registry:") for d in goal.done)
+    assert goal.known["city"] == "Mumbai"
+    assert "search_maps" in goal.tools
+
+
+def test_agent_evidence_off_the_registry_sites_cannot_create_registry_facts() -> None:
+    result = SerpResult("r" * 20, "google", "ok", "sid-r", {}, 1, False, 1)
+    fake = Hit("search_web", result, dict(ELSEWHERE))
+    found = vendor_xray(QUOTE, FakeSearch({}), investigator=FakeInvestigator([fake]))
+    assert found.registry.paid_up_paise is None

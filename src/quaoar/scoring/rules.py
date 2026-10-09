@@ -16,7 +16,13 @@ STRUCK_OFF = frozenset(
 
 
 def vendor_signals(f: VendorFindings, cutoff: date | None) -> list[Signal]:
-    return [registry_signal(f), capital_signal(f), status_signal(f, cutoff), presence_signal(f)]
+    return [
+        registry_signal(f),
+        capital_signal(f),
+        status_signal(f, cutoff),
+        presence_signal(f),
+        legal_signal(f, cutoff),
+    ]
 
 
 def registry_signal(f: VendorFindings) -> Signal:
@@ -95,6 +101,26 @@ def presence_signal(f: VendorFindings) -> Signal:
         return vx(f, "VX-05", Status.INCONSISTENT, text)
     where = f" ({f.maps.city_area})" if f.maps.city_area else ""
     return vx(f, "VX-05", Status.CONSISTENT, f"{f.vendor} has a Google Maps listing{where}.")
+
+
+def legal_signal(f: VendorFindings, cutoff: date | None) -> Signal:
+    # a matter counts when it is dated on or before the cutoff; with no cutoff every dated or undated one counts
+    hits = [m for m in f.legal if cutoff is None or (m.when is not None and m.when <= cutoff)]
+    if hits:
+        text = (
+            f"{len(hits)} court or SEBI page(s) naming {f.vendor} turned up in search"
+            f"{'' if cutoff is None else f' before {cutoff:%b %Y}'}: worth a closer look."
+        )
+        return Signal(
+            check="vendor", rule="VX-06", subject=f.vendor, status=Status.INCONSISTENT, text=text,
+            observed=f"{len(hits)} matter(s)", page=f.page,
+            evidence=tuple(m.evidence for m in hits[:3]), pit_ok=cutoff is not None,
+        )  # fmt: skip
+    text = f"No court or SEBI page naming {f.vendor} turned up in search."
+    return Signal(
+        check="vendor", rule="VX-06", subject=f.vendor, status=Status.CONSISTENT, text=text,
+        page=f.page, pit_ok=cutoff is not None,
+    )  # fmt: skip
 
 
 def vx(

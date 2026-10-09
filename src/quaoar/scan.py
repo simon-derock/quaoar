@@ -6,6 +6,7 @@ from datetime import date
 
 from quaoar.checks.banker import banker_check
 from quaoar.checks.base import SearchPort
+from quaoar.checks.book import Investigator
 from quaoar.checks.litigation import litigation_check
 from quaoar.checks.vendor import vendor_xray
 from quaoar.clock import ClockPort
@@ -54,6 +55,7 @@ def run_scan(
     emit: Emitter,
     clock: ClockPort,
     cutoff: date | None = None,
+    investigator: Investigator | None = None,
 ) -> ScanResult:
     scan_id = scan_id_for(prospectus)
     root = emit(
@@ -81,7 +83,7 @@ def run_scan(
         stage,
     )
 
-    signals = vendor_stage(extraction, search, emit, root, cutoff)
+    signals = vendor_stage(extraction, search, emit, root, cutoff, investigator)
     signals += banker_stage(extraction, search, emit, root, cutoff)
     signals += litigation_stage(company, extraction, search, emit, root, cutoff)
     for signal in signals:
@@ -105,13 +107,18 @@ def run_scan(
 
 
 def vendor_stage(
-    extraction: Extraction, search: SearchPort, emit: Emitter, root: str, cutoff: date | None
+    extraction: Extraction,
+    search: SearchPort,
+    emit: Emitter,
+    root: str,
+    cutoff: date | None,
+    investigator: Investigator | None = None,
 ) -> list[Signal]:
     signals: list[Signal] = []
     for quote in extraction.claims.get("quotes", []):
         if isinstance(quote, QuoteClaim):
             check = emit("stage", {"name": "vendor", "subject": quote.vendor}, root)
-            signals += vendor_signals(vendor_xray(quote, search, check), cutoff)
+            signals += vendor_signals(vendor_xray(quote, search, check, investigator), cutoff)
     return signals
 
 

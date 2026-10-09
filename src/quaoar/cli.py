@@ -37,6 +37,9 @@ def scan(
     max_credits: int = typer.Option(0, help="SerpApi credit cap for this scan (0 = settings)"),
     cutoff: str = typer.Option("", help="prospectus date YYYY-MM-DD for staleness rules"),
     jsonl: bool = typer.Option(False, "--jsonl", help="print raw events instead of pretty lines"),
+    mode: str = typer.Option(
+        "agent", help="agent: fill evidence gaps with a ReAct investigator; fixed: templates only"
+    ),
 ) -> None:
     runtime = make_runtime()
     try:
@@ -52,6 +55,7 @@ def scan(
             [ConsoleSink(raw=jsonl)],
             max_credits,
             date.fromisoformat(cutoff) if cutoff else None,
+            mode,
         )
     except (KeysExhaustedError, CreditBudgetExceededError) as exc:
         console.print(f"[yellow]stopped early:[/yellow] {escape(str(exc))}")
@@ -182,6 +186,11 @@ def pretty(event: Event) -> str:
     d = event.data
     if event.type == "serp":
         return f"  [cyan]search[/] {d['engine']} · {d['credits']} cr · {d['source']} · {d['latency_ms']} ms"
+    if event.type == "agent":
+        why = escape(safe(str(d["why"])))[:110]
+        warn = f" [red]flagged {escape(str(d['flagged']))}[/]" if d["flagged"] else ""
+        terms = escape(safe(str(d["terms"])))
+        return f'  [green]agent[/] {d["tool"]} "{terms}" · {d["hits"]} hits · {d["credits"]} cr · {why}{warn}'
     if event.type == "llm":
         cost = "cache" if d["cached"] else f"{d['tokens_in']}+{d['tokens_out']} tok"
         return f"  [magenta]read[/] {d['task']} · {cost} · {d['latency_ms']} ms"

@@ -7,6 +7,7 @@ from pathlib import Path
 
 import httpx
 
+from quaoar.agent.loop import AgentInvestigator
 from quaoar.clock import SystemClock
 from quaoar.config import Settings, all_secrets, load_settings
 from quaoar.events import Emitter, Event, EventSink, JournalSink
@@ -54,6 +55,7 @@ def execute(
     extra_sinks: Sequence[EventSink] = (),
     max_credits: int = 0,
     cutoff: date | None = None,
+    mode: str = "agent",
 ) -> Executed:
     scan_id = scan_id_for(prospectus)
     folder = scan_folder(runtime, scan_id)
@@ -82,8 +84,15 @@ def execute(
         keys=runtime.settings.cohere_keys,
         emit=emit,
     )
+    investigator = AgentInvestigator(claims, search, emit) if mode == "agent" else None
     result = run_scan(
-        prospectus, search=search, claims=claims, emit=emit, clock=clock, cutoff=cutoff
+        prospectus,
+        search=search,
+        claims=claims,
+        emit=emit,
+        clock=clock,
+        cutoff=cutoff,
+        investigator=investigator,
     )
     save(folder, result)
     return Executed(result, budget.spent, folder)
