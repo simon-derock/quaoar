@@ -5,9 +5,9 @@
 <p align="center">
   <a href="https://github.com/simon-derock/quaoar/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/simon-derock/quaoar/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Python 3.13" src="https://img.shields.io/badge/python-3.13-c6c9cf">
-  <img alt="Tests 900+" src="https://img.shields.io/badge/tests-900%2B-9fbf98">
+  <img alt="Tests 900+" src="https://img.shields.io/badge/tests-900%2B-2ee59d">
   <img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-858a93">
-  <img alt="Powered by SerpApi" src="https://img.shields.io/badge/powered%20by-SerpApi-f2f3f5">
+  <img alt="Powered by SerpApi" src="https://img.shields.io/badge/powered%20by-SerpApi-2ee59d">
 </p>
 
 <p align="center">
@@ -165,3 +165,5 @@ Tests are written first and cite the spec they cover (`# spec: SPEC-...`). Timin
 
 ## Credits
 Search data by [SerpApi](https://serpapi.com). Language model: Cohere. Agent framework: PydanticAI. MIT licence.
+
+Built by Philip Simon Derock ([philipsimonderock.com](https://philipsimonderock.com)) for the SerpApi India Hackathon 2026.

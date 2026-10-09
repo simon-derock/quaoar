@@ -1,7 +1,7 @@
 // ultra smooth scrolling and parallax: wheel input is eased, touch and keyboard stay native
 import { clamp, ease, shift, wheelPixels } from "./motion.js";
 
-const RATE = 8;
+const RATE = 14;
 
 interface Layer {
   node: HTMLElement;
