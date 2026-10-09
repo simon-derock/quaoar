@@ -1,0 +1,212 @@
+{
+  "scan_id": "q223d7cc862d",
+  "company": "AELEA COMMODITIES LIMITED",
+  "consistent": 4,
+  "inconsistent": 0,
+  "unverified": 9,
+  "top": [],
+  "signals": [
+    {
+      "check": "vendor",
+      "rule": "VX-02",
+      "subject": "Ankur Engineers",
+      "status": "unverified",
+      "text": "Ankur Engineers has no company form in its name (no 'Private Limited', 'Limited' or 'LLP'), so it may be a proprietorship or partnership. The company registry doesn't list those, and a registered company with the same name would be a different business, so no registry or court check was made.",
+      "observed": "",
+      "threshold": "",
+      "page": 93,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-05",
+      "subject": "Ankur Engineers",
+      "status": "unverified",
+      "text": "Ankur Engineers has a Google Maps listing (Gujarat 382415, India), but a name alone doesn't confirm it is the same business.",
+      "observed": "",
+      "threshold": "",
+      "page": 93,
+      "evidence": [
+        {
+          "engine": "google_maps",
+          "request": "597aae6b6fea3685",
+          "search_id": "6ac89469bdfe49433625e409",
+          "url": "http://concretemixerspareparts.com/",
+          "title": "Ankur Engineers",
+          "snippet": "No. 5, Mangaldeep Estate, Char Rasta, near Mangaldeep Party Plot, Umiya Nagar, Rabari Colony, Amraiwadi, Ahmedabad, Gujarat 382415, India",
+          "published": null
+        }
+      ],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-02",
+      "subject": "Hasti Construction",
+      "status": "unverified",
+      "text": "Hasti Construction has no company form in its name (no 'Private Limited', 'Limited' or 'LLP'), so it may be a proprietorship or partnership. The company registry doesn't list those, and a registered company with the same name would be a different business, so no registry or court check was made.",
+      "observed": "",
+      "threshold": "",
+      "page": 93,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-05",
+      "subject": "Hasti Construction",
+      "status": "unverified",
+      "text": "Couldn't find Hasti Construction on Google Maps.",
+      "observed": "",
+      "threshold": "",
+      "page": 93,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-02",
+      "subject": "Krishna Enterprises",
+      "status": "unverified",
+      "text": "Krishna Enterprises has no company form in its name (no 'Private Limited', 'Limited' or 'LLP'), so it may be a proprietorship or partnership. The company registry doesn't list those, and a registered company with the same name would be a different business, so no registry or court check was made.",
+      "observed": "",
+      "threshold": "",
+      "page": 95,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-05",
+      "subject": "Krishna Enterprises",
+      "status": "unverified",
+      "text": "Krishna Enterprises has a Google Maps listing, but a name alone doesn't confirm it is the same business.",
+      "observed": "",
+      "threshold": "",
+      "page": 95,
+      "evidence": [
+        {
+          "engine": "google_maps",
+          "request": "601782f35a2eae01",
+          "search_id": "6ac89e82afaa6708aea204be",
+          "url": "https://krishnaknit.com/",
+          "title": "Krishna Enterprises",
+          "snippet": "",
+          "published": null
+        }
+      ],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-02",
+      "subject": "Golden Worldwide",
+      "status": "unverified",
+      "text": "Golden Worldwide has no company form in its name (no 'Private Limited', 'Limited' or 'LLP'), so it may be a proprietorship or partnership. The company registry doesn't list those, and a registered company with the same name would be a different business, so no registry or court check was made.",
+      "observed": "",
+      "threshold": "",
+      "page": 95,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-05",
+      "subject": "Golden Worldwide",
+      "status": "unverified",
+      "text": "Couldn't find Golden Worldwide on Google Maps.",
+      "observed": "",
+      "threshold": "",
+      "page": 95,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "site",
+      "rule": "SV-02",
+      "subject": "AELEA COMMODITIES LIMITED",
+      "status": "consistent",
+      "text": "The registered office (Fort, Mumbai) has a Google Maps listing (listed as corporate office).",
+      "observed": "",
+      "threshold": "",
+      "page": 62,
+      "evidence": [
+        {
+          "engine": "google_maps",
+          "request": "a519fa282a408fe2",
+          "search_id": "6ac894c7392e0b5e0002b79a",
+          "url": "https://www.aeleacommodities.com/",
+          "title": "Aelea Commodities Limited",
+          "snippet": "Office No. 21, 2nd Floor, Nariman Point, Mumbai, Maharashtra 400021, India",
+          "published": null
+        }
+      ],
+      "pit_ok": false
+    },
+    {
+      "check": "banker",
+      "rule": "BK-04",
+      "subject": "Ekadrisht Capital Private Limited",
+      "status": "consistent",
+      "text": "No SEBI order naming Ekadrisht Capital Private Limited turned up in search before Jul 2024.",
+      "observed": "",
+      "threshold": "",
+      "page": 63,
+      "evidence": [],
+      "pit_ok": true
+    },
+    {
+      "check": "banker",
+      "rule": "BK-05",
+      "subject": "Ekadrisht Capital Private Limited",
+      "status": "unverified",
+      "text": "Couldn't read Ekadrisht Capital Private Limited's past-issues table.",
+      "observed": "",
+      "threshold": "",
+      "page": 63,
+      "evidence": [],
+      "pit_ok": true
+    },
+    {
+      "check": "litigation",
+      "rule": "LT-03",
+      "subject": "AELEA COMMODITIES LIMITED",
+      "status": "consistent",
+      "text": "No court or SEBI matter naming the issuer or 3 promoters turned up in search before Jul 2024 beyond the 1 the prospectus discloses.",
+      "observed": "0 undisclosed of 9 found",
+      "threshold": "",
+      "page": 1,
+      "evidence": [],
+      "pit_ok": true
+    },
+    {
+      "check": "footprint",
+      "rule": "NW-01",
+      "subject": "AELEA COMMODITIES LIMITED",
+      "status": "consistent",
+      "text": "No news about AELEA COMMODITIES LIMITED mentioning SEBI action, a complaint or a halt turned up before Jul 2024.",
+      "observed": "20 articles read",
+      "threshold": "",
+      "page": null,
+      "evidence": [],
+      "pit_ok": true
+    }
+  ],
+  "context": [
+    {
+      "check": "footprint",
+      "rule": "HY-01",
+      "subject": "AELEA COMMODITIES LIMITED",
+      "status": "not_applicable",
+      "text": "Context, not a verdict: 10 YouTube video(s) (6 about price, applying or listing) and 20 news article(s) name this IPO.",
+      "observed": "",
+      "threshold": "",
+      "page": null,
+      "evidence": [],
+      "pit_ok": false
+    }
+  ],
+  "ruleset": "1",
+  "disclaimer": "Facts with sources. Not investment advice."
+}

@@ -9,26 +9,25 @@ from typing import Any
 from fastmcp import FastMCP
 
 from quaoar.prospectus.acquire import IntakeError
-from quaoar.replay import ReplayBundleError, load_replay
+from quaoar.replay import ReplayBundleError, load_replay, replay_home
 from quaoar.scoring.card import Card
 from quaoar.scoring.comment import draft_comment as build_letter
 from quaoar.service import Runtime, execute, intake, make_runtime, scan_folder
 
 NAME = re.compile(r"^[a-z0-9-]{1,64}$")
 MAX_MCP_CREDITS = 25
-REPLAY_DIR = Path("fixtures/replay")
 RuntimeFactory = Callable[[], Runtime]
 
 
 def build_server(
     runtime_factory: RuntimeFactory = make_runtime,
-    replay_dir: Path = REPLAY_DIR,
+    replay_dir: Path | None = None,
     *,
     public: bool | None = None,
 ) -> FastMCP:
     mcp = FastMCP("quaoar")
     read_only = os.environ.get("QUAOAR_PUBLIC_MODE") == "replay" if public is None else public
-    add_replay_tools(mcp, replay_dir)
+    add_replay_tools(mcp, replay_dir or replay_home())
     add_saved_tools(mcp, runtime_factory)
     add_scan_tool(mcp, runtime_factory, read_only=read_only)
     return mcp

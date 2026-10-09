@@ -12,7 +12,7 @@ from quaoar.events import Event
 from quaoar.guard.text import clean_text
 from quaoar.prospectus.acquire import IntakeError
 from quaoar.prospectus.diff import Change, diff_claims
-from quaoar.replay import ReplayBundleError, export_scan, load_replay
+from quaoar.replay import ReplayBundleError, export_scan, find_case, load_replay, replay_home
 from quaoar.scoring.card import MARKS, Card, headline
 from quaoar.serp.client import CreditBudgetExceededError, account_lookup
 from quaoar.serp.keys import KeyPool, KeysExhaustedError
@@ -108,7 +108,7 @@ def export(scan_id: str, name: str) -> None:
 @app.command()
 def replay(bundle: Path) -> None:
     try:
-        events, saved = load_replay(bundle)
+        events, saved = load_replay(find_case(bundle))
     except ReplayBundleError as exc:
         console.print(f"[red]{escape(str(exc))}[/red]")
         raise typer.Exit(EXIT_INPUT) from None
@@ -156,7 +156,7 @@ def serve(host: str = "127.0.0.1", port: int = 8000) -> None:
     from quaoar.api.app import create_app
 
     settings = make_runtime().settings
-    uvicorn.run(create_app(Path("fixtures/replay"), settings.cors_origin), host=host, port=port)
+    uvicorn.run(create_app(replay_home(), settings.cors_origin), host=host, port=port)
 
 
 @app.command()
@@ -264,7 +264,7 @@ def start_terminal() -> None:
             f"cache hit rate {stats.hit_rate:.0%} · live latency p50 {stats.live_p50_ms} ms",
         ]
 
-    run(Session(live, Path("fixtures/replay"), key_rows), console)
+    run(Session(live, replay_home(), key_rows), console)
 
 
 # --- event sinks ---

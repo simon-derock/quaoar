@@ -10,6 +10,8 @@ from quaoar.guard.secrets import SecretRedactor
 from quaoar.guard.text import clean_text
 from quaoar.scoring.card import Card
 
+LOCAL_CASES = Path("fixtures/replay")
+BUNDLED_CASES = Path(__file__).parent / "cases"
 EVENTS = "events.jsonl"
 CARD = "card.json"
 
@@ -52,3 +54,15 @@ def scrub(text: str, redact: Callable[[str], Cleaned]) -> str:
     cleaned = mask_pii(redact(clean_text(text).text).text).text
     json.loads(cleaned)  # still one valid json document after scrubbing
     return cleaned
+
+
+def replay_home() -> Path:
+    # inside a clone the fixtures folder wins; an installed copy uses the cases shipped with the package
+    return LOCAL_CASES if LOCAL_CASES.is_dir() else BUNDLED_CASES
+
+
+def find_case(name_or_path: Path) -> Path:
+    # `quaoar replay trafiksol` and `quaoar replay fixtures/replay/trafiksol` both work
+    if name_or_path.is_dir() or name_or_path.parent != Path():
+        return name_or_path
+    return replay_home() / name_or_path.name

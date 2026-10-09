@@ -1,0 +1,190 @@
+{
+  "scan_id": "q51095dcda1c",
+  "company": "TEAMTECH FORMWORK SOLUTIONS LIMITED",
+  "consistent": 6,
+  "inconsistent": 0,
+  "unverified": 6,
+  "top": [],
+  "signals": [
+    {
+      "check": "vendor",
+      "rule": "VX-02",
+      "subject": "welding ROBOT Systems India Pvt. Ltd",
+      "status": "unverified",
+      "text": "Couldn't find welding ROBOT Systems India Pvt. Ltd on company-registry pages.",
+      "observed": "",
+      "threshold": "",
+      "page": 90,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-03",
+      "subject": "welding ROBOT Systems India Pvt. Ltd",
+      "status": "unverified",
+      "text": "Couldn't read welding ROBOT Systems India Pvt. Ltd's paid-up capital.",
+      "observed": "",
+      "threshold": "100x",
+      "page": 90,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-04",
+      "subject": "welding ROBOT Systems India Pvt. Ltd",
+      "status": "unverified",
+      "text": "Couldn't read welding ROBOT Systems India Pvt. Ltd's registry status.",
+      "observed": "",
+      "threshold": "",
+      "page": 90,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-05",
+      "subject": "welding ROBOT Systems India Pvt. Ltd",
+      "status": "unverified",
+      "text": "Couldn't find welding ROBOT Systems India Pvt. Ltd on Google Maps.",
+      "observed": "",
+      "threshold": "",
+      "page": 90,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-06",
+      "subject": "welding ROBOT Systems India Pvt. Ltd",
+      "status": "consistent",
+      "text": "No court or SEBI page naming welding ROBOT Systems India Pvt. Ltd turned up in search.",
+      "observed": "",
+      "threshold": "",
+      "page": 90,
+      "evidence": [],
+      "pit_ok": true
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-02",
+      "subject": "Preserve Machineries",
+      "status": "unverified",
+      "text": "Preserve Machineries has no company form in its name (no 'Private Limited', 'Limited' or 'LLP'), so it may be a proprietorship or partnership. The company registry doesn't list those, and a registered company with the same name would be a different business, so no registry or court check was made.",
+      "observed": "",
+      "threshold": "",
+      "page": 90,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-05",
+      "subject": "Preserve Machineries",
+      "status": "unverified",
+      "text": "Preserve Machineries has a Google Maps listing (Karnataka 560022, India), but a name alone doesn't confirm it is the same business.",
+      "observed": "",
+      "threshold": "",
+      "page": 90,
+      "evidence": [
+        {
+          "engine": "google_maps",
+          "request": "4f2b7f9ce58d11fc",
+          "search_id": "6ac8a96b12eb14a6aecf0e2e",
+          "url": "https://preserve.org.in/",
+          "title": "Preserve Machineries",
+          "snippet": "85 / N / A, Tumkur Rd, Goutham Nagar, 2nd Stage, Industrial Suburb, Yeswanthpur, Bengaluru, Karnataka 560022, India",
+          "published": null
+        }
+      ],
+      "pit_ok": false
+    },
+    {
+      "check": "site",
+      "rule": "SV-02",
+      "subject": "TEAMTECH FORMWORK SOLUTIONS LIMITED",
+      "status": "consistent",
+      "text": "The registered office (Hydernagar, Hyderabad) has a Google Maps listing (listed as construction equipment supplier).",
+      "observed": "",
+      "threshold": "",
+      "page": 58,
+      "evidence": [
+        {
+          "engine": "google_maps",
+          "request": "3a69efad7257245a",
+          "search_id": "6ac8a96c5922f40e7e657772",
+          "url": "https://teamtechengg.com/",
+          "title": "TeamTech Formwork Solutions Limited",
+          "snippet": "3rd Floor, Sri Sai Enclave, [house no.], Calvary Temple Rd, IDPl Employees Colony, Hafeezpet, Miyapur, Hyderabad, Telangana 500049, India",
+          "published": null
+        }
+      ],
+      "pit_ok": false
+    },
+    {
+      "check": "banker",
+      "rule": "BK-04",
+      "subject": "Getfive Advisors Private Limited",
+      "status": "consistent",
+      "text": "No SEBI order naming Getfive Advisors Private Limited turned up in search before Dec 2025.",
+      "observed": "",
+      "threshold": "",
+      "page": 59,
+      "evidence": [],
+      "pit_ok": true
+    },
+    {
+      "check": "banker",
+      "rule": "BK-05",
+      "subject": "Getfive Advisors Private Limited",
+      "status": "consistent",
+      "text": "No SEBI order naming 2 past issuers of Getfive Advisors Private Limited turned up in search.",
+      "observed": "0 of 2 past issues",
+      "threshold": "",
+      "page": 59,
+      "evidence": [],
+      "pit_ok": true
+    },
+    {
+      "check": "litigation",
+      "rule": "LT-03",
+      "subject": "TEAMTECH FORMWORK SOLUTIONS LIMITED",
+      "status": "consistent",
+      "text": "No court or SEBI matter naming the issuer or 3 promoters turned up in search before Dec 2025 beyond the 6 the prospectus discloses.",
+      "observed": "0 undisclosed of 1 found",
+      "threshold": "",
+      "page": 1,
+      "evidence": [],
+      "pit_ok": true
+    },
+    {
+      "check": "footprint",
+      "rule": "NW-01",
+      "subject": "TEAMTECH FORMWORK SOLUTIONS LIMITED",
+      "status": "consistent",
+      "text": "No news about TEAMTECH FORMWORK SOLUTIONS LIMITED mentioning SEBI action, a complaint or a halt turned up before Dec 2025.",
+      "observed": "18 articles read",
+      "threshold": "",
+      "page": null,
+      "evidence": [],
+      "pit_ok": true
+    }
+  ],
+  "context": [
+    {
+      "check": "footprint",
+      "rule": "HY-01",
+      "subject": "TEAMTECH FORMWORK SOLUTIONS LIMITED",
+      "status": "not_applicable",
+      "text": "Context, not a verdict: 14 YouTube video(s) (10 about price, applying or listing) and 18 news article(s) name this IPO.",
+      "observed": "",
+      "threshold": "",
+      "page": null,
+      "evidence": [],
+      "pit_ok": false
+    }
+  ],
+  "ruleset": "1",
+  "disclaimer": "Facts with sources. Not investment advice."
+}
