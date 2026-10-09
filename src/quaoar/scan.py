@@ -9,8 +9,8 @@ from quaoar.checks.base import SearchPort
 from quaoar.checks.book import Investigator
 from quaoar.checks.footprint import footprint
 from quaoar.checks.litigation import litigation_check
-from quaoar.checks.site import MAX_PLACES, site_visit
-from quaoar.checks.vendor import vendor_xray
+from quaoar.checks.site import MAX_PLACES, site_visit, usable
+from quaoar.checks.vendor import quote_paise, vendor_xray
 from quaoar.clock import ClockPort
 from quaoar.domain.claims import (
     DisclosedCaseClaim,
@@ -22,6 +22,7 @@ from quaoar.domain.claims import (
 )
 from quaoar.domain.findings import Signal
 from quaoar.domain.ids import stable_id
+from quaoar.domain.names import normalize_company
 from quaoar.events import Emitter
 from quaoar.prospectus.acquire import Prospectus
 from quaoar.prospectus.extract import ClaimSource, Extraction, extract_claims
@@ -34,8 +35,6 @@ from quaoar.scoring.footprint_rules import footprint_signals
 from quaoar.scoring.litigation_rules import litigation_signals
 from quaoar.scoring.rules import RULESET_VERSION, vendor_signals
 from quaoar.scoring.site_rules import site_signals
-
-ISSUER_LINE = re.compile(r"^[A-Z][A-Z0-9&.,' ()-]{2,80}\bLIMITED$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -133,11 +132,22 @@ def vendor_stage(
     investigator: Investigator | None = None,
 ) -> list[Signal]:
     signals: list[Signal] = []
-    for quote in extraction.claims.get("quotes", []):
-        if isinstance(quote, QuoteClaim):
-            check = emit("stage", {"name": "vendor", "subject": quote.vendor}, root)
-            signals += vendor_signals(vendor_xray(quote, search, check, investigator), cutoff)
+    for quote in one_quote_per_vendor(extraction):
+        check = emit("stage", {"name": "vendor", "subject": quote.vendor}, root)
+        signals += vendor_signals(vendor_xray(quote, search, check, investigator), cutoff)
     return signals
+
+
+def one_quote_per_vendor(extraction: Extraction) -> list[QuoteClaim]:
+    # a vendor quoted for several items is checked once, against its largest quotation
+    best: dict[str, QuoteClaim] = {}
+    for claim in extraction.claims.get("quotes", []):
+        if not isinstance(claim, QuoteClaim):
+            continue
+        key = normalize_company(claim.vendor)
+        if key not in best or (quote_paise(claim) or 0) > (quote_paise(best[key]) or 0):
+            best[key] = claim
+    return list(best.values())
 
 
 def site_stage(
@@ -149,7 +159,9 @@ def site_stage(
     investigator: Investigator | None,
 ) -> list[Signal]:
     signals: list[Signal] = []
-    places = [c for c in extraction.claims.get("places", []) if isinstance(c, PlaceClaim)]
+    places = [
+        c for c in extraction.claims.get("places", []) if isinstance(c, PlaceClaim) and usable(c)
+    ]
     for place in places[:MAX_PLACES]:
         check = emit("stage", {"name": "site", "subject": f"{place.role} {place.city}"}, root)
         signals += site_signals(site_visit(company, place, search, check, investigator))
@@ -193,11 +205,17 @@ def timed[T](emit: Emitter, clock: ClockPort, parent: str, name: str, run: Calla
     return value
 
 
+ISSUER_LINE = re.compile(r"^[A-Z][A-Z0-9&.,' ()-]{2,80}\bLIMITED$")
+INTERMEDIARY = re.compile(r"STOCK EXCHANGE|SECURITIES AND EXCHANGE|REGISTRAR|LEAD MANAGER", re.I)
+
+
 def issuer_name(pages: list[Page]) -> str:
-    # the cover names the issuer in capitals ending in LIMITED
-    for page in pages[:2]:
-        for line in page.text.splitlines():
-            line = " ".join(line.split())
-            if ISSUER_LINE.match(line):
-                return line
-    return "Unnamed issuer"
+    # the issuer is the company named most often on the cover pages; the lead manager and registrar
+    # appear once or twice, so listing order alone would pick the wrong company
+    cover = pages[:3]
+    lines = [" ".join(line.split()) for p in cover for line in p.text.splitlines()]
+    candidates = [ln for ln in lines if ISSUER_LINE.match(ln) and not INTERMEDIARY.search(ln)]
+    if not candidates:
+        return "Unnamed issuer"
+    text = " ".join(" ".join(p.text.split()) for p in cover)
+    return max(candidates, key=lambda name: (text.count(name), -candidates.index(name)))

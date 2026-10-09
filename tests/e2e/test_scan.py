@@ -109,3 +109,42 @@ def test_scan_adds_banker_signals_when_a_lead_manager_is_found(tmp_path: Path) -
         clock=clock,
     )
     assert {"BK-04", "BK-05"} <= {s.rule for s in result.signals}
+
+
+def test_one_vendor_quoted_for_several_items_gets_one_check_using_its_largest_quote(
+    tmp_path: Path,
+) -> None:
+    pdf = tmp_path / "demo.pdf"
+    pdf.write_bytes(make_pdf(PAGES))
+    sink = MemorySink()
+    clock = FixedClock()
+    search = FakeSearch({"duckduckgo": registry_body(ZAUBA, INSTA), "google_maps": maps_body()})
+    quotes = Quotes(
+        items=[QUOTE, QUOTE.model_copy(update={"item": "second item", "amount_text": "500.00"})]
+    )
+    result = run_scan(
+        from_path(pdf),
+        search=search,
+        claims=FakeSource({"quotes": quotes}),
+        emit=Emitter("d", sink, clock),
+        clock=clock,
+        cutoff=date(2024, 9, 3),
+    )
+    vendor_stages = [e for e in sink.events if e.type == "stage" and e.data.get("name") == "vendor"]
+    assert len(vendor_stages) == 1
+    assert [s.rule for s in result.signals if s.rule == "VX-03"] == ["VX-03"]
+    assert "1,770 times" in next(s.text for s in result.signals if s.rule == "VX-03")
+
+
+def test_the_issuer_is_the_name_repeated_on_the_cover_not_the_first_company_listed() -> None:
+    cover = Page(
+        1,
+        "BOOK RUNNING LEAD MANAGER\nSWASTIKA INVESTMART LIMITED\nREGISTRAR TO THE ISSUE\nMAASHITLA SECURITIES PRIVATE LIMITED\n",
+        needs_ocr=False,
+    )
+    second = Page(
+        2,
+        "TBI CORN LIMITED\nINITIAL PUBLIC ISSUE OF UPTO 47,80,800 EQUITY SHARES OF TBI CORN LIMITED\nOUR COMPANY, TBI CORN LIMITED, IS",
+        needs_ocr=False,
+    )
+    assert issuer_name([cover, second]) == "TBI CORN LIMITED"
