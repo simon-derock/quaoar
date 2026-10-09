@@ -175,3 +175,24 @@ def test_role_words_in_place_of_a_name_are_dropped() -> None:
     assert [c.model_dump()["name"] for c in result.claims["lead_managers"]] == [
         "Ekadrisht Capital Private Limited"
     ]
+
+
+def test_issue_expense_rows_are_not_vendors() -> None:
+    names = [
+        "Total Estimated Issue Expenses",
+        "Lead Manger Fees including Underwriting Commission",
+        "Fees Payable to Regulators",
+        "Registrar Charges",
+        "Brightwell Polymers Private Limited",
+    ]
+    page = Page(89, "\n".join(f"Quotation from: - {n} 100.00" for n in names), needs_ocr=False)
+    items = [
+        quote(vendor=n, span=n, amount_text="100.00", item="x", unit_text="", quote_date_text="")
+        for n in names
+    ]
+    result = extract_claims(
+        [page], objects_only([page]), FakeSource({"quotes": Quotes(items=items)})
+    )
+    assert [c.model_dump()["vendor"] for c in result.claims["quotes"]] == [
+        "Brightwell Polymers Private Limited"
+    ]

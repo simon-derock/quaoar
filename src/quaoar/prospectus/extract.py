@@ -1,4 +1,5 @@
 # claims from located sections: the llm proposes, grounding keeps only what is on the page
+import re
 import unicodedata
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -148,9 +149,20 @@ def is_grounded(claim: Grounded, page_text: str) -> bool:
     return bool(page) and bool(values) and all(norm(v) in page for v in values)
 
 
+EXPENSE_ROW = re.compile(
+    r"\b(fees?|expenses?|commission|charges|payable|brokerage|total|stamp duty|printing|advertis\w*|"
+    r"miscellaneous|contingenc\w*|registrar|underwriting)\b",
+    re.I,
+)
+
+
 def is_generic(claim: Grounded) -> bool:
     name = getattr(claim, "name", None)
-    return isinstance(name, str) and norm(name) in GENERIC_NAMES
+    if isinstance(name, str) and norm(name) in GENERIC_NAMES:
+        return True
+    # rows of the issue-expenses table ("Total Estimated Issue Expenses", "Lead Manger Fees ...") are not vendors
+    vendor = getattr(claim, "vendor", None)
+    return isinstance(vendor, str) and bool(EXPENSE_ROW.search(vendor))
 
 
 def with_page_span(claim: Grounded, page_text: str) -> Grounded:
