@@ -27,6 +27,10 @@ from quaoar.prospectus.sections import SectionMap
 
 CHUNK_BYTES = 20 * 1024
 SPAN_CHARS = 300
+# a section the model refuses is asked again in halves, down to this size
+MIN_SPLIT_BYTES = 3000
+MAX_SPLITS = 2
+PAGE_MARKER = re.compile(r"\[\[page \d+\]\]")
 # role words the model sometimes returns where a name should be
 GENERIC_NAMES = frozenset(
     {"book running lead manager", "book running lead managers", "lead manager", "lead managers",
@@ -82,14 +86,11 @@ def extract_claims(
                 continue
             for chunk in chunks(safe, section.start, section.end):
                 warn_injection(chunk, task, emit, parent)
-                calls += 1
                 # one unreadable chunk becomes "couldn't read", never a crashed scan
-                try:
-                    result = source.extract(task, output, chunk, parent)
-                except LlmError:
-                    failed[task] += 1
-                    continue
-                for claim in items_of(result):
+                results, made, bad = ask(source, task, output, chunk, parent)
+                calls += made
+                failed[task] += bad
+                for claim in (c for result in results for c in items_of(result)):
                     page_text = safe.get(claim.page, "")
                     if is_generic(claim):
                         dropped[task] += 1
@@ -99,6 +100,48 @@ def extract_claims(
                         dropped[task] += 1
         claims[task] = dedupe(kept)
     return Extraction(claims, dropped, failed, calls)
+
+
+def ask(
+    source: ClaimSource,
+    task: str,
+    output: type[BaseModel],
+    text: str,
+    parent: str | None,
+    depth: int = 0,
+) -> tuple[list[BaseModel], int, int]:
+    # returns (answers, model calls made, pieces that could not be read)
+    try:
+        return [source.extract(task, output, text, parent)], 1, 0
+    except LlmError:
+        parts = halve(text) if depth < MAX_SPLITS and len(text.encode()) > MIN_SPLIT_BYTES else []
+        if not parts:
+            return [], 1, 1
+    answers: list[BaseModel] = []
+    calls = bad = 0
+    for part in parts:
+        got, made, missed = ask(source, task, output, part, parent, depth + 1)
+        answers += got
+        calls += made
+        bad += missed
+    return answers, calls + 1, bad
+
+
+def halve(text: str) -> list[str]:
+    # cut near the middle at a line break; the second half keeps the page marker it was under
+    middle = len(text) // 2
+    low = middle // 2
+    cut = next(
+        (c for c in (text.rfind("\n", low, middle + 1), text.rfind(" ", low, middle + 1)) if c > 0),
+        middle,
+    )
+    head, tail = text[:cut], text[cut:].lstrip("\n")
+    if not head.strip() or not tail.strip():
+        return []
+    markers = PAGE_MARKER.findall(head)
+    if markers and not tail.startswith("[[page"):
+        tail = f"{markers[-1]}\n{tail}"
+    return [head, tail]
 
 
 def safe_text(text: str) -> str:

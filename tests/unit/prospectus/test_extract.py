@@ -3,7 +3,14 @@ from collections.abc import Mapping
 
 from pydantic import BaseModel
 
-from quaoar.domain.claims import LeadManagerClaim, LeadManagers, QuoteClaim, Quotes
+from quaoar.domain.claims import (
+    LeadManagerClaim,
+    LeadManagers,
+    PromoterClaim,
+    Promoters,
+    QuoteClaim,
+    Quotes,
+)
 from quaoar.events import Emitter, MemorySink
 from quaoar.llm.client import LlmError
 from quaoar.prospectus.extract import CHUNK_BYTES, chunks, extract_claims, is_grounded
@@ -196,3 +203,51 @@ def test_issue_expense_rows_are_not_vendors() -> None:
     assert [c.model_dump()["vendor"] for c in result.claims["quotes"]] == [
         "Brightwell Polymers Private Limited"
     ]
+
+
+class PickySource(FakeSource):
+    # the model refuses long sections now and then (a 422 that retrying does not cure)
+    def __init__(self, answers: Mapping[str, BaseModel], limit: int) -> None:
+        super().__init__(answers)
+        self.limit = limit
+
+    def extract[T: BaseModel](
+        self, task: str, output: type[T], text: str, parent: str | None = None
+    ) -> T:
+        if len(text) > self.limit:
+            self.texts.append(text)
+            raise LlmError(f"{task}: every Cohere key is rate limited or failing")
+        return super().extract(task, output, text, parent)
+
+
+def test_a_section_the_model_refuses_is_split_and_asked_in_halves() -> None:
+    filler = "Promoter details and shareholding pattern as on the date. " * 120
+    pages = [
+        Page(
+            10,
+            f"{filler}\nThe Promoters of our Company are Asha Rao and Vikram Sen.\n",
+            needs_ocr=False,
+        )
+    ]
+    sections = SectionMap({"promoters": Section("promoters", "OUR PROMOTERS", 10, 10)}, (), 3)
+    answer = Promoters(
+        items=[PromoterClaim(page=10, name="Asha Rao"), PromoterClaim(page=10, name="Vikram Sen")]
+    )
+    source = PickySource({"promoters": answer}, limit=5000)
+    result = extract_claims(pages, sections, source)
+    assert {c.model_dump()["name"] for c in result.claims["promoters"]} == {
+        "Asha Rao",
+        "Vikram Sen",
+    }
+    assert result.failed["promoters"] == 0
+    assert result.calls >= 3
+    # every half still carries a page marker so the model can cite the page
+    assert all("[[page 10]]" in t for t in source.texts)
+
+
+def test_a_section_that_cannot_be_split_further_counts_as_failed_not_crashed() -> None:
+    pages = [Page(10, "Promoters: Asha Rao\n" * 5, needs_ocr=False)]
+    sections = SectionMap({"promoters": Section("promoters", "OUR PROMOTERS", 10, 10)}, (), 3)
+    result = extract_claims(pages, sections, PickySource({}, limit=10))
+    assert result.failed["promoters"] == 1
+    assert result.claims["promoters"] == []

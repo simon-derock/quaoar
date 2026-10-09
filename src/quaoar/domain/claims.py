@@ -1,10 +1,19 @@
 # claims as printed in a prospectus; each one carries its page and the exact words it came from
+import re
 from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
+CITATION = re.compile(r"</?co(?::[^>]*|\s[^>]*)?>")
+
+
+def plain(text: str) -> str:
+    # the model sometimes wraps a name in its own citation tags, e.g. <co>Name</co: 0:[59,62]>
+    return " ".join(CITATION.sub("", text).split())
+
+
 # pdf line breaks cut names mid-word-group; every printed name is one clean line
-Tidy = Annotated[str, AfterValidator(lambda text: " ".join(text.split()))]
+Tidy = Annotated[str, AfterValidator(lambda text: plain(text))]
 
 
 class Grounded(BaseModel):
@@ -12,7 +21,7 @@ class Grounded(BaseModel):
 
     page: int = Field(ge=1, description="pdf page number from the [[page N]] marker")
     # the stored span is cut from the page by code; whatever the model writes here is ignored
-    span: str = Field(default="", max_length=4000, description="optional short quote")
+    span: Tidy = Field(default="", max_length=4000, description="optional short quote")
 
 
 class QuoteClaim(Grounded):
