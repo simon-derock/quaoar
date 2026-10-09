@@ -1,5 +1,5 @@
 // the page: plays a recorded scan from the api into a terminal and a card, and answers beginner questions
-import { MARKS, caseBlurb, caseLabel, clean, formatEvent, headline, host, lineKind, safeLink, shares, titleCase } from "./render.js";
+import { MARKS, caseBlurb, caseLabel, clean, formatEvent, headline, host, lineKind, parseEvents, safeLink, shares } from "./render.js";
 import { startScroll } from "./scroll.js";
 import type { Card, QEvent, Signal } from "./render.js";
 
@@ -11,7 +11,9 @@ declare global {
 
 const api = (window.QUAOAR_API ?? "").replace(/\/$/, "");
 const QUESTIONS = ["What is an SME IPO?", "Where do I get a prospectus?", "Is this IPO safe?", "What does “couldn't find” mean?"];
+const STEP_MS = 95;
 let current: EventSource | null = null;
+let run = 0;
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -64,7 +66,7 @@ function row(signal: Signal): HTMLElement {
 }
 
 function showCard(card: Card): void {
-  el("company").textContent = titleCase(clean(card.company));
+  el("company").textContent = clean(card.company);
   el("headline").textContent = headline(card);
   const list = el("signals");
   const rows = card.signals.map(row);
@@ -81,6 +83,7 @@ function showCard(card: Card): void {
 
 function reset(name: string): void {
   current?.close();
+  run += 1;
   el<HTMLPreElement>("terminal").replaceChildren();
   el("signals").replaceChildren();
   el("headline").textContent = "";
@@ -94,24 +97,68 @@ function reset(name: string): void {
   });
 }
 
-function play(name: string): void {
-  reset(name);
-  line(`quaoar replay ${name}`, "cmd");
+function show(event: QEvent): void {
+  const text = formatEvent(event);
+  if (text !== null) line(text, lineKind(event));
+}
+
+// plays a bundle shipped with the page at a steady pace; no network wait, so it never stalls
+async function playStatic(name: string, mine: number): Promise<boolean> {
+  try {
+    const [events, card] = await Promise.all([
+      fetch(`replays/${name}/events.jsonl`).then((r) => (r.ok ? r.text() : Promise.reject(new Error("missing")))),
+      fetch(`replays/${name}/card.json`).then((r) => (r.ok ? (r.json() as Promise<Card>) : Promise.reject(new Error("missing")))),
+    ]);
+    const queue = parseEvents(events);
+    let index = 0;
+    const tick = (): void => {
+      if (mine !== run) return;
+      const event = queue[index];
+      if (event === undefined) {
+        showCard(card);
+        return;
+      }
+      show(event);
+      index += 1;
+      window.setTimeout(tick, STEP_MS);
+    };
+    tick();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function playStream(name: string): void {
   const source = new EventSource(`${api}/api/scan/stream?case=${encodeURIComponent(name)}`);
   current = source;
-  source.addEventListener("event", (message) => {
-    const event = JSON.parse((message as MessageEvent<string>).data) as QEvent;
-    const text = formatEvent(event);
-    if (text !== null) line(text, lineKind(event));
-  });
-  source.addEventListener("card", (message) => {
-    showCard(JSON.parse((message as MessageEvent<string>).data) as Card);
-  });
+  source.addEventListener("event", (message) => show(JSON.parse((message as MessageEvent<string>).data) as QEvent));
+  source.addEventListener("card", (message) => showCard(JSON.parse((message as MessageEvent<string>).data) as Card));
   source.addEventListener("done", () => source.close());
   source.onerror = () => {
     line("connection closed", "stage");
     source.close();
   };
+}
+
+function play(name: string): void {
+  reset(name);
+  const mine = run;
+  line(`quaoar replay ${name}`, "cmd");
+  void playStatic(name, mine).then((ok) => {
+    if (!ok && mine === run) playStream(name);
+  });
+}
+
+async function caseNames(): Promise<string[]> {
+  try {
+    const local = await fetch("replays/index.json");
+    if (local.ok) return (await local.json()) as string[];
+  } catch {
+    // fall through to the api
+  }
+  const response = await fetch(`${api}/api/cases`);
+  return (await response.json()) as string[];
 }
 
 function tabs(names: string[]): void {
@@ -130,8 +177,7 @@ function tabs(names: string[]): void {
 }
 
 async function start(): Promise<void> {
-  const response = await fetch(`${api}/api/cases`);
-  const names = (await response.json()) as string[];
+  const names = await caseNames();
   const ordered = ["trafiksol", ...names.filter((name) => name !== "trafiksol")];
   tabs(ordered);
   let selected = ordered[0] ?? "trafiksol";
@@ -185,7 +231,12 @@ function chat(): void {
 }
 
 function reveal(): void {
-  const nodes = document.querySelectorAll(".reveal");
+  const nodes = document.querySelectorAll<HTMLElement>(".reveal");
+  // siblings that appear together arrive one after another, 70 ms apart
+  nodes.forEach((node) => {
+    const siblings = node.parentElement === null ? [] : Array.from(node.parentElement.children).filter((child) => child.classList.contains("reveal"));
+    node.style.setProperty("--d", `${siblings.indexOf(node) * 70}ms`);
+  });
   if (!("IntersectionObserver" in window)) {
     nodes.forEach((node) => node.classList.add("in"));
     return;

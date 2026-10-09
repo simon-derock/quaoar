@@ -127,16 +127,10 @@ export function caseBlurb(name: string): string {
   return BLURBS[name] ?? "Recorded case";
 }
 
-const SMALL = new Set(["and", "of", "the", "for"]);
-
-// prospectus covers print the issuer in capitals; short words stay capitals because they are usually initials
-export function titleCase(name: string): string {
-  return name
-    .split(/\s+/)
-    .map((word) => {
-      const lower = word.toLowerCase();
-      if (SMALL.has(lower)) return lower;
-      return word.length <= 3 ? word.toUpperCase() : lower.charAt(0).toUpperCase() + lower.slice(1);
-    })
-    .join(" ");
+// a replay bundle's events file has one json event per line
+export function parseEvents(text: string): QEvent[] {
+  return text
+    .split("\n")
+    .filter((line) => line.trim() !== "")
+    .map((line) => JSON.parse(line) as QEvent);
 }

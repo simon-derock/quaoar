@@ -7,7 +7,8 @@
   <meta name="theme-color" content="#0d0a08">
   <title>Quaoar · Check every IPO before you apply</title>
   <meta name="description" content="Quaoar reads an SME IPO prospectus, checks its claims against public search results and shows the proof behind every line.">
-  <link rel="preload" href="fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/bodoni-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/manrope-500.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,20 +16,22 @@
   <div class="grain" aria-hidden="true"></div>
 
   <header class="top" id="top">
+    <a class="word" href="#top" aria-label="Quaoar, back to top">QUAOAR</a>
     <nav aria-label="Sections">
       <a href="#product">Product</a>
       <a href="#how">Method</a>
       <a href="#checks">Checks</a>
       <a href="#ask">Ask</a>
     </nav>
-    <a class="word" href="#top" aria-label="Quaoar">quaoar</a>
+    <p class="credit">Built by Philip Simon Derock <span>·</span> <a href="https://serpapi.com" rel="noopener noreferrer" target="_blank">SerpApi</a> India Hackathon 2026</p>
   </header>
 
   <main>
     <section class="hero">
-      <h1 data-depth="0.12"><span class="reveal">Check every IPO</span><br><em class="reveal">before you apply.</em></h1>
+      <h1 class="reveal" data-depth="0.12">Check every IPO</h1>
+      <p class="tagline reveal" data-depth="0.12">Before you apply</p>
       <p class="lede reveal" data-depth="0.07">Quaoar reads the prospectus and shows the proof behind every line.</p>
-      <div class="actions reveal" data-depth="0.02">
+      <div class="actions reveal" data-depth="0.04">
         <a class="btn primary" href="#product">Watch a scan</a>
         <a class="btn ghost" href="#ask">New to IPOs?</a>
       </div>
@@ -39,7 +42,7 @@
         <div class="chrome">
           <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
           <span class="title">quaoar · replay</span>
-          <button id="run" type="button" class="again">Replay ↻</button>
+          <button id="run" type="button" class="again">Replay</button>
         </div>
         <div class="tabs" id="cases" role="tablist" aria-label="Recorded cases"></div>
         <div class="split">
@@ -55,7 +58,7 @@
           </div>
         </div>
       </div>
-      <p class="caption">A recorded scan of a real prospectus. No keys, no uploads, no live search on this page.</p>
+      <p class="caption">A recorded scan of a real prospectus. Search data by SerpApi.</p>
     </section>
 
     <section class="numbers" aria-label="Why it exists">
@@ -65,15 +68,17 @@
     </section>
 
     <section class="band" id="how">
-      <h2 class="reveal" data-depth="0.05">Method</h2>
+      <p class="eyebrow reveal" data-depth="0.05">How it works</p>
+      <h2 class="reveal" data-depth="0.05">From PDF to proof</h2>
       <div class="tiles three">
-        <article class="reveal" data-depth="0.02"><span class="n">1</span><h3>Read</h3><p>Pull the checkable claims out of the prospectus.</p></article>
-        <article class="reveal" data-depth="0.035"><span class="n">2</span><h3>Check</h3><p>Search for each one through SerpApi.</p></article>
-        <article class="reveal" data-depth="0.02"><span class="n">3</span><h3>Prove</h3><p>Fixed rules set every status, with a source link.</p></article>
+        <article class="reveal" data-depth="0.02"><span class="n">01</span><h3>Read</h3><p>Pull the checkable claims out of the prospectus.</p></article>
+        <article class="reveal" data-depth="0.035"><span class="n">02</span><h3>Check</h3><p>Search for each one through SerpApi.</p></article>
+        <article class="reveal" data-depth="0.02"><span class="n">03</span><h3>Prove</h3><p>Fixed rules set every status, with a source link.</p></article>
       </div>
     </section>
 
     <section class="band" id="checks">
+      <p class="eyebrow reveal" data-depth="0.05">What it looks at</p>
       <h2 class="reveal" data-depth="0.05">Five checks</h2>
       <div class="tiles bento">
         <article class="reveal" data-depth="0.02"><h3>Vendor</h3><p>Is the company quoting for the money real, and in proportion?</p></article>
@@ -85,6 +90,7 @@
     </section>
 
     <section class="band ask" id="ask">
+      <p class="eyebrow reveal" data-depth="0.05">For beginners</p>
       <h2 class="reveal" data-depth="0.05">New to IPOs?</h2>
       <p class="sub reveal" data-depth="0.05">Ask in plain words. Quaoar explains, and never says whether to apply.</p>
       <div class="chat reveal" data-depth="0.02">
@@ -98,6 +104,7 @@
     </section>
 
     <section class="band limits" id="limits">
+      <p class="eyebrow reveal" data-depth="0.05">Read this first</p>
       <h2 class="reveal" data-depth="0.05">Honest limits</h2>
       <ul class="reveal">
         <li><b>Absence is not a finding.</b> “Couldn't find” is common and never counted against a company.</li>
@@ -108,7 +115,7 @@
   </main>
 
   <footer>
-    <span class="mark">quaoar</span>
+    <span class="mark">QUAOAR</span>
     <span>Facts with sources. Not investment advice.</span>
     <a href="https://github.com/simon-derock/quaoar" rel="noopener noreferrer" target="_blank">GitHub ↗</a>
   </footer>

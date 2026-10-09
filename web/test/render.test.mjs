@@ -64,12 +64,11 @@ test("case names get readable labels, unknown ones pass through", () => {
   assert.equal(caseBlurb("new-case"), "Recorded case");
 });
 
-import { titleCase } from "../dist/render.js";
+import { parseEvents } from "../dist/render.js";
 
-test("issuer names are shown in title case with initials kept", () => {
-  assert.equal(titleCase("TRAFIKSOL ITS TECHNOLOGIES LIMITED"), "Trafiksol ITS Technologies Limited");
-  assert.equal(titleCase("TBI CORN LIMITED"), "TBI Corn Limited");
-  assert.equal(titleCase("BANK OF INDIA"), "Bank of India");
+test("a bundle's events file becomes events, blank lines skipped", () => {
+  const text = '{"type":"stage","data":{"name":"intake"}}\n\n{"type":"serp","data":{}}\n';
+  assert.deepEqual(parseEvents(text).map((e) => e.type), ["stage", "serp"]);
 });
 
 import { clamp, ease, shift, wheelPixels } from "../dist/motion.js";
