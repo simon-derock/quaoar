@@ -42,7 +42,7 @@ def llm(tmp_path: Path, factory) -> tuple[LlmClient, MemorySink]:  # type: ignor
     sink, clock = MemorySink(), FixedClock()
     client = LlmClient(
         ledger=Ledger(tmp_path), clock=clock, model_name="command-a-03-2025",
-        keys=KEYS, factory=factory, emit=Emitter("s", sink, clock),
+        keys=KEYS, factory=factory, emit=Emitter("s", sink, clock), sleep=lambda _: None,
     )  # fmt: skip
     return client, sink
 

@@ -13,7 +13,14 @@ from pydantic_ai.settings import ModelSettings
 
 from quaoar.domain.claims import Quotes
 from quaoar.events import Emitter, MemorySink
-from quaoar.llm.client import REQUEST_TIMEOUT_S, ContextTooLargeError, LlmClient, LlmError
+from quaoar.llm.client import (
+    COOLDOWN_S,
+    REQUEST_TIMEOUT_S,
+    ROUNDS,
+    ContextTooLargeError,
+    LlmClient,
+    LlmError,
+)
 from quaoar.llm.prompts import RULES, instructions, wrap_data
 from quaoar.serp.keys import fingerprint
 from quaoar.serp.ledger import Ledger
@@ -63,7 +70,7 @@ def make(tmp_path: Path, factory: Factory, **kw: object) -> tuple[LlmClient, Mem
         keys=KEYS,
         factory=factory,
         emit=Emitter("scan1", sink, clock),
-        **kw,  # type: ignore[arg-type]
+        **{"sleep": lambda _: None, **kw},  # type: ignore[arg-type]
     )
     return client, sink
 
@@ -204,3 +211,46 @@ def test_every_model_call_carries_an_explicit_timeout(tmp_path: Path) -> None:
     client, _ = make(tmp_path, factory)  # type: ignore[arg-type]
     client.extract("quotes", Quotes, "text")
     assert all(s is not None and s.get("timeout") == REQUEST_TIMEOUT_S for s in factory.settings)
+
+
+class LimitedOnce:
+    # the per-minute limit: every key answers 429 until the window has passed
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def __call__(self, model_name: str, api_key: str) -> Model:
+        self.calls += 1
+        if self.calls <= len(KEYS):
+
+            def broken(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+                raise ModelHTTPError(429, model_name)
+
+            return FunctionModel(broken)
+        return TestModel(custom_output_args=QUOTE)
+
+
+def test_a_per_minute_limit_is_waited_out_instead_of_failing_the_scan(tmp_path: Path) -> None:
+    waits: list[float] = []
+    client, _ = make(tmp_path, LimitedOnce(), sleep=waits.append)  # type: ignore[arg-type]
+    out = client.extract("quotes", Quotes, "a long prospectus section")
+    assert out.items[0].vendor == "OASIS CORPCARE PRIVATE LIMITED"
+    assert waits == [COOLDOWN_S]
+
+
+def test_waiting_is_bounded_when_the_limit_never_lifts(tmp_path: Path) -> None:
+    waits: list[float] = []
+    limited = Factory({k.get_secret_value(): 429 for k in KEYS})
+    client, _ = make(tmp_path, limited, sleep=waits.append)
+    with pytest.raises(LlmError, match="rate limited"):
+        client.extract("quotes", Quotes, "text")
+    assert len(waits) == ROUNDS - 1
+
+
+def test_after_giving_up_once_later_calls_do_not_wait_again(tmp_path: Path) -> None:
+    waits: list[float] = []
+    limited = Factory({k.get_secret_value(): 429 for k in KEYS})
+    client, _ = make(tmp_path, limited, sleep=waits.append)
+    for text in ("one", "two", "three"):
+        with pytest.raises(LlmError):
+            client.extract("quotes", Quotes, text)
+    assert len(waits) == ROUNDS - 1

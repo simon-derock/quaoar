@@ -1,5 +1,6 @@
 # cohere through pydantic-ai: one model per scan, keys rotate on rate limits, answers cached
 import os
+import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 
@@ -32,6 +33,9 @@ ROTATE_ON = frozenset({429})
 # cohere answers 422 INVALID_TOOL_GENERATION now and then; a fresh try usually works
 RETRY_ON = frozenset({422, 500, 502, 503, 504})
 RETRIES_PER_KEY = 2
+# trial keys are limited per minute: wait the window out a couple of times before giving up
+COOLDOWN_S = 35.0
+ROUNDS = 3
 # a hung request must fail fast and be retried, never wait for minutes
 REQUEST_TIMEOUT_S = 75.0
 TRANSIENT = (httpx.TransportError, ModelAPIError)
@@ -75,11 +79,13 @@ class LlmClient:
         factory: ModelFactory = cohere_model,
         replay: ReplayStore | None = None,
         emit: Emitter | None = None,
+        sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self._ledger, self._clock, self._model = ledger, clock, model_name
         self._keys = list(keys)
         self._spent: set[str] = set()
-        self._factory, self._replay, self._emit = factory, replay, emit
+        self._rounds = ROUNDS
+        self._factory, self._replay, self._emit, self._sleep = factory, replay, emit, sleep
 
     def extract[T: BaseModel](
         self, task: str, output: type[T], text: str, parent: str | None = None
@@ -175,6 +181,22 @@ class LlmClient:
         )
 
     def _across_keys[R](self, task: str, attempt: Callable[[SecretStr], R]) -> tuple[R, str]:
+        for round_ in range(self._rounds):
+            found = self._one_round(task, attempt)
+            if found is not None:
+                return found
+            # only rate limits are worth waiting for; anything else already moved on to the next key
+            if not self._spent or round_ == self._rounds - 1:
+                break
+            self._sleep(COOLDOWN_S)
+            self._spent.clear()
+        # a limit that never lifted is probably a monthly cap: later calls fail fast, not wait again
+        if self._spent:
+            self._rounds = 1
+        self._spent.clear()
+        raise LlmError(f"{task}: every Cohere key is rate limited or failing")
+
+    def _one_round[R](self, task: str, attempt: Callable[[SecretStr], R]) -> tuple[R, str] | None:
         for key in self._keys:
             fp = fingerprint(key.get_secret_value())
             if fp in self._spent:
@@ -182,8 +204,8 @@ class LlmClient:
             try:
                 return attempt(key), fp
             except ModelHTTPError as exc:
-                # a rate limit retires the key for the run; a stubborn transient error just
-                # moves on to the next key; anything else is a real failure
+                # a rate limit sets the key aside until the next round; a stubborn transient
+                # error just moves on to the next key; anything else is a real failure
                 if exc.status_code in ROTATE_ON:
                     self._spent.add(fp)
                     continue
@@ -195,7 +217,7 @@ class LlmClient:
             except TRANSIENT:
                 # a stalled or dropped connection counts against this key; the next key gets a go
                 continue
-        raise LlmError(f"{task}: every Cohere key is rate limited or failing")
+        return None
 
     def run_agent[T: BaseModel](
         self,
