@@ -55,7 +55,9 @@ def execute(
     extra_sinks: Sequence[EventSink] = (),
     max_credits: int = 0,
     cutoff: date | None = None,
+    *,
     mode: str = "agent",
+    point_in_time: bool = True,
 ) -> Executed:
     scan_id = scan_id_for(prospectus)
     folder = scan_folder(runtime, scan_id)
@@ -93,6 +95,7 @@ def execute(
         clock=clock,
         cutoff=cutoff,
         investigator=investigator,
+        point_in_time=point_in_time,
     )
     save(folder, result)
     return Executed(result, budget.spent, folder)

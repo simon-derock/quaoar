@@ -25,6 +25,7 @@ from quaoar.domain.ids import stable_id
 from quaoar.events import Emitter
 from quaoar.prospectus.acquire import Prospectus
 from quaoar.prospectus.extract import ClaimSource, Extraction, extract_claims
+from quaoar.prospectus.meta import prospectus_date
 from quaoar.prospectus.pdf import Page, read_pages
 from quaoar.prospectus.sections import SectionMap, locate_sections
 from quaoar.scoring.banker_rules import banker_signals
@@ -61,32 +62,17 @@ def run_scan(
     clock: ClockPort,
     cutoff: date | None = None,
     investigator: Investigator | None = None,
+    point_in_time: bool = True,
 ) -> ScanResult:
     scan_id = scan_id_for(prospectus)
     root = emit(
         "stage", {"name": "intake", "bytes": prospectus.size, "sha256": prospectus.sha256[:16]}
     )
-
     pages = timed(emit, clock, root, "pages", lambda: read_pages(prospectus.path))
     company = issuer_name(pages)
+    cutoff = choose_cutoff(pages, cutoff, emit, root, point_in_time=point_in_time)
     sections = timed(emit, clock, root, "sections", lambda: locate_sections(pages))
-    emit(
-        "stage",
-        {
-            "name": "sections",
-            "found": ", ".join(sorted(sections.sections)),
-            "missing": ", ".join(sections.missing),
-        },
-        root,
-    )
-
-    stage = emit("stage", {"name": "claims"}, root)
-    extraction = extract_claims(pages, sections, claims, emit, stage)
-    emit(
-        "stage",
-        {"name": "claims", "counts": {k: len(v) for k, v in extraction.claims.items()}},
-        stage,
-    )
+    extraction = read_claims(pages, sections, claims, emit, root)
 
     signals = vendor_stage(extraction, search, emit, root, cutoff, investigator)
     signals += site_stage(company, extraction, search, emit, root, investigator)
@@ -112,6 +98,30 @@ def run_scan(
         root,
     )
     return ScanResult(scan_id, company, sections, extraction, signals, card)
+
+
+def choose_cutoff(
+    pages: list[Page], given: date | None, emit: Emitter, root: str, *, point_in_time: bool
+) -> date | None:
+    # by default evidence is read as of the prospectus date, so later news can't change the card
+    cutoff = given or (prospectus_date(pages) if point_in_time else None)
+    shown = cutoff.isoformat() if cutoff else "none (evidence as of today)"
+    emit("stage", {"name": "cutoff", "date": shown}, root)
+    return cutoff
+
+
+def read_claims(
+    pages: list[Page], sections: SectionMap, claims: ClaimSource, emit: Emitter, root: str
+) -> Extraction:
+    found = ", ".join(sorted(sections.sections))
+    emit(
+        "stage", {"name": "sections", "found": found, "missing": ", ".join(sections.missing)}, root
+    )
+    stage = emit("stage", {"name": "claims"}, root)
+    extraction = extract_claims(pages, sections, claims, emit, stage)
+    counts = ", ".join(f"{k} {len(v)}" for k, v in extraction.claims.items())
+    emit("stage", {"name": "claims", "counts": counts}, stage)
+    return extraction
 
 
 def vendor_stage(

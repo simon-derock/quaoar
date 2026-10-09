@@ -585,6 +585,7 @@ flowchart LR
 - SPEC-PDF-01 [P0] Input is a local path or an https URL. Downloads: https only, at most 40 MB, must start with `%PDF`, 30 s timeout. Hosts of NSE and BSE are refused with "download it manually" (their terms forbid automated collection).
 - SPEC-PDF-02 [P0] Text per page via pypdfium2 with 1-based page numbers; a page with under 30 characters is marked `needs_ocr` and skipped (no OCR in v1).
 - SPEC-PDF-03 [P0] The input sha256 is recorded; the same PDF always maps to the same scan input id.
+- SPEC-PDF-04 [P0] The date printed on the cover (the most repeated `Dated:` date on the first three pages, ties to the later one) is the default point-in-time cutoff for every check; `--cutoff` overrides it and `--now` reads evidence as of today.
 - SPEC-SEC-01 [P0] The section locator finds page ranges for: Objects of the Issue/Offer, Our Business, Our Promoters and Promoter Group, Our Group Companies, Outstanding Litigation and Material Developments, General Information (lead manager), Other Regulatory and Statutory Disclosures (past issues table). It uses the table of contents first, then heading regexes.
 - SPEC-SEC-02 [P0] A section counts only if its heading text is found on its start page; otherwise it is reported missing, never guessed.
 - SPEC-CLM-01 [P0] Cohere extracts typed claims per section: QuoteClaim, LeadManagerClaim, PastIssueClaim, DisclosedCase, PlaceClaim, PromoterClaim, GroupCompanyClaim, CustomerClaim.

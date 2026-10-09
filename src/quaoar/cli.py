@@ -35,7 +35,12 @@ EXIT_INPUT, EXIT_PARTIAL = 2, 3
 def scan(
     source: str = typer.Argument(..., help="prospectus pdf path or https url"),
     max_credits: int = typer.Option(0, help="SerpApi credit cap for this scan (0 = settings)"),
-    cutoff: str = typer.Option("", help="prospectus date YYYY-MM-DD for staleness rules"),
+    cutoff: str = typer.Option(
+        "", help="evidence date YYYY-MM-DD (default: the date printed on the prospectus)"
+    ),
+    now: bool = typer.Option(
+        False, "--now", help="read evidence as of today instead of the prospectus date"
+    ),
     jsonl: bool = typer.Option(False, "--jsonl", help="print raw events instead of pretty lines"),
     mode: str = typer.Option(
         "agent", help="agent: fill evidence gaps with a ReAct investigator; fixed: templates only"
@@ -55,7 +60,8 @@ def scan(
             [ConsoleSink(raw=jsonl)],
             max_credits,
             date.fromisoformat(cutoff) if cutoff else None,
-            mode,
+            mode=mode,
+            point_in_time=not now,
         )
     except (KeysExhaustedError, CreditBudgetExceededError) as exc:
         console.print(f"[yellow]stopped early:[/yellow] {escape(str(exc))}")
