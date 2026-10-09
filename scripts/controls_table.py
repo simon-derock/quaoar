@@ -43,7 +43,7 @@ def main(home: Path, doc: Path, heading: str, slug: str) -> None:
     lines = [
         f"### {heading}",
         "",
-        "| Issuer | Role | Flagged | Checks out / doesn't match / couldn't find | Searches paid in this run |",
+        "| Issuer | Role | Flagged | Checks out / doesn't match / couldn't find | Credits spent on this scan id (all runs) |",
         "|---|---|---|---|---:|",
         *rows,
         "",
