@@ -52,7 +52,7 @@ Then the question that matters: does it cry wolf? Three prospectuses with no kno
 | Trafiksol (red herring) | yes: vendor capital 1,770x | 8 / 1 / 1 |
 | Aelea Commodities (control) | no | 4 / 0 / 9 |
 | Indian Emulsifier (control) | no | 3 / 0 / 2 |
-| TBI Corn (control) | yes: a SEBI order from 2022 naming its lead manager | 2 / 1 / 8 |
+| TBI Corn (control) | yes: a 2021 SEBI order naming its lead manager | 3 / 1 / 7 |
 
 **Controls flagged: 1 of 3.** The first run flagged 2 of 3, mostly from Quaoar's own bugs (matching a vendor to a same-named company, reading the lead manager as the issuer). Those were fixed as identity and parsing bugs, with the threshold untouched, and the audit shows both runs. The TBI flag is a true record about the banker, not the company, and the card says so.
 
@@ -69,7 +69,7 @@ git clone https://github.com/simon-derock/quaoar && cd quaoar
 uv sync
 uv run quaoar replay fixtures/replay/trafiksol
 ```
-This replays a recorded scan of the Trafiksol red herring prospectus. Other recorded cases are in `fixtures/replay/` (`uv run quaoar` then `/cases`).
+This replays a recorded scan of the Trafiksol red herring prospectus. Other recorded cases are in `fixtures/replay/` (`uv run quaoar` then `/cases`). `teamtech` is a prospectus never seen before, downloaded from sebi.gov.in and scanned live to test user documents; it has no ground truth and is not part of the evaluation.
 
 ## The terminal
 ```

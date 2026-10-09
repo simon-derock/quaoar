@@ -1,27 +1,27 @@
 {
   "scan_id": "q6edb74c3085",
   "company": "TBI CORN LIMITED",
-  "consistent": 2,
+  "consistent": 3,
   "inconsistent": 1,
-  "unverified": 8,
+  "unverified": 7,
   "top": [
     {
       "check": "banker",
       "rule": "BK-04",
-      "subject": "SS CORPORATE SECURITIES LIMITED",
+      "subject": "Swastika Investmart Limited",
       "status": "inconsistent",
-      "text": "A SEBI order naming SS CORPORATE SECURITIES LIMITED turned up in search, dated Jun 2022.",
+      "text": "A SEBI order naming Swastika Investmart Limited turned up in search, dated Mar 2021.",
       "observed": "",
       "threshold": "",
-      "page": 50,
+      "page": 43,
       "evidence": [
         {
           "engine": "duckduckgo",
-          "request": "8133e118a99f79da",
-          "search_id": "6ac8a0cfde20ee[phone]",
-          "url": "https://www.sebi.gov.in/enforcement/orders/jun-2022/adjudication-order-against-ss-corporate-securities-ltd-in-the-matter-of-delta-leasing-and-finance-ltd-_60461.html",
-          "title": "Adjudication Order against SS Corporate Securities Ltd. in the ... - SEBI",
-          "snippet": "Adjudication Order against SS Corporate Securities Ltd. in the matter of Delta Leasing and Finance Ltd.",
+          "request": "7e8b2deca8cd27b3",
+          "search_id": "6ac8ae320bbc38257ce81294",
+          "url": "https://www.sebi.gov.in/enforcement/orders/mar-2021/adjudication-order-in-the-matter-of-swastika-investmart-limited_49724.html",
+          "title": "Adjudication Order in the matter of Swastika Investmart Limited",
+          "snippet": "Securities and Exchange Board of India is made for protect the interests of investors in securities and to promote the development of, and to regulate the securities market and for matters connected therewith or incidental thereto",
           "published": null
         }
       ],
@@ -126,20 +126,20 @@
     {
       "check": "banker",
       "rule": "BK-04",
-      "subject": "SS CORPORATE SECURITIES LIMITED",
+      "subject": "Swastika Investmart Limited",
       "status": "inconsistent",
-      "text": "A SEBI order naming SS CORPORATE SECURITIES LIMITED turned up in search, dated Jun 2022.",
+      "text": "A SEBI order naming Swastika Investmart Limited turned up in search, dated Mar 2021.",
       "observed": "",
       "threshold": "",
-      "page": 50,
+      "page": 43,
       "evidence": [
         {
           "engine": "duckduckgo",
-          "request": "8133e118a99f79da",
-          "search_id": "6ac8a0cfde20ee[phone]",
-          "url": "https://www.sebi.gov.in/enforcement/orders/jun-2022/adjudication-order-against-ss-corporate-securities-ltd-in-the-matter-of-delta-leasing-and-finance-ltd-_60461.html",
-          "title": "Adjudication Order against SS Corporate Securities Ltd. in the ... - SEBI",
-          "snippet": "Adjudication Order against SS Corporate Securities Ltd. in the matter of Delta Leasing and Finance Ltd.",
+          "request": "7e8b2deca8cd27b3",
+          "search_id": "6ac8ae320bbc38257ce81294",
+          "url": "https://www.sebi.gov.in/enforcement/orders/mar-2021/adjudication-order-in-the-matter-of-swastika-investmart-limited_49724.html",
+          "title": "Adjudication Order in the matter of Swastika Investmart Limited",
+          "snippet": "Securities and Exchange Board of India is made for protect the interests of investors in securities and to promote the development of, and to regulate the securities market and for matters connected therewith or incidental thereto",
           "published": null
         }
       ],
@@ -148,12 +148,12 @@
     {
       "check": "banker",
       "rule": "BK-05",
-      "subject": "SS CORPORATE SECURITIES LIMITED",
-      "status": "unverified",
-      "text": "Couldn't read SS CORPORATE SECURITIES LIMITED's past-issues table.",
-      "observed": "",
+      "subject": "Swastika Investmart Limited",
+      "status": "consistent",
+      "text": "No SEBI order naming past issuer of Swastika Investmart Limited turned up in search.",
+      "observed": "0 of 1 past issues",
       "threshold": "",
-      "page": 50,
+      "page": 43,
       "evidence": [],
       "pit_ok": true
     },
@@ -162,7 +162,7 @@
       "rule": "LT-03",
       "subject": "TBI CORN LIMITED",
       "status": "consistent",
-      "text": "No court or SEBI matter naming the issuer or 0 promoters turned up in search before Jun 2024 beyond the 3 the prospectus discloses.",
+      "text": "No court or SEBI matter naming the issuer or 3 promoters turned up in search before Jun 2024 beyond the 3 the prospectus discloses.",
       "observed": "0 undisclosed of 1 found",
       "threshold": "",
       "page": 1,

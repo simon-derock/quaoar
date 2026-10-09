@@ -152,7 +152,7 @@
       "text": "No SEBI order naming Ekadrisht Capital Private Limited turned up in search before Jul 2024.",
       "observed": "",
       "threshold": "",
-      "page": 70,
+      "page": 63,
       "evidence": [],
       "pit_ok": true
     },
@@ -164,7 +164,7 @@
       "text": "Couldn't read Ekadrisht Capital Private Limited's past-issues table.",
       "observed": "",
       "threshold": "",
-      "page": 70,
+      "page": 63,
       "evidence": [],
       "pit_ok": true
     },
