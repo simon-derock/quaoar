@@ -9,8 +9,10 @@ TARGETS: dict[str, re.Pattern[str]] = {
     "general_information": re.compile(r"^GENERAL INFORMATION$"),
     "objects": re.compile(r"^OBJECTS? OF THE (ISSUE|OFFER)$"),
     "business": re.compile(r"^(OUR )?BUSINESS( OVERVIEW)?$"),
-    "promoters": re.compile(r"^OUR PROMOTERS?( AND PROMOTER GROUP)?$"),
-    "group_companies": re.compile(r"^(OUR )?GROUP COMPAN(Y|IES)$"),
+    "promoters": re.compile(r"^OUR PROMOTERS?( AND PROMOTERS?[' ]?S? GROUPS?)?$"),
+    "group_companies": re.compile(
+        r"^(INFORMATION WITH RESPECT TO )?(OUR )?GROUP COMPAN(Y|IES)( ?/ ?ENTITIES)?$"
+    ),
     # filings misspell this one ("DEVELOPEMENT"), so any DEVELOP... word counts
     "litigation": re.compile(r"^OUTSTANDING LITIGATIONS? AND MATERIAL DEVELOP\w*$"),
     "regulatory": re.compile(r"^OTHER REGULATORY AND STATUTORY DISCLOSURES$"),
@@ -101,8 +103,13 @@ def top_lines(page: Page) -> set[str]:
     return {normal(line) for line in lines[:TOP_LINES]}
 
 
+SECTION_PREFIX = re.compile(r"^SECTION [IVXL]+ ?[-:] ?")
+
+
 def target_name(title: str) -> str | None:
-    return next((name for name, pattern in TARGETS.items() if pattern.match(title)), None)
+    # some prospectuses title a chapter "SECTION V - GENERAL INFORMATION"; the prefix is not part of the name
+    bare = SECTION_PREFIX.sub("", title)
+    return next((name for name, pattern in TARGETS.items() if pattern.match(bare)), None)
 
 
 def clean_lines(text: str) -> list[str]:

@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from quaoar.prospectus.pdf import Page, read_pages
-from quaoar.prospectus.sections import locate_sections
+from quaoar.prospectus.sections import locate_sections, target_name
 
 TOC = [
     "Table of Contents",
@@ -98,3 +98,23 @@ def test_real_trafiksol_prospectus_sections() -> None:
     assert starts["litigation"] == 270
     assert starts["regulatory"] == 282
     assert found.missing == ()
+
+
+@pytest.mark.parametrize(
+    ("title", "name"),
+    [
+        ("SECTION V - GENERAL INFORMATION", "general_information"),
+        ("OUR PROMOTERS AND PROMOTERS GROUP", "promoters"),
+        ("OUR PROMOTER AND PROMOTER GROUP", "promoters"),
+        ("SECTION XI - INFORMATION WITH RESPECT TO GROUP COMPANIES/ ENTITIES", "group_companies"),
+        ("OUR GROUP COMPANY", "group_companies"),
+        ("SECTION XII - OTHER REGULATORY AND STATUTORY DISCLOSURES", "regulatory"),
+        ("OUTSTANDING LITIGATIONS AND MATERIAL DEVELOPMENTS", "litigation"),
+        ("SECTION VII - PARTICULARS OF THE ISSUE", None),
+        ("OUR MANAGEMENT", None),
+    ],
+)
+def test_title_variants_seen_in_real_prospectuses_map_to_the_same_section(
+    title: str, name: str | None
+) -> None:
+    assert target_name(title) == name
