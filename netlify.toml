@@ -1,4 +1,7 @@
-# netlify builds the static console; the api address comes from QUAOAR_API_URL at build time
+# netlify builds the static site from web/; the page plays its recorded cases with no api,
+# and only the beginner chat calls the replay-only api on render (address set at build time)
+# the site is served at https://quaoar.philipsimonderock.com: add it under
+# Site configuration > Domain management > Add a domain (netlify dns creates the record and the certificate)
 [build]
   base = "web"
   command = "npm ci && npm run build"
@@ -6,3 +9,10 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  QUAOAR_API_URL = "https://quaoar-api.onrender.com"
+
+# short, memorable install address: curl -LsSf https://quaoar.philipsimonderock.com/install | sh
+[[redirects]]
+  from = "/install"
+  to = "/install.sh"
+  status = 200

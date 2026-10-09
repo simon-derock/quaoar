@@ -20,10 +20,11 @@ and links to its source. It never says fraud, buy or sell.
 ## Tools (MCP server `quaoar`)
 - `list_replays` and `replay_card <name>`: recorded cases, no keys needed. Start here.
 - `scan_prospectus <pdf path or https url>`: a live scan. Costs SerpApi credits (cap 25). `mode` is `agent` (a bounded ReAct investigator fills evidence gaps) or `fixed`.
+- `ask_card <name or scan_id> <question>`: a plain-language answer about a card, citing its lines (L<n>) and any follow-up search results (S<n>). Quote the answer with its citations; it never changes a status.
 - `saved_card <scan_id>`, `draft_comment <scan_id>`, `ledger_stats`.
 
 ## Playbooks
-**Investor quick check:** `scan_prospectus` with the PDF, then read the card in plain words:
+**Investor quick check:** `scan_prospectus` with the PDF, then read the card in plain words (follow-up questions go to `ask_card`):
 the counts first, then each "doesn't match" line with its proof link. Say what was *not* found
 as "couldn't find", never as a problem.
 

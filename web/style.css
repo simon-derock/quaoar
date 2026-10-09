@@ -260,3 +260,46 @@ footer a:hover { color: var(--green); }
 }
 @media (max-width: 560px) {
   .install { font-size: 11.5px; } .install-note { font-size: 11.5px; } .credit { font-size: 9.5px; } .bento { grid-template-columns: 1fr; } .compare { grid-template-columns: 1fr 1fr; } .compare .ratio { grid-column: 1 / -1; } .r { grid-template-columns: 10.5ch minmax(0, 1fr); } .r .mt { grid-column: 2; text-align: left; } }
+
+/* docs button beside the GitHub icon */
+.docs-btn { padding: 9px 16px; border: 1px solid var(--line); border-radius: 999px; font: 500 13px/1 var(--sans); color: var(--fg); transition: border-color 150ms ease, background-color 150ms ease, transform var(--dur-1) var(--ease-out-quad); }
+.docs-btn:hover { border-color: var(--muted); background: rgba(238, 240, 242, 0.05); }
+.docs-btn:active { transform: scale(0.98); }
+.docs-btn[aria-current="page"] { border-color: color-mix(in srgb, var(--green) 55%, transparent); color: var(--green); }
+.install-note a { color: var(--soft); border-bottom: 1px solid var(--line); transition: color 150ms ease; }
+.install-note a:hover { color: var(--fg); }
+
+/* the docs page: a sticky contents list and a reading column */
+.docs { display: grid; grid-template-columns: 220px minmax(0, 760px); gap: clamp(32px, 6vw, 96px); justify-content: center; padding-top: 130px; }
+.toc { position: sticky; top: 110px; align-self: start; display: grid; gap: 2px; max-height: calc(100vh - 140px); overflow: auto; scrollbar-width: none; }
+.toc p { margin: 18px 0 6px; font: 500 11px var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+.toc p:first-child { margin-top: 0; }
+.toc a { padding: 6px 12px; border-left: 2px solid var(--line); font-size: 14px; color: var(--muted); transition: color 150ms ease, border-color 150ms ease; }
+.toc a:hover { color: var(--fg); }
+.toc a.on { color: var(--fg); border-left-color: var(--green); }
+.prose h1 { font: 300 clamp(44px, 5.4vw, 68px)/1.02 var(--serif); font-variation-settings: "opsz" 144, "SOFT" 50; letter-spacing: -0.035em; }
+.prose .lead { margin-top: 22px; font-size: 18px; color: var(--soft); }
+.prose h2 { margin: 72px 0 0; padding-top: 8px; font: 400 32px/1.15 var(--serif); font-variation-settings: "opsz" 72, "SOFT" 50; letter-spacing: -0.02em; scroll-margin-top: 100px; }
+.prose h3 { margin: 34px 0 0; font: 500 17px var(--sans); color: var(--fg); }
+.prose p, .prose li { margin-top: 14px; font-size: 16px; line-height: 1.7; color: var(--soft); }
+.prose ul { padding-left: 20px; }
+.prose a { color: var(--fg); border-bottom: 1px solid color-mix(in srgb, var(--green) 55%, transparent); transition: border-color 150ms ease; }
+.prose a:hover { border-color: var(--green); }
+.prose b { color: var(--fg); font-weight: 500; }
+.prose code { padding: 2px 6px; border-radius: 6px; background: rgba(238, 240, 242, 0.07); font: 400 13.5px var(--mono); color: var(--fg); }
+.prose pre { margin: 18px 0 0; padding: 18px 20px; border: 1px solid var(--line); border-radius: 14px; background: #08090a; overflow-x: auto; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+.prose pre code { padding: 0; background: none; font-size: 13px; line-height: 1.75; color: var(--soft); white-space: pre; }
+.prose table { width: 100%; margin-top: 20px; border-collapse: collapse; font-size: 14.5px; }
+.prose th { padding: 10px 12px; text-align: left; font: 500 12px var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--line); }
+.prose td { padding: 12px; vertical-align: top; color: var(--soft); border-bottom: 1px solid var(--line); line-height: 1.6; }
+.prose td:first-child { white-space: nowrap; }
+.pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font: 600 11.5px/1.7 var(--sans); }
+.pill.ok { color: var(--green); background: color-mix(in srgb, var(--green) 13%, transparent); }
+.pill.bad { color: var(--red); background: color-mix(in srgb, var(--red) 15%, transparent); }
+.pill.none { color: var(--muted); background: rgba(126, 132, 141, 0.15); }
+.prose .end { margin-top: 64px; color: var(--dim); }
+@media (max-width: 980px) {
+  .docs { grid-template-columns: minmax(0, 1fr); padding-top: 100px; } .toc { display: none; }
+  .prose td:first-child { white-space: normal; } .prose table { display: block; overflow-x: auto; }
+  .docs-btn { padding: 8px 13px; }
+}

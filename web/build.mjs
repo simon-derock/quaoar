@@ -2,7 +2,9 @@
 import { copyFileSync, mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 
 mkdirSync("dist/fonts", { recursive: true });
-for (const file of ["index.html", "style.css", "_headers"]) copyFileSync(file, `dist/${file}`);
+for (const file of ["index.html", "docs.html", "style.css", "_headers", "favicon.svg", "favicon-32.png", "apple-touch-icon.png", "og.png"]) copyFileSync(file, `dist/${file}`);
+// the installer is served from the site too, so the branded url works once the domain is live
+copyFileSync("../install.sh", "dist/install.sh");
 const FONTS = {
   "fraunces.woff2": "@fontsource-variable/fraunces/files/fraunces-latin-full-normal.woff2",
   "fraunces-italic.woff2": "@fontsource-variable/fraunces/files/fraunces-latin-full-italic.woff2",

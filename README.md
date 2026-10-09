@@ -21,6 +21,8 @@
 </p>
 
 <p align="center">
+  <a href="https://quaoar.philipsimonderock.com">Website</a> ·
+  <a href="https://quaoar.philipsimonderock.com/docs.html">Docs</a> ·
   <a href="#try-it-in-60-seconds">Try it</a> ·
   <a href="#what-it-checks">What it checks</a> ·
   <a href="#proof-that-it-works">Results</a> ·
@@ -115,12 +117,12 @@ Then the question that matters: does it cry wolf? Three prospectuses with no kno
 
 
 ## Try it in 60 seconds
-No API keys needed. With [uv](https://docs.astral.sh/uv/) installed, one line:
+No API keys needed. One line on macOS or Linux (it installs [uv](https://docs.astral.sh/uv/) first if you don't have it):
 
 ```bash
-uv tool install git+https://github.com/simon-derock/quaoar   # then run: quaoar
+curl -LsSf https://raw.githubusercontent.com/simon-derock/quaoar/main/install.sh | sh   # then run: quaoar
 ```
-Or run it once without installing: `uvx --from git+https://github.com/simon-derock/quaoar quaoar replay trafiksol`.
+Already have uv: `uv tool install git+https://github.com/simon-derock/quaoar`. Run it once without installing: `uvx --from git+https://github.com/simon-derock/quaoar quaoar replay trafiksol`. Full guide: [docs](https://quaoar.philipsimonderock.com/docs.html).
 
 From a clone:
 ```bash
@@ -196,4 +198,4 @@ Tests are written first and cite the spec they cover (`# spec: SPEC-...`). Timin
 ## Credits
 Search data by [SerpApi](https://serpapi.com). Language model: Cohere. Agent framework: PydanticAI. MIT licence.
 
-Built by Philip Simon Derock ([philipsimonderock.com](https://philipsimonderock.com)) for the SerpApi India Hackathon 2026.
+Built by Philip Simon Derock ([philipsimonderock.com](https://philipsimonderock.com)) for the SerpApi India Hackathon 2026. Favicon dove: [Font Awesome Free](https://fontawesome.com/license/free) (CC BY 4.0).

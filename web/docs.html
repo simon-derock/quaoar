@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0a0b0c">
+  <title>Quaoar docs · install, commands, checks and agents</title>
+  <meta name="description" content="How to install Quaoar, run a check on an SME IPO prospectus, read the card, and use its agents from the terminal or your own agent.">
+  <link rel="canonical" href="https://quaoar.philipsimonderock.com/docs.html">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preload" href="fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="docs-page">
+  <div class="glow" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="top">
+    <a class="word" href="index.html" aria-label="Quaoar home">QUAOAR</a>
+    <nav aria-label="Site">
+      <a href="index.html#product">Product</a>
+      <a href="index.html#how">How it works</a>
+      <a href="index.html#checks">Checks</a>
+      <a href="index.html#ask">Ask</a>
+      <a href="index.html#questions">Questions</a>
+    </nav>
+    <div class="right">
+      <p class="credit">Built by Philip Simon Derock<br>for the <a href="https://serpapi.com" rel="noopener noreferrer" target="_blank">SerpApi</a> India Hackathon 2026</p>
+      <a class="docs-btn" href="docs.html" aria-current="page">Docs</a>
+      <a class="gh" href="https://github.com/simon-derock/quaoar" rel="noopener noreferrer" target="_blank" aria-label="Quaoar on GitHub">
+        <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <main class="docs">
+    <aside class="toc" aria-label="On this page">
+      <p>Getting started</p>
+      <a href="#overview">Overview</a>
+      <a href="#install">Install</a>
+      <a href="#quick-start">Quick start</a>
+      <a href="#live-scan">Scan a prospectus</a>
+      <p>Using it</p>
+      <a href="#terminal">Terminal commands</a>
+      <a href="#cli">Command line</a>
+      <a href="#card">Reading the card</a>
+      <a href="#rules">Checks and rules</a>
+      <a href="#agents">AI agents</a>
+      <a href="#mcp">From your own agent</a>
+      <p>Reference</p>
+      <a href="#evidence">Evidence and privacy</a>
+      <a href="#serpapi">How it uses SerpApi</a>
+      <a href="#limits">Limits and evaluation</a>
+    </aside>
+
+    <article class="prose">
+      <h1 id="overview">Quaoar docs</h1>
+      <p class="lead">Quaoar reads an SME IPO prospectus, pulls out the claims that can be checked against the outside world, and checks each one through SerpApi. The result is a card: every line says <b>checks out</b>, <b>doesn't match</b> or <b>couldn't find</b>, with the source behind it. It never gives a verdict on the company and never gives investment advice.</p>
+
+      <h2 id="install">Install</h2>
+      <p>One line on macOS or Linux. It installs <a href="https://docs.astral.sh/uv/" rel="noopener noreferrer" target="_blank">uv</a> first if you don't have it, then the <code>quaoar</code> command (Python 3.13 is fetched if needed).</p>
+      <pre><code>curl -LsSf https://raw.githubusercontent.com/simon-derock/quaoar/main/install.sh | sh</code></pre>
+      <p>Already have uv:</p>
+      <pre><code>uv tool install git+https://github.com/simon-derock/quaoar</code></pre>
+      <p>Try it once without installing anything:</p>
+      <pre><code>uvx --from git+https://github.com/simon-derock/quaoar quaoar replay trafiksol</code></pre>
+      <p>From source, for development:</p>
+      <pre><code>git clone https://github.com/simon-derock/quaoar && cd quaoar
+uv sync
+uv run quaoar</code></pre>
+
+      <h2 id="quick-start">Quick start</h2>
+      <p>No API keys are needed to watch a recorded check and ask about it.</p>
+      <pre><code>$ quaoar
+› /replay trafiksol          watch the recorded Trafiksol check
+› /proof 2                   the source behind line 2: page, date, SerpApi search id
+› why was this flagged?      the analyst answers, citing card lines
+› /cases                     every recorded case</code></pre>
+      <p>New to IPOs? Type <code>hi</code>, <code>what is an SME IPO</code> or <code>where do I get a prospectus</code>. Plain answers are built in, in English and basic Hinglish.</p>
+
+      <h2 id="live-scan">Scan a prospectus</h2>
+      <p>A live scan needs a SerpApi key and a Cohere key. Put them in a <code>.env</code> file in the folder you run Quaoar from:</p>
+      <pre><code>SERPAPI_API_KEYS=your-serpapi-key
+COHERE_API_KEYS=your-cohere-key</code></pre>
+      <p>Then check the setup without spending credits, and scan:</p>
+      <pre><code>quaoar doctor
+quaoar scan path/to/red-herring-prospectus.pdf
+quaoar scan https://www.sebi.gov.in/.../prospectus.pdf</code></pre>
+      <table>
+        <thead><tr><th>Option</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>--mode agent|fixed</code></td><td><code>agent</code> (default) lets the investigator fill evidence gaps; <code>fixed</code> uses query templates only.</td></tr>
+          <tr><td><code>--max-credits N</code></td><td>Caps the SerpApi credits this scan may spend (default 45).</td></tr>
+          <tr><td><code>--cutoff YYYY-MM-DD</code></td><td>Reads evidence as of this date. By default it is the date printed on the prospectus.</td></tr>
+          <tr><td><code>--now</code></td><td>Reads evidence up to today instead.</td></tr>
+          <tr><td><code>--jsonl</code></td><td>Prints the raw event stream.</td></tr>
+        </tbody>
+      </table>
+      <p>A fresh scan costs about 12 to 37 searches. Repeating it costs nothing: every search and model read is kept in a local ledger. Exchange sites (NSE, BSE) forbid automated downloads, so Quaoar refuses their links; save the PDF yourself or use the lead manager's website. For the version an investor sees while the issue is open, scan the red herring prospectus (RHP).</p>
+
+      <h2 id="terminal">Terminal commands</h2>
+      <table>
+        <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>/scan &lt;pdf|url&gt;</code></td><td>Scans a prospectus; a path or URL typed on its own does the same.</td></tr>
+          <tr><td><code>/replay &lt;name&gt;</code></td><td>Plays a recorded case with no keys.</td></tr>
+          <tr><td><code>/cases</code></td><td>Lists the recorded cases.</td></tr>
+          <tr><td><code>/card</code></td><td>Shows the last card again.</td></tr>
+          <tr><td><code>/proof &lt;n&gt;</code></td><td>The evidence behind line n: URL, date, engine, SerpApi search id.</td></tr>
+          <tr><td><code>/ask &lt;question&gt;</code></td><td>Asks the analyst about the card. Any open question with a card on screen does the same.</td></tr>
+          <tr><td><code>/trace</code></td><td>What caused what in the last scan.</td></tr>
+          <tr><td><code>/comment</code></td><td>Drafts a neutral public-comment letter from the lines that didn't match. You send it; Quaoar never does.</td></tr>
+          <tr><td><code>/mode agent|fixed</code></td><td>How evidence gaps are filled in the next scan.</td></tr>
+          <tr><td><code>/budget &lt;n&gt;</code></td><td>Credit cap for the next live scan.</td></tr>
+          <tr><td><code>/credits</code></td><td>Searches left per key and the cache hit rate.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="cli">Command line</h2>
+      <table>
+        <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>quaoar</code></td><td>Opens the interactive terminal.</td></tr>
+          <tr><td><code>quaoar scan &lt;pdf|url&gt;</code></td><td>Runs a check and saves the card under <code>~/.quaoar/scans</code>.</td></tr>
+          <tr><td><code>quaoar ask &lt;case|scan-id&gt; "&lt;question&gt;"</code></td><td>Asks the analyst about a recorded case or a saved scan.</td></tr>
+          <tr><td><code>quaoar replay &lt;case&gt;</code></td><td>Plays a recorded case.</td></tr>
+          <tr><td><code>quaoar card &lt;scan-id&gt;</code></td><td>Prints a saved card.</td></tr>
+          <tr><td><code>quaoar comment &lt;scan-id&gt;</code></td><td>Drafts the public-comment letter.</td></tr>
+          <tr><td><code>quaoar diff &lt;earlier&gt; &lt;later&gt;</code></td><td>Compares two versions of a prospectus (draft, red herring, final). Reads claims only, no searches.</td></tr>
+          <tr><td><code>quaoar doctor</code></td><td>Checks keys, model access and the ledger without spending credits.</td></tr>
+          <tr><td><code>quaoar ledger stats|verify</code></td><td>Credits by engine and key, cache hit rate; verifies stored responses.</td></tr>
+          <tr><td><code>quaoar keys status</code></td><td>Searches left on each SerpApi key.</td></tr>
+          <tr><td><code>quaoar serve</code></td><td>Runs the replay-only web API.</td></tr>
+          <tr><td><code>quaoar mcp</code></td><td>Runs the MCP server over stdio.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="card">Reading the card</h2>
+      <table>
+        <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill ok">checks out</span></td><td>Public evidence agrees with the prospectus.</td></tr>
+          <tr><td><span class="pill bad">doesn't match</span></td><td>Public evidence disagrees, and the source is shown. It is a reason to look closer, not a conclusion.</td></tr>
+          <tr><td><span class="pill none">couldn't find</span></td><td>No public evidence turned up. Small private firms often barely appear online, so this is common and is never counted against a company.</td></tr>
+        </tbody>
+      </table>
+      <p>Statuses come only from fixed rules, never from a language model. The card counts the three kinds and gives no overall score.</p>
+
+      <h2 id="rules">Checks and rules</h2>
+      <table>
+        <thead><tr><th>Rule</th><th>Check</th><th>Doesn't match when</th></tr></thead>
+        <tbody>
+          <tr><td><code>VX-02</code></td><td>Vendor</td><td>Shown as couldn't find when the vendor isn't on company-registry pages, or has no company form in its name.</td></tr>
+          <tr><td><code>VX-03</code></td><td>Vendor</td><td>The quote is 100 times or more the vendor's paid-up capital.</td></tr>
+          <tr><td><code>VX-04</code></td><td>Vendor</td><td>The registry lists the vendor as struck off, dormant, dissolved or in liquidation, or its last balance sheet is over 18 months older than the prospectus.</td></tr>
+          <tr><td><code>VX-05</code></td><td>Vendor</td><td>Its Google Maps listing is marked permanently closed.</td></tr>
+          <tr><td><code>VX-06</code></td><td>Vendor</td><td>Court or SEBI pages naming the vendor are dated on or before the prospectus.</td></tr>
+          <tr><td><code>SV-02</code></td><td>Premises</td><td>The registered office, factory or warehouse is closed on Google Maps.</td></tr>
+          <tr><td><code>SV-04</code></td><td>Premises</td><td>A factory or warehouse is listed on Maps as a residential place.</td></tr>
+          <tr><td><code>BK-04</code></td><td>Lead manager</td><td>A SEBI order names the merchant banker before the prospectus date.</td></tr>
+          <tr><td><code>BK-05</code></td><td>Lead manager</td><td>A SEBI order names a company in the banker's past-issues table.</td></tr>
+          <tr><td><code>LT-03</code></td><td>Litigation</td><td>Court or SEBI matters naming the issuer turn up beyond those the prospectus discloses.</td></tr>
+          <tr><td><code>NW-01</code></td><td>News</td><td>Dated news before the prospectus mentions SEBI action, a complaint or a trading halt.</td></tr>
+        </tbody>
+      </table>
+      <p>Promotion volume (YouTube videos, news articles) is shown as context and never counted. A person's name alone is never enough to match a record, and cards never name individuals.</p>
+
+      <h2 id="agents">AI agents</h2>
+      <p>Two PydanticAI agents on Cohere. Both gather and explain evidence; fixed rules set every status, and code checks everything an agent says before anyone sees it.</p>
+      <h3>The Investigator</h3>
+      <p>Runs during a scan when a fixed search comes back empty. It plans which evidence gap to close next and rewords the search: the registry city, the CIN, the name without its legal suffix. It may run at most 8 searches, spend 6 credits and make 10 model requests per investigation. It hands over the gaps it closed and the ones still open; the rules then read only the evidence.</p>
+      <h3>The Analyst</h3>
+      <p>Answers questions about a finished card. A retrieval step marks the lines related to the question; the model reads lines for free and runs a follow-up search only when no line covers the subject, at most 3 searches and 3 credits per question. Its answer is shown only if every cited line or result exists, every number appears in a cited source, and the wording and advice guards pass. Otherwise the card-only answer is shown. Advice and instruction-shaped questions get fixed replies without a model call.</p>
+      <pre><code>$ quaoar ask trafiksol "why was this flagged?"
+Line 2 doesn't match: the vendor named for the IPO money quoted ₹17.70 crore, while
+registry pages show its paid-up capital as ₹1 lakh, 1,770 times smaller.
+  line 2 · instafinancials.com (search 6ac7fe400e285d07c1e956d5)
+answered by the analyst agent</code></pre>
+      <p>In both, the model chooses search terms only; code builds each query, adds the site allowlist, and sends it through the same cache, key pool and credit budget as every other search. Web text is marked as untrusted data, and every trace is stored, so asking again replays it with no model call.</p>
+
+      <h2 id="mcp">From your own agent</h2>
+      <pre><code>claude mcp add quaoar -- uvx --from git+https://github.com/simon-derock/quaoar quaoar mcp</code></pre>
+      <table>
+        <thead><tr><th>Tool</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>list_replays</code></td><td>Recorded cases, no keys needed.</td></tr>
+          <tr><td><code>replay_card</code></td><td>The card of a recorded case.</td></tr>
+          <tr><td><code>ask_card</code></td><td>A cited answer about a recorded case or a saved scan.</td></tr>
+          <tr><td><code>scan_prospectus</code></td><td>A live check of a local PDF or https URL (uses credits).</td></tr>
+          <tr><td><code>saved_card</code></td><td>The card of a scan run earlier on this machine.</td></tr>
+          <tr><td><code>draft_comment</code></td><td>A neutral public-comment letter from the lines that didn't match.</td></tr>
+          <tr><td><code>ledger_stats</code></td><td>Credits by engine and key, and the cache hit rate.</td></tr>
+        </tbody>
+      </table>
+      <p>The skill file <code>skills/quaoar/SKILL.md</code> in the repository holds the playbooks and the language rules for agents.</p>
+
+      <h2 id="evidence">Evidence and privacy</h2>
+      <ul>
+        <li><b>As of the prospectus date.</b> Evidence is read as of the date printed on the prospectus, so later news can't change the card. Registry and Maps pages show today's state; strict before-listing evidence relies on dated news, orders and court records.</li>
+        <li><b>Untrusted text.</b> Text from PDFs and search results is cleaned of control characters and bidi tricks. Personal identifiers are masked before anything reaches the model, and injection-shaped text is flagged.</li>
+        <li><b>Every line has a source.</b> Each source keeps its URL, date, engine and SerpApi search id, so anyone can repeat the check.</li>
+        <li><b>Keys stay local.</b> Keys live in your <code>.env</code>, are redacted from every log and replay, and the public website holds none.</li>
+      </ul>
+
+      <h2 id="serpapi">How it uses SerpApi</h2>
+      <table>
+        <thead><tr><th>Engine</th><th>Used for</th></tr></thead>
+        <tbody>
+          <tr><td>DuckDuckGo (site-restricted)</td><td>Company-registry pages, SEBI orders, Indian Kanoon and IBBI records</td></tr>
+          <tr><td>Google Maps</td><td>Vendor and premises listings, open or closed, place type</td></tr>
+          <tr><td>Google News</td><td>Dated coverage before the prospectus date</td></tr>
+          <tr><td>YouTube</td><td>Promotion volume, shown as context only</td></tr>
+          <tr><td>Google</td><td>General web, the agents' last resort</td></tr>
+        </tbody>
+      </table>
+      <p>Every search goes through one client with a query guard, a cache, a credit budget and key rotation. Site-restricted searches use DuckDuckGo because, in a probe, Google returned off-site results for <code>site:</code> queries.</p>
+
+      <h2 id="limits">Limits and evaluation</h2>
+      <ul>
+        <li><b>Small evaluation.</b> One known case in two versions (Trafiksol) and three ordinary companies; no accuracy claim is made. <a href="https://github.com/simon-derock/quaoar/blob/main/docs/benchmark-audits/controls-2026-10-09.md" rel="noopener noreferrer" target="_blank">Control audit</a>.</li>
+        <li><b>Analyst.</b> Offline, 40 of 40 questions cited the expected line or said plainly the card had none; with the live model, 23 of 24. <a href="https://github.com/simon-derock/quaoar/blob/main/docs/benchmark-audits/analyst-2026-10-09.md" rel="noopener noreferrer" target="_blank">Analyst audit</a>.</li>
+        <li><b>A screen, not a verdict.</b> The 100× vendor-capital rule was fixed before any control was scanned. Real small suppliers can quote large amounts too.</li>
+        <li><b>Couldn't find is not a finding.</b> It is never counted against a company.</li>
+      </ul>
+      <p class="end">Facts with sources. Not investment advice.</p>
+    </article>
+  </main>
+
+  <footer>
+    <div class="f-brand">
+      <span class="mark">QUAOAR</span>
+      <span>Facts with sources. Not investment advice.</span>
+    </div>
+    <div class="f-made">
+      <span>Built for the <a href="https://serpapi.com" rel="noopener noreferrer" target="_blank">SerpApi</a> India Hackathon 2026</span>
+      <span>by Philip Simon Derock · <a href="https://philipsimonderock.com" rel="noopener noreferrer" target="_blank">philipsimonderock.com</a></span>
+    </div>
+    <a class="f-gh" href="https://github.com/simon-derock/quaoar" rel="noopener noreferrer" target="_blank">Source on GitHub</a>
+  </footer>
+  <script type="module" src="docs.js"></script>
+</body>
+</html>

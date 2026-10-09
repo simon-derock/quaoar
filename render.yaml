@@ -13,6 +13,6 @@ services:
       - key: QUAOAR_PUBLIC_MODE
         value: replay
       - key: QUAOAR_CORS_ORIGIN
-        sync: false
+        value: https://quaoar.philipsimonderock.com
       - key: PYTHON_VERSION
         value: "3.13"
