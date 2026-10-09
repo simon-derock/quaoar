@@ -1,6 +1,6 @@
 # memory (compact live state; PLAN_SPEC.md is canonical)
 updated: 2026-10-09T12:25+05:30
-phase: v0.1.0 candidate; checks, cli, replay, mcp, skill, api, web, README, video script done
+phase: v0.1.0 candidate; ReAct agent, diff, controls run 2 (1 of 3 flagged), README results, replay bundles done; remaining: deploy, video, submit (user)
 deadline: USER SAYS tonight 2026-10-09 23:00 IST (official page: Oct 10 23:59). Stop building by 19:00; 19:00-23:00 is deploy, video, submit.
 
 decisions:

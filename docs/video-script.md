@@ -17,7 +17,7 @@ Narrate as lines stream: sections found in milliseconds, claims read from the pr
 Read the "doesn't match" line: "The vendor quoted ₹17.70 crore, but its paid-up capital on the registry is ₹1 lakh: 1,770 times." Then `› /proof 2`: the registry page, the date, the SerpApi search id. Say what "couldn't find" means and that it is never held against a company.
 
 **1:55 - 2:20 It stays quiet when there is nothing to find**
-`› /replay aelea` (a clean control from the same banker). "On three ordinary companies, Quaoar reported <X of 3> lines that did not match." Read the real figure from `docs/benchmark-audits/controls-2026-10-09.md`.
+`› /replay aelea` (a clean control from the same banker). "On three ordinary companies, Quaoar flagged one: a real SEBI order from 2022 naming the lead manager of TBI Corn. The first run flagged two; those were our own bugs, and the audit shows both runs." Figures: `docs/benchmark-audits/controls-2026-10-09.md`.
 
 **2:20 - 2:45 Same core everywhere**
 `› /comment` for the neutral public-comment letter, then the MCP tool from Claude Code (`replay_card trafiksol`), then the Netlify page replaying the same case.
