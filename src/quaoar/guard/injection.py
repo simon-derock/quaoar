@@ -8,7 +8,8 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         "ignore_previous",
         re.compile(
             r"\b(?:ignore|disregard|forget)\s+(?:all\s+|any\s+|the\s+)?"
-            r"(?:previous|prior|above|earlier)\s+(?:instructions?|rules?|prompts?|messages?)\b",
+            r"(?:previous|prior|above|earlier|your|these|those|my)\s+"
+            r"(?:instructions?|rules?|prompts?|messages?|guidelines?)\b",
             re.I,
         ),
     ),

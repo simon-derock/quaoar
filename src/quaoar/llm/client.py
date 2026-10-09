@@ -229,10 +229,28 @@ class LlmClient:
         limits: UsageLimits,
         parent: str | None = None,
     ) -> AgentRun[T]:
+        run = self.run_agent_or_text(
+            task, output, system, brief, tools, limits, parent, text_ok=False
+        )
+        value = run.output if isinstance(run.output, output) else None
+        return AgentRun(value, run.input_tokens, run.output_tokens, run.key_fp, run.latency_ns)
+
+    def run_agent_or_text[T: BaseModel](
+        self,
+        task: str,
+        output: type[T],
+        system: str,
+        brief: str,
+        tools: Sequence[Tool],
+        limits: UsageLimits,
+        parent: str | None = None,
+        *,
+        text_ok: bool = True,
+    ) -> AgentRun[T | str]:
         start = self._clock.ns()
 
-        def attempt(key: SecretStr) -> AgentRun[T]:
-            return self._agent_attempt(output, system, brief, tools, limits, key)
+        def attempt(key: SecretStr) -> AgentRun[T | str]:
+            return self._agent_attempt(output, system, brief, tools, limits, key, text_ok=text_ok)
 
         run, fp = self._across_keys(task, attempt)
         latency = self._clock.ns() - start
@@ -249,12 +267,16 @@ class LlmClient:
         tools: Sequence[Tool],
         limits: UsageLimits,
         key: SecretStr,
-    ) -> AgentRun[T]:
+        *,
+        text_ok: bool = False,
+    ) -> AgentRun[T | str]:
         tries = 0
+        # some models answer in prose instead of calling the output tool; a caller may accept that
+        kinds: list[object] = [ToolOutput(output), str] if text_ok else [ToolOutput(output)]
         while True:
             agent = Agent(
                 self._factory(self._model, key.get_secret_value()),
-                output_type=ToolOutput(output),
+                output_type=kinds,
                 instructions=system,
                 tools=list(tools),
                 retries=1,

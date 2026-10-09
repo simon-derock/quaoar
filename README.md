@@ -62,15 +62,35 @@ Statuses come only from fixed rules. The language model reads the prospectus int
 ### Evidence as of the prospectus date
 By default Quaoar reads evidence **as of the date printed on the prospectus**, so later news cannot change the card. A Trafiksol scan dated before the SEBI action shows the vendor mismatch and nothing else; `--now` reads everything up to today. For the version an investor sees while the issue is open, scan the red herring prospectus (RHP), not the final prospectus filed after bidding closes.
 
-### A bounded ReAct investigator
-When a fixed search comes back empty, a ReAct investigator (PydanticAI on Cohere) reformulates it: it adds the registry city, tries the CIN, drops the legal suffix. It only **gathers evidence**; fixed rules still decide every verdict. Its design:
+## Two AI agents, on a short leash
+Quaoar uses two PydanticAI agents on Cohere. Both can only **gather and explain evidence**: fixed rules set every status, and code checks everything an agent says before anyone sees it.
 
-- the model chooses search *terms* and a one-sentence `why`; code builds the query, adds the site allowlist and applies the same cache, key pool and credit budget as every other search;
-- at most 8 searches, 6 credits and 10 model requests per investigation; repeated searches are refused;
-- text from the web is untrusted data in the prompt, and injection-shaped text is flagged in the event stream;
-- the tool-call trace is stored, so re-running a scan replays it with no model call.
+| | The Investigator | The Analyst |
+|---|---|---|
+| **When** | during a scan, when a fixed search comes back empty | after a scan, when someone asks a question |
+| **Plans** | which evidence gap to close next, and how to reword the search (registry city, CIN, legal suffix) | which card lines answer the question (a retrieval step marks the related ones), and whether a search is needed at all |
+| **Tools** | registry, legal, Maps, news and web searches | `read_line` (free), plus registry, Maps, legal and news follow-ups |
+| **Budget** | 8 searches, 6 credits, 10 model requests | 3 searches, 3 credits, 10 model requests |
+| **Output** | a handoff: gaps closed and still open | an answer of at most 120 words, citing card lines (L2) and search results (S1) |
+| **Checked by code** | the rules read only the evidence; the model can't set a status | every citation must exist; every number must appear in a cited source; wording and advice guards must pass; otherwise the card-only answer is shown |
+| **Measured** | 5 gaps closed, 17 left open across five scans | 23/24 expected lines cited, 24/24 passed the wording guard, 6 credits for the first live run ([audit](docs/benchmark-audits/analyst-2026-10-09.md)) |
 
-Prompt structure and the measured behaviour are in [ADR-0002](docs/decisions/ADR-0002-investigator-prompt.md). How much it actually helped is reported below, unvarnished.
+Shared design, in both:
+- **Code builds the queries.** The model chooses search *terms* and writes a one-sentence `why`. Code adds the site allowlist and sends each search through the same cache, key pool and credit budget as every other search. Repeated searches are refused.
+- **Web text is data.** Search results are marked as untrusted data in the prompt, and injection-shaped text is flagged.
+- **Fixed replies need no model.** Advice questions and instruction-shaped questions get fixed replies.
+- **Traces are replayable.** Every tool-call trace is stored, so a scan or a question asked again replays with no model call.
+- **Works without a model.** With no keys or no model, the Analyst still answers from the card alone, deterministically.
+
+```bash
+quaoar ask trafiksol "why was this flagged?"
+```
+```
+Line 2 doesn't match: the vendor named for the IPO money quoted ₹17.70 crore, while registry pages show its paid-up capital as ₹1 lakh, 1,770 times smaller. That is a reason to look closer, not a conclusion.
+  line 2 · https://www.instafinancials.com/company/oasis-corpcare-private-limited-… (search 6ac7fe400e285d07c1e956d5)
+answered by the analyst agent
+```
+In the terminal, any question asked with a card on screen goes to the Analyst (or `/ask …`). From your own agent, it is the MCP tool `ask_card`. Prompt design and measured behaviour: [ADR-0002](docs/decisions/ADR-0002-investigator-prompt.md), [analyst audit](docs/benchmark-audits/analyst-2026-10-09.md).
 
 ## Proof that it works
 
@@ -87,7 +107,7 @@ Then the question that matters: does it cry wolf? Three prospectuses with no kno
 
 **Controls flagged: 1 of 3.** The first run flagged 2 of 3, mostly from Quaoar's own bugs (matching a vendor to a same-named company, reading the lead manager as the issuer). Those were fixed as identity and parsing bugs, with the threshold untouched, and the audit shows both runs. The TBI flag is a true record about the banker, not the company, and the card says so.
 
-**The ReAct investigator**, over the five scans: 15 investigations, 29 searches, 5 evidence gaps closed (1 registry, 4 Maps) and 17 left open. It helps at the margin and never changes a verdict.
+**The Investigator**, over the five scans: 15 investigations, 29 searches, 5 evidence gaps closed (1 registry, 4 Maps) and 17 left open. It helps at the margin and never changes a verdict.
 
 **A scan costs** about 12 to 37 SerpApi searches on a fresh prospectus, 0 on a replay. Four companies is not an accuracy claim.
 
@@ -122,7 +142,7 @@ QUAOAR · check every IPO before you apply
 ```
 Plain language works too ("show proof for 2"). A complete beginner can type "hi", "what is an SME IPO" or "where do I get a prospectus" and get a plain answer, in English or basic Hinglish. Advice questions ("should I apply?") get the facts and a plain disclaimer, not a view.
 
-Other commands: `quaoar scan`, `card`, `comment`, `diff`, `doctor` (checks keys, model access and the ledger without spending credits), `ledger stats|verify`, `keys status`, `export`, `replay`, `serve`, `mcp`.
+Other commands: `quaoar scan`, `ask`, `card`, `comment`, `diff`, `doctor` (checks keys, model access and the ledger without spending credits), `ledger stats|verify`, `keys status`, `export`, `replay`, `serve`, `mcp`.
 
 ## Run a live scan on your own prospectus
 ```bash
@@ -137,7 +157,7 @@ Exchange sites (NSE, BSE) forbid automated downloads, so Quaoar refuses their UR
 ```bash
 claude mcp add quaoar -- uvx --from git+https://github.com/simon-derock/quaoar quaoar mcp
 ```
-Tools: `list_replays`, `replay_card`, `scan_prospectus`, `saved_card`, `draft_comment`, `ledger_stats`. Copy [`skills/quaoar/SKILL.md`](skills/quaoar/SKILL.md) into your agent's skills folder for the playbooks and language rules.
+Tools: `list_replays`, `replay_card`, `ask_card`, `scan_prospectus`, `saved_card`, `draft_comment`, `ledger_stats`. Copy [`skills/quaoar/SKILL.md`](skills/quaoar/SKILL.md) into your agent's skills folder for the playbooks and language rules.
 
 ## How it is built
 ```mermaid

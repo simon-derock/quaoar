@@ -107,6 +107,7 @@ class Toolbox:
             return f"<results>search rejected ({exc.rule}); rephrase with plain company words</results>"
         except (SerpError, KeysExhaustedError):
             return f"<results>search unavailable; {BLOCKED}</results>"
+        self.book.searches += 1
         return self._observe(tool, kind, keys, result, clean_terms, why)
 
     def _function(self, name: str) -> Callable[[Terms, Why], str]:

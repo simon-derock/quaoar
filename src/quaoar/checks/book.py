@@ -47,6 +47,8 @@ class EvidenceBook:
     calls: list[ToolCall] = field(default_factory=list)
     credits: int = 0
     steps: int = 0
+    # searches that actually ran; steps also counts the ones the toolbox refused
+    searches: int = 0
     handoff: Handoff | None = None
 
     def of(self, tool: str) -> list[Hit]:

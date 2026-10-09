@@ -9,7 +9,14 @@ from pydantic_ai import Tool
 from pydantic_ai.usage import UsageLimits
 
 from quaoar.agent.tools import Toolbox
-from quaoar.analyst.evidence import evidence_text
+from quaoar.analyst.evidence import (
+    FLAG_WORDS,
+    NONE_FLAGGED,
+    TOPICS,
+    evidence_text,
+    pick_lines,
+    words,
+)
 from quaoar.analyst.prompts import ANALYST_PROMPT_VERSION, ANALYST_SYSTEM, analyst_brief
 from quaoar.checks.base import SearchPort, safe
 from quaoar.checks.book import EvidenceBook, ToolCall
@@ -21,6 +28,7 @@ from quaoar.guard.injection import scan_injection
 from quaoar.guard.pii import mask_pii
 from quaoar.guard.wording import banned_terms
 from quaoar.llm.client import LlmClient, LlmError
+from quaoar.primer import VERDICT, answer
 from quaoar.scoring.card import MARKS, Card
 
 FOLLOW_UP_TOOLS = ("search_registry", "search_maps", "search_legal", "search_news")
@@ -93,6 +101,12 @@ class Analyst:
             return Reply(ADVICE_REPLY, (), "fixed")
         if scan_injection(asked):
             return Reply(REFUSED, (), "fixed")
+        # "is it safe / worth it" gets the same plain no-verdict reply everywhere
+        if answer(asked) == VERDICT:
+            return Reply(VERDICT, (), "fixed")
+        # "why was this flagged" on a card where nothing failed to match has one exact answer
+        if card.inconsistent == 0 and words(asked) & FLAG_WORDS:
+            return Reply(NONE_FLAGGED, (), "evidence")
         if self._llm is None or self._search is None:
             return from_evidence(card, asked)
         return self._agent(card, asked, self._llm, self._search, parent)
@@ -125,18 +139,62 @@ class Analyst:
             return settle(trace.answer, card, book) or from_evidence(card, asked)
 
         tools = [line_reader(card), *toolbox.tools(FOLLOW_UP_TOOLS)]
-        brief = analyst_brief(card, asked, self._budget.max_searches)
+        related = [pick.number for pick in pick_lines(card, asked)]
+        brief = analyst_brief(card, asked, self._budget.max_searches, related)
         limits = UsageLimits(request_limit=self._budget.max_requests)
         try:
-            run = llm.run_agent("analyst", Answer, ANALYST_SYSTEM, brief, tools, limits, parent)
+            run = llm.run_agent_or_text(
+                "analyst", Answer, ANALYST_SYSTEM, brief, tools, limits, parent
+            )
         except LlmError:
             return from_evidence(card, asked)
-        trace = Trace(calls=book.calls, answer=run.output)
-        llm.remember(
-            key, "analyst", trace.model_dump_json().encode(), run.key_fp,
-            run.input_tokens, run.output_tokens, run.latency_ns,
-        )  # fmt: skip
-        return settle(run.output, card, book) or from_evidence(card, asked)
+        answer = run.output if not isinstance(run.output, str) else from_prose(run.output)
+        # an empty run is not recorded, so asking again gives the model another chance
+        if answer is not None:
+            trace = Trace(calls=book.calls, answer=answer)
+            llm.remember(
+                key, "analyst", trace.model_dump_json().encode(), run.key_fp,
+                run.input_tokens, run.output_tokens, run.latency_ns,
+            )  # fmt: skip
+        return settle(answer, card, book) or from_evidence(card, asked)
+
+
+PROSE_CITE = re.compile(r"\b([LS]\d{1,3})\b")
+CITE_MARKS = re.compile(r"\s*[\[(](?:\s*[LS]\d{1,3}\s*,?)+[\])]")
+
+
+SENTENCE = re.compile(r"(?<=[.!?])\s+")
+SUPPORTED = 0.6
+MONTHS = {m: m[:3] for m in ("january", "february", "march", "april", "june", "july", "august",
+          "september", "october", "november", "december")}  # fmt: skip
+
+
+def terms(text: str) -> set[str]:
+    return {MONTHS.get(w, w) for w in words(text)}
+
+
+def attribute(text: str, card: Card) -> list[str]:
+    # an answer that cites nothing can still be traced: most of each sentence must come from one line,
+    # counting the plain words for that line's check ("lead manager" for the banker check)
+    refs: list[str] = []
+    for sentence in filter(None, (part.strip() for part in SENTENCE.split(text))):
+        said = terms(sentence)
+        if not said:
+            continue
+        support = [
+            (len(said & (terms(s.text) | set(TOPICS.get(s.check, ())))) / len(said), n)
+            for n, s in enumerate(card.signals, start=1)
+        ]
+        share, best = max(support, key=lambda pair: (pair[0], -pair[1]))
+        if share < SUPPORTED:
+            return []
+        refs.append(f"L{best}")
+    return refs
+
+
+def from_prose(text: str) -> Answer:
+    # a prose answer keeps its inline ids as citations; the same checks then apply
+    return Answer(text=text[:MAX_TEXT], cites=PROSE_CITE.findall(text)[:8])
 
 
 def line_reader(card: Card) -> Tool:
@@ -170,13 +228,16 @@ def settle(answer: Answer | None, card: Card, book: EvidenceBook) -> Reply | Non
     # the model's answer is only shown if every citation exists and every word passes the guards
     if answer is None:
         return None
-    text = mask_pii(plain(answer.text)).text.strip()[:MAX_TEXT]
+    text = CITE_MARKS.sub("", mask_pii(plain(answer.text)).text).strip()[:MAX_TEXT]
     if not text or banned_terms(text) or VERDICT_WORDS.search(text):
         return None
-    cites = cited(answer.cites, card, book)
+    named = [*answer.cites, *mentioned_lines(text)]
+    cites = cited(named, card, book) or cited(attribute(text, card), card, book)
     if not cites and not UNKNOWN.search(text):
         return None
-    return Reply(text, cites, "agent", searches=book.steps, credits=book.credits)
+    if not numbers_grounded(text, sources_text(cites, card, book)):
+        return None
+    return Reply(text, cites, "agent", searches=book.searches, credits=book.credits)
 
 
 def cited(refs: list[str], card: Card, book: EvidenceBook) -> tuple[Cited, ...]:
@@ -201,6 +262,51 @@ def cited(refs: list[str], card: Card, book: EvidenceBook) -> tuple[Cited, ...]:
                 )
             )
     return tuple(out[:MAX_CITES])
+
+
+NUMBER = re.compile(r"\d[\d,]*(?:\.\d+)?")
+
+
+def numbers_of(text: str) -> set[float]:
+    found: set[float] = set()
+    for raw in NUMBER.findall(text):
+        try:
+            found.add(float(raw.replace(",", "")))
+        except ValueError:
+            continue
+    return found
+
+
+LINE_PHRASE = re.compile(r"\blines?\s+\d+(?:\s*(?:,|and|&)\s*\d+)*", re.I)
+
+
+def mentioned_lines(text: str) -> list[str]:
+    # "line 6 says" and "lines 1 and 3" are citations written in prose
+    return [f"L{n}" for phrase in LINE_PHRASE.findall(text) for n in re.findall(r"\d+", phrase)]
+
+
+def sources_text(cites: tuple[Cited, ...], card: Card, book: EvidenceBook) -> str:
+    # the card's context notes are part of what any answer may quote
+    parts: list[str] = [c.text for c in card.context]
+    for cite in cites:
+        number = int(cite.ref[1:])
+        if cite.ref[0] == "L":
+            signal = card.signals[number - 1]
+            parts += [
+                signal.text,
+                signal.observed,
+                *(f"{e.title} {e.snippet}" for e in signal.evidence),
+            ]
+        else:
+            item = book.hits[number - 1].item
+            parts += [str(item.get(k, "")) for k in ("title", "snippet", "address", "date")]
+    return " ".join(parts)
+
+
+def numbers_grounded(text: str, sources: str) -> bool:
+    # every number in an answer must be one its sources state; line numbers are allowed
+    allowed = numbers_of(sources) | {float(n) for n in range(0, 11)}
+    return numbers_of(text) <= allowed
 
 
 def from_evidence(card: Card, question: str) -> Reply:

@@ -29,6 +29,13 @@ NOT_COVERED = (
     "This card doesn't cover that. It checks the vendor, the premises, the lead manager, "
     "court and SEBI matters, and news; ask about one of those, or /proof <n> for a line's source."
 )
+TOPIC_NAMES = {
+    "vendor": "the vendor",
+    "site": "the company's premises",
+    "banker": "the lead manager",
+    "litigation": "court or SEBI matters",
+    "footprint": "news coverage",
+}
 NONE_FLAGGED = (
     "No line on this card fails to match. Lines marked couldn't find are gaps, not findings."
 )
@@ -69,7 +76,21 @@ def pick_lines(card: Card, question: str) -> list[Pick]:
     return [pick for _, pick in ranked[:MAX_LINES]]
 
 
+def missing_topic(card: Card, question: str) -> str | None:
+    # asked about something this card has no line on: say so rather than cite loosely related lines
+    asked = topics_of(words(question))
+    present = {s.check for s in card.signals}
+    absent = sorted(asked - present)
+    if asked and not asked & present:
+        names = " or ".join(TOPIC_NAMES[t] for t in absent)
+        return f"This card has no line about {names}: the scan found nothing it could check there."
+    return None
+
+
 def evidence_text(card: Card, question: str) -> tuple[str, list[int]]:
+    gap = missing_topic(card, question)
+    if gap is not None:
+        return gap, []
     picks = pick_lines(card, question)
     if not picks:
         flagged = words(question) & FLAG_WORDS
