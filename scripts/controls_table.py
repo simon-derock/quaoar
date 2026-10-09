@@ -14,10 +14,9 @@ CASES = (
     ("Indian Emulsifier", "control", "364487443e9c"),
     ("TBI Corn", "control", "6ab4ed705448"),
 )
-START, END = "<!-- results:start -->", "<!-- results:end -->"
 
 
-def main(home: Path, doc: Path, heading: str) -> None:
+def main(home: Path, doc: Path, heading: str, slug: str) -> None:
     db = sqlite3.connect(home / "ledger.sqlite3")
     results: list[CaseResult] = []
     rows, details = [], []
@@ -56,16 +55,18 @@ def main(home: Path, doc: Path, heading: str) -> None:
         "Lines that did not match:" if details else "No case produced a line that did not match.",
         *details,
     ]
-    write_block(doc, "\n".join(lines))
+    write_block(doc, slug, "\n".join(lines))
     sys.stdout.write("\n".join(lines) + "\n")
 
 
-def write_block(doc: Path, block: str) -> None:
+def write_block(doc: Path, slug: str, block: str) -> None:
+    # one block per run, so run 1 is never overwritten by run 2
+    start, end = f"<!-- results:{slug}:start -->", f"<!-- results:{slug}:end -->"
     text = doc.read_text(encoding="utf-8")
-    wrapped = f"{START}\n{block}\n{END}"
-    if START in text:
-        head, rest = text.split(START, 1)
-        text = head + wrapped + rest.split(END, 1)[1]
+    wrapped = f"{start}\n{block}\n{end}"
+    if start in text:
+        head, rest = text.split(start, 1)
+        text = head + wrapped + rest.split(end, 1)[1]
     else:
         text = text.rstrip("\n") + "\n\n" + wrapped + "\n"
     doc.write_text(text, encoding="utf-8")
@@ -85,4 +86,5 @@ def find_scan(home: Path, prefix: str) -> Path | None:
 
 if __name__ == "__main__":
     title = sys.argv[1] if len(sys.argv) > 1 else "Results"
-    main(Path.home() / ".quaoar", Path("docs/benchmark-audits/controls-2026-10-09.md"), title)
+    key = sys.argv[2] if len(sys.argv) > 2 else "run"
+    main(Path.home() / ".quaoar", Path("docs/benchmark-audits/controls-2026-10-09.md"), title, key)
