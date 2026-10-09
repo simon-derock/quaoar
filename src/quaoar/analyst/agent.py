@@ -160,7 +160,10 @@ class Analyst:
 
 
 PROSE_CITE = re.compile(r"\b([LS]\d{1,3})\b")
-CITE_MARKS = re.compile(r"\s*[\[(](?:\s*[LS]\d{1,3}\s*,?)+[\])]")
+CITE_MARKS = re.compile(
+    r"\s*(?:cites?:\s*)?[\[(]\s*[\"']?[LS]\d{1,3}[\"']?(?:\s*,\s*[\"']?[LS]\d{1,3}[\"']?)*\s*[\])]",
+    re.I,
+)
 
 
 SENTENCE = re.compile(r"(?<=[.!?])\s+")

@@ -235,3 +235,15 @@ def test_why_flagged_on_a_card_with_nothing_flagged_has_an_exact_answer(tmp_path
     assert ask.ask(clean, "why was this flagged?").text.startswith(
         "No line on this card fails to match"
     )
+
+
+def test_citation_markers_of_any_shape_are_removed_from_the_text() -> None:
+    from quaoar.analyst.agent import CITE_MARKS
+
+    for raw in (
+        'It does. ["L2"]',
+        "It does. [L2, S1]",
+        "It does. (L2)",
+        'It does.\n\nCites: ["L2", "L3"]',
+    ):
+        assert CITE_MARKS.sub("", raw).strip() == "It does.", raw
