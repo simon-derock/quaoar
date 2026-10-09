@@ -54,8 +54,16 @@ export function formatEvent(event: QEvent): string | null {
       const cost = d["cached"] === true ? "cache" : `${String(d["tokens_in"])}+${String(d["tokens_out"])} tok`;
       return `  read ${String(d["task"])} · ${cost} · ${String(d["latency_ms"])} ms`;
     }
-    case "stage":
-      return clean(String(d["name"] ?? "stage"));
+    case "agent": {
+      const flag = d["flagged"] ? ` [flagged ${clean(String(d["flagged"]))}]` : "";
+      return `  agent ${clean(String(d["tool"]))} "${clean(String(d["terms"]))}" · ${String(d["hits"])} hits · ${String(d["credits"])} cr · ${clean(String(d["why"])).slice(0, 110)}${flag}`;
+    }
+    case "stage": {
+      const name = clean(String(d["name"] ?? "stage"));
+      // show the one detail that makes a stage readable: the subject, the cutoff date, or the timing
+      const extra = d["subject"] ?? d["date"] ?? (d["ms"] === undefined ? undefined : `${String(d["ms"])} ms`);
+      return extra === undefined ? name : `${name} · ${clean(String(extra))}`;
+    }
     default:
       return null;
   }

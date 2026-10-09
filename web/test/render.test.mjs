@@ -23,6 +23,13 @@ test("events become terminal lines and unknown types are skipped", () => {
   const serp = { type: "serp", data: { engine: "google_maps", credits: 1, source: "live", latency_ms: 812 } };
   assert.equal(formatEvent(serp), "  search google_maps · 1 cr · live · 812 ms");
   assert.equal(formatEvent({ type: "stage", data: { name: "sections" } }), "sections");
+  assert.equal(formatEvent({ type: "stage", data: { name: "cutoff", date: "2024-09-03" } }), "cutoff · 2024-09-03");
+  assert.equal(formatEvent({ type: "stage", data: { name: "vendor", subject: "ACME LTD" } }), "vendor · ACME LTD");
+  assert.equal(formatEvent({ type: "stage", data: { name: "pages", ms: 12.5 } }), "pages · 12.5 ms");
+  const agent = { type: "agent", data: { tool: "search_maps", terms: "Acme Pune", hits: 2, credits: 1, why: "maps gap: city added", flagged: "" } };
+  assert.equal(formatEvent(agent), '  agent search_maps "Acme Pune" · 2 hits · 1 cr · maps gap: city added');
+  const hostile = { type: "agent", data: { tool: "search_web", terms: "x", hits: 0, credits: 0, why: "w", flagged: "ignore_previous" } };
+  assert.match(formatEvent(hostile) ?? "", /\[flagged ignore_previous\]/);
   assert.equal(formatEvent({ type: "signal", data: {} }), null);
 });
 
