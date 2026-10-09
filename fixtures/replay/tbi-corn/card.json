@@ -1,0 +1,201 @@
+{
+  "scan_id": "q6edb74c3085",
+  "company": "TBI CORN LIMITED",
+  "consistent": 2,
+  "inconsistent": 1,
+  "unverified": 8,
+  "top": [
+    {
+      "check": "banker",
+      "rule": "BK-04",
+      "subject": "SS CORPORATE SECURITIES LIMITED",
+      "status": "inconsistent",
+      "text": "A SEBI order naming SS CORPORATE SECURITIES LIMITED turned up in search, dated Jun 2022.",
+      "observed": "",
+      "threshold": "",
+      "page": 50,
+      "evidence": [
+        {
+          "engine": "duckduckgo",
+          "request": "8133e118a99f79da",
+          "search_id": "6ac8a0cfde20ee[phone]",
+          "url": "https://www.sebi.gov.in/enforcement/orders/jun-2022/adjudication-order-against-ss-corporate-securities-ltd-in-the-matter-of-delta-leasing-and-finance-ltd-_60461.html",
+          "title": "Adjudication Order against SS Corporate Securities Ltd. in the ... - SEBI",
+          "snippet": "Adjudication Order against SS Corporate Securities Ltd. in the matter of Delta Leasing and Finance Ltd.",
+          "published": null
+        }
+      ],
+      "pit_ok": true
+    }
+  ],
+  "signals": [
+    {
+      "check": "vendor",
+      "rule": "VX-02",
+      "subject": "Anpee -Tech Engineers (Civil and Structural Consultant)",
+      "status": "unverified",
+      "text": "Anpee -Tech Engineers (Civil and Structural Consultant) has no company form in its name (no 'Private Limited', 'Limited' or 'LLP'), so it may be a proprietorship or partnership. The company registry doesn't list those, and a registered company with the same name would be a different business, so no registry or court check was made.",
+      "observed": "",
+      "threshold": "",
+      "page": 77,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-05",
+      "subject": "Anpee -Tech Engineers (Civil and Structural Consultant)",
+      "status": "unverified",
+      "text": "Couldn't find Anpee -Tech Engineers (Civil and Structural Consultant) on Google Maps.",
+      "observed": "",
+      "threshold": "",
+      "page": 77,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-02",
+      "subject": "ARKA Sustainable Energy Solutions",
+      "status": "unverified",
+      "text": "ARKA Sustainable Energy Solutions has no company form in its name (no 'Private Limited', 'Limited' or 'LLP'), so it may be a proprietorship or partnership. The company registry doesn't list those, and a registered company with the same name would be a different business, so no registry or court check was made.",
+      "observed": "",
+      "threshold": "",
+      "page": 78,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-05",
+      "subject": "ARKA Sustainable Energy Solutions",
+      "status": "unverified",
+      "text": "ARKA Sustainable Energy Solutions has a Google Maps listing (Maharashtra 416416, India), but a name alone doesn't confirm it is the same business.",
+      "observed": "",
+      "threshold": "",
+      "page": 78,
+      "evidence": [
+        {
+          "engine": "google_maps",
+          "request": "66308bd173871d97",
+          "search_id": "6ac89841f7e996baecc829e3",
+          "url": "http://www.arkaenergy.co.in/",
+          "title": "ARKA SUSTAINABLE ENERGY SOLUTIONS PVT LTD",
+          "snippet": "Road, near Yamah Showroom, Sangli, Madhavnagar, Sangli Miraj Kupwad, Maharashtra 416416, India",
+          "published": null
+        }
+      ],
+      "pit_ok": false
+    },
+    {
+      "check": "site",
+      "rule": "SV-02",
+      "subject": "TBI CORN LIMITED",
+      "status": "unverified",
+      "text": "Couldn't find the registered office (MIDC, Miraj) on Google Maps.",
+      "observed": "",
+      "threshold": "",
+      "page": 41,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "site",
+      "rule": "SV-02",
+      "subject": "TBI CORN LIMITED",
+      "status": "unverified",
+      "text": "Couldn't find the other (Navrangpura, Ahmedabad) on Google Maps.",
+      "observed": "",
+      "threshold": "",
+      "page": 46,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "site",
+      "rule": "SV-02",
+      "subject": "TBI CORN LIMITED",
+      "status": "unverified",
+      "text": "Couldn't find the other (Andheri East, Mumbai) on Google Maps.",
+      "observed": "",
+      "threshold": "",
+      "page": 49,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "banker",
+      "rule": "BK-04",
+      "subject": "SS CORPORATE SECURITIES LIMITED",
+      "status": "inconsistent",
+      "text": "A SEBI order naming SS CORPORATE SECURITIES LIMITED turned up in search, dated Jun 2022.",
+      "observed": "",
+      "threshold": "",
+      "page": 50,
+      "evidence": [
+        {
+          "engine": "duckduckgo",
+          "request": "8133e118a99f79da",
+          "search_id": "6ac8a0cfde20ee[phone]",
+          "url": "https://www.sebi.gov.in/enforcement/orders/jun-2022/adjudication-order-against-ss-corporate-securities-ltd-in-the-matter-of-delta-leasing-and-finance-ltd-_60461.html",
+          "title": "Adjudication Order against SS Corporate Securities Ltd. in the ... - SEBI",
+          "snippet": "Adjudication Order against SS Corporate Securities Ltd. in the matter of Delta Leasing and Finance Ltd.",
+          "published": null
+        }
+      ],
+      "pit_ok": true
+    },
+    {
+      "check": "banker",
+      "rule": "BK-05",
+      "subject": "SS CORPORATE SECURITIES LIMITED",
+      "status": "unverified",
+      "text": "Couldn't read SS CORPORATE SECURITIES LIMITED's past-issues table.",
+      "observed": "",
+      "threshold": "",
+      "page": 50,
+      "evidence": [],
+      "pit_ok": true
+    },
+    {
+      "check": "litigation",
+      "rule": "LT-03",
+      "subject": "TBI CORN LIMITED",
+      "status": "consistent",
+      "text": "No court or SEBI matter naming the issuer or 0 promoters turned up in search before Jun 2024 beyond the 3 the prospectus discloses.",
+      "observed": "0 undisclosed of 1 found",
+      "threshold": "",
+      "page": 1,
+      "evidence": [],
+      "pit_ok": true
+    },
+    {
+      "check": "footprint",
+      "rule": "NW-01",
+      "subject": "TBI CORN LIMITED",
+      "status": "consistent",
+      "text": "No news about TBI CORN LIMITED mentioning SEBI action, a complaint or a halt turned up before Jun 2024.",
+      "observed": "8 articles read",
+      "threshold": "",
+      "page": null,
+      "evidence": [],
+      "pit_ok": true
+    }
+  ],
+  "context": [
+    {
+      "check": "footprint",
+      "rule": "HY-01",
+      "subject": "TBI CORN LIMITED",
+      "status": "not_applicable",
+      "text": "Context, not a verdict: 6 YouTube video(s) (4 about price, applying or listing) and 8 news article(s) name this IPO.",
+      "observed": "",
+      "threshold": "",
+      "page": null,
+      "evidence": [],
+      "pit_ok": false
+    }
+  ],
+  "ruleset": "1",
+  "disclaimer": "Facts with sources. Not investment advice."
+}

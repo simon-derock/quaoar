@@ -10,6 +10,7 @@ from quaoar.replay import load_replay
 from tests.meta.test_docstrings import ROOT
 
 BUNDLES = sorted(p for p in (ROOT / "fixtures" / "replay").glob("*") if p.is_dir())
+HASH_FIELD = re.compile(r'"(?:request|search_id|id|parent|key|sha256)":"[0-9a-f]{8,}"')
 KEYLIKE = re.compile(r"api_key=(?!\[redacted\])|bearer\s+\w{8,}|\b[0-9a-f]{64}\b", re.I)
 
 
@@ -17,6 +18,8 @@ KEYLIKE = re.compile(r"api_key=(?!\[redacted\])|bearer\s+\w{8,}|\b[0-9a-f]{64}\b
 def test_bundle_has_no_keys_or_personal_identifiers(bundle) -> None:  # type: ignore[no-untyped-def]
     text = "".join(f.read_text(encoding="utf-8") for f in bundle.glob("*"))
     assert KEYLIKE.search(text) is None
+    # request and search ids are hex and can be all digits by chance
+    text = HASH_FIELD.sub('"hash"', text)
     for pattern in (PAN, AADHAAR, MOBILE, FREE_MAIL):
         assert pattern.search(text) is None
 

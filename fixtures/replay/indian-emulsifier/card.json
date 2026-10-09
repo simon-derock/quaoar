@@ -1,0 +1,106 @@
+{
+  "scan_id": "q0fc4746a8ca",
+  "company": "INDIAN EMULSIFIERS LIMITED",
+  "consistent": 3,
+  "inconsistent": 0,
+  "unverified": 2,
+  "top": [],
+  "signals": [
+    {
+      "check": "vendor",
+      "rule": "VX-02",
+      "subject": "Samarth Engineering",
+      "status": "unverified",
+      "text": "Samarth Engineering has no company form in its name (no 'Private Limited', 'Limited' or 'LLP'), so it may be a proprietorship or partnership. The company registry doesn't list those, and a registered company with the same name would be a different business, so no registry or court check was made.",
+      "observed": "",
+      "threshold": "",
+      "page": 88,
+      "evidence": [],
+      "pit_ok": false
+    },
+    {
+      "check": "vendor",
+      "rule": "VX-05",
+      "subject": "Samarth Engineering",
+      "status": "unverified",
+      "text": "Samarth Engineering has a Google Maps listing (Maharashtra 410501, India), but a name alone doesn't confirm it is the same business.",
+      "observed": "",
+      "threshold": "",
+      "page": 88,
+      "evidence": [
+        {
+          "engine": "google_maps",
+          "request": "95706e7f8f952b10",
+          "search_id": "6ac89eb3970121060faf7fa0",
+          "url": "",
+          "title": "SAMARTH ENGINEERING",
+          "snippet": "410501, Chimbali Road, Gaikwad Vasti, Moshi, Chimbli, Medankarwadi, Maharashtra 410501, India",
+          "published": null
+        }
+      ],
+      "pit_ok": false
+    },
+    {
+      "check": "site",
+      "rule": "SV-02",
+      "subject": "INDIAN EMULSIFIERS LIMITED",
+      "status": "consistent",
+      "text": "The registered office (Worli, Mumbai) has a Google Maps listing (listed as corporate office).",
+      "observed": "",
+      "threshold": "",
+      "page": 59,
+      "evidence": [
+        {
+          "engine": "google_maps",
+          "request": "c64346f303ed8ebc",
+          "search_id": "6ac89b47ea58e8367103e32b",
+          "url": "http://indianemulsifiers.com/",
+          "title": "Indian Emulsifiers Ltd",
+          "snippet": "Sumer Kendra, 107, Pandurang Budhkar Marg, behind worli mahindra towers, BDD Chawls Worli, Worli, Mumbai, Maharashtra 400018, India",
+          "published": null
+        }
+      ],
+      "pit_ok": false
+    },
+    {
+      "check": "litigation",
+      "rule": "LT-03",
+      "subject": "INDIAN EMULSIFIERS LIMITED",
+      "status": "consistent",
+      "text": "No court or SEBI matter naming the issuer or 3 promoters turned up in search before May 2024 beyond the 0 the prospectus discloses.",
+      "observed": "0 undisclosed of 1 found",
+      "threshold": "",
+      "page": 1,
+      "evidence": [],
+      "pit_ok": true
+    },
+    {
+      "check": "footprint",
+      "rule": "NW-01",
+      "subject": "INDIAN EMULSIFIERS LIMITED",
+      "status": "consistent",
+      "text": "No news about INDIAN EMULSIFIERS LIMITED mentioning SEBI action, a complaint or a halt turned up before May 2024.",
+      "observed": "10 articles read",
+      "threshold": "",
+      "page": null,
+      "evidence": [],
+      "pit_ok": true
+    }
+  ],
+  "context": [
+    {
+      "check": "footprint",
+      "rule": "HY-01",
+      "subject": "INDIAN EMULSIFIERS LIMITED",
+      "status": "not_applicable",
+      "text": "Context, not a verdict: 11 YouTube video(s) (8 about price, applying or listing) and 10 news article(s) name this IPO.",
+      "observed": "",
+      "threshold": "",
+      "page": null,
+      "evidence": [],
+      "pit_ok": false
+    }
+  ],
+  "ruleset": "1",
+  "disclaimer": "Facts with sources. Not investment advice."
+}

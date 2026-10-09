@@ -1,7 +1,7 @@
 {
-  "scan_id": "q16129907970",
+  "scan_id": "qd72c2381d9e",
   "company": "TRAFIKSOL ITS TECHNOLOGIES LIMITED",
-  "consistent": 5,
+  "consistent": 8,
   "inconsistent": 1,
   "unverified": 1,
   "top": [
@@ -108,6 +108,40 @@
       "pit_ok": false
     },
     {
+      "check": "vendor",
+      "rule": "VX-06",
+      "subject": "OASIS CORPCARE PRIVATE LIMITED",
+      "status": "consistent",
+      "text": "No court or SEBI page naming OASIS CORPCARE PRIVATE LIMITED turned up in search.",
+      "observed": "",
+      "threshold": "",
+      "page": 89,
+      "evidence": [],
+      "pit_ok": true
+    },
+    {
+      "check": "site",
+      "rule": "SV-02",
+      "subject": "TRAFIKSOL ITS TECHNOLOGIES LIMITED",
+      "status": "consistent",
+      "text": "The registered office (Sector 63, Noida) has a Google Maps listing (listed as corporate office).",
+      "observed": "",
+      "threshold": "",
+      "page": 75,
+      "evidence": [
+        {
+          "engine": "google_maps",
+          "request": "ef409f93ccdb0bc6",
+          "search_id": "6ac8900085f8c66a5c99ad77",
+          "url": "http://www.trafiksol.com/",
+          "title": "Trafiksol ITS Technologies Limited",
+          "snippet": "3rd floor, G-187, Chotpur, G Block, Sector 63, Noida, Uttar Pradesh 201309, India",
+          "published": null
+        }
+      ],
+      "pit_ok": false
+    },
+    {
       "check": "banker",
       "rule": "BK-04",
       "subject": "Ekadrisht Capital Private Limited",
@@ -124,8 +158,8 @@
       "rule": "BK-05",
       "subject": "Ekadrisht Capital Private Limited",
       "status": "consistent",
-      "text": "No SEBI order naming past issuer of Ekadrisht Capital Private Limited turned up in search.",
-      "observed": "0 of 1 past issues",
+      "text": "No SEBI order naming 2 past issuers of Ekadrisht Capital Private Limited turned up in search.",
+      "observed": "0 of 2 past issues",
       "threshold": "",
       "page": 80,
       "evidence": [],
@@ -136,12 +170,38 @@
       "rule": "LT-03",
       "subject": "TRAFIKSOL ITS TECHNOLOGIES LIMITED",
       "status": "consistent",
-      "text": "No court or SEBI matter naming the issuer or 3 promoters turned up in search before Sep 2024 beyond the 4 the prospectus discloses.",
+      "text": "No court or SEBI matter naming the issuer or 2 promoters turned up in search before Sep 2024 beyond the 4 the prospectus discloses.",
       "observed": "0 undisclosed of 4 found",
       "threshold": "",
       "page": 1,
       "evidence": [],
       "pit_ok": true
+    },
+    {
+      "check": "footprint",
+      "rule": "NW-01",
+      "subject": "TRAFIKSOL ITS TECHNOLOGIES LIMITED",
+      "status": "consistent",
+      "text": "No news about TRAFIKSOL ITS TECHNOLOGIES LIMITED mentioning SEBI action, a complaint or a halt turned up before Sep 2024.",
+      "observed": "23 articles read",
+      "threshold": "",
+      "page": null,
+      "evidence": [],
+      "pit_ok": true
+    }
+  ],
+  "context": [
+    {
+      "check": "footprint",
+      "rule": "HY-01",
+      "subject": "TRAFIKSOL ITS TECHNOLOGIES LIMITED",
+      "status": "not_applicable",
+      "text": "Context, not a verdict: 15 YouTube video(s) (6 about price, applying or listing) and 23 news article(s) name this IPO.",
+      "observed": "",
+      "threshold": "",
+      "page": null,
+      "evidence": [],
+      "pit_ok": false
     }
   ],
   "ruleset": "1",
