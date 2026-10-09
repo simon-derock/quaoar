@@ -1,0 +1,45 @@
+{
+ "advice": {
+  "pattern": "\\bshould\\s+i\\s+(?:buy|apply|sell|invest|subscribe|hold|exit)\\b|\\b(?:target|fair)\\s+price\\b|\\bwill\\s+(?:it|this|the\\s+(?:stock|share|ipo))\\s+(?:go\\s+up|rise|fall|list\\s+(?:high|at\\s+a\\s+premium))\\b|\\bmultibagger\\b|\\blisting\\s+gains?\\b|\\bkya\\s+(?:main|mai|mein)\\s+(?:apply|invest|kharid)\\w*|\\b(?:kharidu|kharidun|bechu|bechun)\\b",
+  "reply": "Quaoar doesn't give investment advice. It shows what a prospectus claims and what public sources say; pick a recorded case to see one."
+ },
+ "rules": [
+  {
+   "pattern": "\\b(?:thanks|thank\\s+you|thx|shukriya|dhanyavad)\\b",
+   "reply": "You're welcome. Facts with sources. Not investment advice."
+  },
+  {
+   "pattern": "\\b(?:is|are|was|kya)\\b.*\\b(?:safe|legit|genuine|trustworthy|reliable|good|worth)\\b|\\b(?:safe|legit|genuine)\\s*\\?",
+   "reply": "Quaoar doesn't say whether an IPO is safe, good or worth applying to, and gives no advice. It checks the claims in the prospectus and shows the evidence.\nPick a recorded case above to see what a check looks like."
+  },
+  {
+   "pattern": "(?:couldn'?t|could\\s+not)\\s+find|doesn'?t\\s+match|does\\s+not\\s+match|checks?\\s+out",
+   "reply": "checks out: public evidence agrees with the document.\ndoesn't match: public evidence disagrees with the document; the source is shown. It is a reason to look closer, not a verdict.\ncouldn't find: no public evidence turned up. Small private firms often barely appear online, so this is common and is never counted against a company."
+  },
+  {
+   "pattern": "(?=.*\\b(?:where|kahan|kahaan)\\b)(?=.*\\b(?:get|find|download|prospectus|pdf|milega|milta)\\b)",
+   "reply": "Download the prospectus from the website of the lead manager (the merchant banker named on its cover) or from SEBI's filings page. NSE and BSE forbid automated downloads, so save the PDF yourself. To check one, run Quaoar from your terminal (the steps are in the GitHub README); this page only replays recorded cases."
+  },
+  {
+   "pattern": "^\\W*(?:please\\s+)?(?:can\\s+you\\s+)?(?:check|scan|analy[sz]e|verify)\\b",
+   "reply": "Download the prospectus from the website of the lead manager (the merchant banker named on its cover) or from SEBI's filings page. NSE and BSE forbid automated downloads, so save the PDF yourself. To check one, run Quaoar from your terminal (the steps are in the GitHub README); this page only replays recorded cases."
+  },
+  {
+   "pattern": "\\bsme\\b.*\\b(?:what|kya|explain|mean)\\b|\\b(?:what|explain)\\b.*\\bsme\\b",
+   "reply": "An SME IPO is a small company selling shares to the public for the first time, listed on NSE Emerge or the BSE SME platform. These companies are often little known and have less public information, and applications are in lots that cost a lakh or more. That is why it helps to check what the prospectus says before you apply."
+  },
+  {
+   "pattern": "\\b(?:what|kya|explain|difference)\\b.*\\b(?:prospectus|drhp|rhp|red\\s+herring)\\b",
+   "reply": "A prospectus is the legal document a company files to sell shares. The draft (DRHP) is public for comment, the red herring (RHP) is what investors see while the issue is open, and the final prospectus is filed after bidding closes. To check before you apply, use the RHP."
+  },
+  {
+   "pattern": "\\bhow\\b.*\\b(?:check|use|work|start|begin)\\b|\\bkaise\\b|\\bsteps?\\b",
+   "reply": "1. Download the prospectus PDF (ask me where).\n2. Run Quaoar on it from your terminal; a live scan uses SerpApi credits.\n3. Read the card: every line links to the page and source behind it.\nTo see a finished example first, pick a recorded case above."
+  },
+  {
+   "pattern": "^\\W*(?:hi+|hello|hey|namaste)\\b|what\\s+is\\s+this|who\\s+are\\s+you|what\\s+(?:is|does)\\s+quaoar|know\\s+nothing|help\\s+me|beginner|new\\s+to|\\bkya\\s+hai\\b|\\bmadad\\b|nahi\\s+pata|kuch\\s+nahi|samajh\\s+nahi|what\\s+can\\s+you\\s+do",
+   "reply": "Quaoar checks an SME IPO before you apply. Give it the company's prospectus (a PDF) and it checks what the document claims (its vendors, offices, lead manager, court cases) against public search results. You get a list of what checks out, what doesn't match and what it couldn't find, each with a source link. It gives no view on whether to apply.\nPick a recorded case above to watch a check, or ask me anything about SME IPOs."
+  }
+ ],
+ "fallback": "I can explain SME IPOs and prospectuses, and show recorded checks. Try: what is an SME IPO, where do I get a prospectus, or what does couldn't find mean."
+}

@@ -1,5 +1,5 @@
-# netlify builds the static site from web/; the page plays its recorded cases with no api,
-# and only the beginner chat calls the replay-only api on render (address set at build time)
+# netlify builds the static site from web/: recorded cases and the beginner chat both ship with the page,
+# so the site needs no server
 # the site is served at https://quaoar.philipsimonderock.com: add it under
 # Site configuration > Domain management > Add a domain (netlify dns creates the record and the certificate)
 [build]
@@ -9,7 +9,6 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  QUAOAR_API_URL = "https://quaoar-api.onrender.com"
 
 # short, memorable install address: curl -LsSf https://quaoar.philipsimonderock.com/install | sh
 [[redirects]]

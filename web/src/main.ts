@@ -226,15 +226,31 @@ function bubble(text: string, who: "me" | "bot"): void {
   thread.scrollTop = thread.scrollHeight;
 }
 
+interface Primer {
+  advice: { pattern: string; reply: string };
+  rules: { pattern: string; reply: string }[];
+  fallback: string;
+}
+
+let primer: Promise<Primer> | null = null;
+
+// the chat answers come from primer.json, generated from the cli's own rules: no server, no wait
 async function ask(question: string, shown: boolean): Promise<void> {
   if (shown) bubble(question, "me");
+  primer ??= fetch("primer.json").then((r) => r.json() as Promise<Primer>);
   try {
-    const response = await fetch(`${api}/api/ask?q=${encodeURIComponent(question)}`);
-    const body = (await response.json()) as { answer?: string };
-    bubble(clean(body.answer ?? "Something went wrong. Try again."), "bot");
+    bubble(answerFrom(await primer, question.slice(0, 300)), "bot");
   } catch {
-    bubble("Couldn't reach the server. It may be waking up; try again in a minute.", "bot");
+    primer = null;
+    bubble("Couldn't load the answers. Reload the page and try again.", "bot");
   }
+}
+
+function answerFrom(p: Primer, question: string): string {
+  if (new RegExp(p.advice.pattern, "i").test(question)) return p.advice.reply;
+  if (question.startsWith("/")) return p.fallback;
+  const hit = p.rules.find((rule) => new RegExp(rule.pattern, "i").test(question));
+  return clean(hit?.reply ?? p.fallback);
 }
 
 function chat(): void {
