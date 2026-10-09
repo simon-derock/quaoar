@@ -120,7 +120,9 @@ Then the question that matters: does it cry wolf? Three prospectuses with no kno
 
 **The Investigator**, over the five scans: 15 investigations, 29 searches, 5 evidence gaps closed (1 registry, 4 Maps) and 17 left open. It helps at the margin and never changes a verdict.
 
-**A scan costs** about 12 to 37 SerpApi searches on a fresh prospectus, 0 on a replay. Four companies is not an accuracy claim.
+**A second, pre-registered survey** of six 2026 SME prospectuses ([audit](docs/benchmark-audits/survey-2026-10-09.md)): 4 completed cards with 1 flag (two Delhi court records, with the prospectus's disclosure thresholds likely the explanation), and 2 stopped at their credit cap. It also exposed three parsing gaps, now fixed.
+
+**A scan costs** about 12 to 37 SerpApi searches on a fresh prospectus, 0 on a replay. Seven ordinary companies is not an accuracy claim.
 
 `quaoar diff earlier.pdf later.pdf` compares two versions of a prospectus (draft, red herring, final) and lists vendors, matters and lead managers that were added, removed or changed. It reads claims only, no searches. The promoter list is noisy when a draft lists promoter-group members.
 
@@ -196,7 +198,7 @@ Full design, specs and diagrams: [`PLAN_SPEC.md`](PLAN_SPEC.md). Decisions: [`do
 - **The 100x vendor-capital rule is a screen, not a verdict.** It was fixed before any control was scanned. A tiny vendor quoting a large amount is worth a look, but real small suppliers do this too.
 - **Registry snippets are not live filings** and can lag the official records.
 - **Point-in-time is partial.** Registry and Maps pages show today's state; strict "before listing" evidence relies on dated news, orders and court records.
-- **Very small evaluation.** One positive (two versions) and three controls, all from one banker's website (exchange hosts forbid automated download). No accuracy claim is made.
+- **Small evaluation.** One positive (two versions) and seven ordinary companies: three controls from one banker's website, and four completed cards from a second, pre-registered survey of 2026 prospectuses. No accuracy claim is made.
 
 ## Development
 ```bash
