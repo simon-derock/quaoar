@@ -3,6 +3,7 @@ import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
+from functools import partial
 
 from quaoar.checks.banker import banker_check
 from quaoar.checks.base import SearchPort
@@ -20,10 +21,11 @@ from quaoar.domain.claims import (
     PromoterClaim,
     QuoteClaim,
 )
-from quaoar.domain.findings import Signal
+from quaoar.domain.findings import Signal, Status
 from quaoar.domain.ids import stable_id
 from quaoar.domain.names import normalize_company
 from quaoar.events import Emitter
+from quaoar.guard.query import QueryRejectedError
 from quaoar.prospectus.acquire import Prospectus
 from quaoar.prospectus.extract import ClaimSource, Extraction, extract_claims
 from quaoar.prospectus.meta import prospectus_date, require_prospectus
@@ -135,8 +137,34 @@ def vendor_stage(
     signals: list[Signal] = []
     for quote in one_quote_per_vendor(extraction):
         check = emit("stage", {"name": "vendor", "subject": quote.vendor}, root)
-        signals += vendor_signals(vendor_xray(quote, search, check, investigator), cutoff)
+        signals += isolated(
+            emit,
+            check,
+            "vendor",
+            quote.vendor,
+            partial(vendor_lines, quote, search, check, investigator, cutoff),
+        )
     return signals
+
+
+def vendor_lines(
+    quote: QuoteClaim,
+    search: SearchPort,
+    check: str,
+    investigator: Investigator | None,
+    cutoff: date | None,
+) -> list[Signal]:
+    return vendor_signals(vendor_xray(quote, search, check, investigator), cutoff)
+
+
+def site_lines(
+    company: str,
+    place: PlaceClaim,
+    search: SearchPort,
+    check: str,
+    investigator: Investigator | None,
+) -> list[Signal]:
+    return site_signals(site_visit(company, place, search, check, investigator))
 
 
 def one_quote_per_vendor(extraction: Extraction) -> list[QuoteClaim]:
@@ -165,7 +193,13 @@ def site_stage(
     ]
     for place in places[:MAX_PLACES]:
         check = emit("stage", {"name": "site", "subject": f"{place.role} {place.city}"}, root)
-        signals += site_signals(site_visit(company, place, search, check, investigator))
+        signals += isolated(
+            emit,
+            check,
+            "site",
+            f"{place.role.replace('_', ' ')} in {place.city}",
+            partial(site_lines, company, place, search, check, investigator),
+        )
     return signals
 
 
@@ -179,7 +213,13 @@ def banker_stage(
     if not managers:
         return []
     check = emit("stage", {"name": "banker", "subject": managers[0].name}, root)
-    return banker_signals(banker_check(managers[0], past, search, check), cutoff)
+    return isolated(
+        emit,
+        check,
+        "banker",
+        managers[0].name,
+        lambda: banker_signals(banker_check(managers[0], past, search, check), cutoff),
+    )
 
 
 def litigation_stage(
@@ -196,7 +236,38 @@ def litigation_stage(
     if not extraction.claims.get("cases") and not extraction.claims.get("promoters"):
         return []
     check = emit("stage", {"name": "litigation", "subject": company}, root)
-    return litigation_signals(litigation_check(company, 1, cases, promoters, search, check), cutoff)
+    return isolated(
+        emit,
+        check,
+        "litigation",
+        company,
+        lambda: litigation_signals(
+            litigation_check(company, 1, cases, promoters, search, check), cutoff
+        ),
+    )
+
+
+REFUSED_RULE = {"vendor": "VX-02", "site": "SV-02", "banker": "BK-05", "litigation": "LT-03"}
+
+
+def isolated(
+    emit: Emitter, parent: str, check: str, subject: str, run: Callable[[], list[Signal]]
+) -> list[Signal]:
+    # one unusable name must cost one line of the card, never the whole scan
+    try:
+        return run()
+    except QueryRejectedError as exc:
+        emit("warn", {"check": check, "reason": f"search refused: {exc.rule}"}, parent)
+        text = f"Couldn't check {subject}: a search for it was refused ({exc.rule}), so nothing was looked up."
+        return [
+            Signal(
+                check=check,
+                rule=REFUSED_RULE[check],
+                subject=subject,
+                status=Status.UNVERIFIED,
+                text=text,
+            )
+        ]
 
 
 def timed[T](emit: Emitter, clock: ClockPort, parent: str, name: str, run: Callable[[], T]) -> T:

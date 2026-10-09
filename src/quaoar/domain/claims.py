@@ -1,7 +1,10 @@
 # claims as printed in a prospectus; each one carries its page and the exact words it came from
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
+
+# pdf line breaks cut names mid-word-group; every printed name is one clean line
+Tidy = Annotated[str, AfterValidator(lambda text: " ".join(text.split()))]
 
 
 class Grounded(BaseModel):
@@ -13,42 +16,42 @@ class Grounded(BaseModel):
 
 
 class QuoteClaim(Grounded):
-    vendor: str = Field(description="quotation from, exactly as printed")
-    item: str = Field(description="what is being bought")
-    amount_text: str = Field(description="amount exactly as printed, digits and commas")
+    vendor: Tidy = Field(description="quotation from, exactly as printed")
+    item: Tidy = Field(description="what is being bought")
+    amount_text: Tidy = Field(description="amount exactly as printed, digits and commas")
     unit_text: str = Field(default="", description="unit as printed, e.g. Lakhs, Crore, Rs.")
     quote_date_text: str = Field(default="", description="quotation date as printed")
 
 
 class LeadManagerClaim(Grounded):
-    name: str
+    name: Tidy
 
 
 class PastIssueClaim(Grounded):
-    issuer: str
+    issuer: Tidy
     listing_date_text: str = ""
     issue_price_text: str = ""
 
 
 class DisclosedCaseClaim(Grounded):
-    party: str = Field(description="company or person the case is against or by, as printed")
-    forum: str = ""
-    case_ref: str = ""
+    party: Tidy = Field(description="company or person the case is against or by, as printed")
+    forum: Tidy = ""
+    case_ref: Tidy = ""
     nature: str = ""
 
 
 class PlaceClaim(Grounded):
     role: Literal["registered_office", "corporate_office", "factory", "warehouse", "other"]
-    locality: str = Field(description="area or industrial estate, never a house or flat number")
-    city: str
+    locality: Tidy = Field(description="area or industrial estate, never a house or flat number")
+    city: Tidy
 
 
 class PromoterClaim(Grounded):
-    name: str
+    name: Tidy
 
 
 class GroupCompanyClaim(Grounded):
-    name: str
+    name: Tidy
 
 
 class Quotes(BaseModel):
