@@ -1,7 +1,7 @@
 # memory (compact live state; PLAN_SPEC.md is canonical)
-updated: 2026-10-09T02:05+05:30
+updated: 2026-10-09T12:25+05:30
 phase: v0.1.0 candidate; checks, cli, replay, mcp, skill, api, web, README, video script done
-deadline: 2026-10-10 23:59 IST (aim to submit by 21:00)
+deadline: USER SAYS tonight 2026-10-09 23:00 IST (official page: Oct 10 23:59). Stop building by 19:00; 19:00-23:00 is deploy, video, submit.
 
 decisions:
 - single agent; work only in Quaoar/ on main; gate && commit && push per micro-commit; no BOARD.md
