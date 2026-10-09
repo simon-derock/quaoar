@@ -208,4 +208,4 @@ Tests are written first and cite the spec they cover (`# spec: SPEC-...`). Timin
 ## Credits
 Search data by [SerpApi](https://serpapi.com). Language model: Cohere. Agent framework: PydanticAI. MIT licence.
 
-Built by Philip Simon Derock ([philipsimonderock.com](https://philipsimonderock.com)) for the SerpApi India Hackathon 2026. Favicon dove: [Font Awesome Free](https://fontawesome.com/license/free) (CC BY 4.0).
+Built by Philip Simon Derock ([philipsimonderock.com](https://philipsimonderock.com)) for the SerpApi India Hackathon 2026. Favicon dove: [Font Awesome Free](https://fontawesome.com/license/free) (CC BY 4.0). Fonts: Fraunces and Geist (SIL Open Font License 1.1; licence texts ship with the site's fonts). Demo-video music: Beethoven, Symphony No. 1, I, by the Chamber Orchestra of the United States Marine Band, public domain ([source](https://commons.wikimedia.org/wiki/File:Symphony_No._1_in_C_-_I._Adagio_molto,_Allegro_con_brio_-_Chamber_Orchestra_-_United_States_Marine_Band.opus)).

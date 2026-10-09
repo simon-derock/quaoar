@@ -25,5 +25,9 @@ for (const name of cases) {
   for (const file of ["events.jsonl", "card.json"]) copyFileSync(`${REPLAYS}/${name}/${file}`, `dist/replays/${name}/${file}`);
 }
 writeFileSync("dist/replays/index.json", JSON.stringify(cases));
+// the fonts are under the SIL Open Font License, which travels with the font files
+for (const [pkg, name] of [["@fontsource-variable/fraunces", "Fraunces"], ["@fontsource/geist-sans", "Geist"], ["@fontsource/geist-mono", "Geist-Mono"]]) {
+  copyFileSync(`node_modules/${pkg}/LICENSE`, `dist/fonts/${name}-OFL.txt`);
+}
 const api = process.env.QUAOAR_API_URL ?? "";
 writeFileSync("dist/config.js", `window.QUAOAR_API = ${JSON.stringify(api)};\n`);
