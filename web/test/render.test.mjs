@@ -71,3 +71,26 @@ test("issuer names are shown in title case with initials kept", () => {
   assert.equal(titleCase("TBI CORN LIMITED"), "TBI Corn Limited");
   assert.equal(titleCase("BANK OF INDIA"), "Bank of India");
 });
+
+import { clamp, ease, shift, wheelPixels } from "../dist/motion.js";
+
+test("easing approaches the target, never overshoots and settles exactly", () => {
+  let value = 0;
+  for (let i = 0; i < 400; i += 1) value = ease(value, 1000, 1 / 60, 8);
+  assert.equal(value, 1000);
+  assert.ok(ease(0, 100, 1 / 60, 8) > 0 && ease(0, 100, 1 / 60, 8) < 100);
+  assert.equal(ease(5, 5, 0.016, 8), 5);
+});
+
+test("a layer at the middle of the screen does not move and far ones are capped", () => {
+  assert.equal(shift(1450, 1000, 900, 0.1), 0);
+  assert.equal(shift(5000, 0, 900, 0.1), 48);
+  assert.equal(shift(-5000, 0, 900, 0.1), -48);
+  assert.equal(clamp(5, 0, 3), 3);
+});
+
+test("wheel deltas are normalised from pixels, lines and pages", () => {
+  assert.equal(wheelPixels(100, 0, 900), 100);
+  assert.equal(wheelPixels(3, 1, 900), 96);
+  assert.equal(wheelPixels(1, 2, 900), 900);
+});

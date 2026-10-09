@@ -4,10 +4,10 @@
 
 <p align="center">
   <a href="https://github.com/simon-derock/quaoar/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/simon-derock/quaoar/actions/workflows/ci.yml/badge.svg"></a>
-  <img alt="Python 3.13" src="https://img.shields.io/badge/python-3.13-4c6ef5">
-  <img alt="Tests 900+" src="https://img.shields.io/badge/tests-900%2B-3ddc97">
-  <img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-8b7bff">
-  <img alt="Powered by SerpApi" src="https://img.shields.io/badge/powered%20by-SerpApi-4de1ff">
+  <img alt="Python 3.13" src="https://img.shields.io/badge/python-3.13-e5502f">
+  <img alt="Tests 900+" src="https://img.shields.io/badge/tests-900%2B-aacd7c">
+  <img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-f2c97e">
+  <img alt="Powered by SerpApi" src="https://img.shields.io/badge/powered%20by-SerpApi-f6a91f">
 </p>
 
 <p align="center">

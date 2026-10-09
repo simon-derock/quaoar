@@ -1,5 +1,6 @@
 // the page: plays a recorded scan from the api into a terminal and a card, and answers beginner questions
 import { MARKS, caseBlurb, caseLabel, clean, formatEvent, headline, host, lineKind, safeLink, shares, titleCase } from "./render.js";
+import { startScroll } from "./scroll.js";
 import type { Card, QEvent, Signal } from "./render.js";
 
 declare global {
@@ -181,7 +182,6 @@ function chat(): void {
     input.value = "";
     void ask(text, true);
   });
-  void ask("hi", false);
 }
 
 function reveal(): void {
@@ -205,5 +205,6 @@ function reveal(): void {
 }
 
 reveal();
+startScroll();
 chat();
 start().catch(() => line("couldn't reach the api; it may be waking up, try again in a minute", "stage"));
