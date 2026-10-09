@@ -134,3 +134,35 @@ export function parseEvents(text: string): QEvent[] {
     .filter((line) => line.trim() !== "")
     .map((line) => JSON.parse(line) as QEvent);
 }
+
+export interface Row {
+  kind: LineKind;
+  label: string;
+  text: string;
+  meta: string;
+  note: string;
+}
+
+const str = (value: unknown): string => clean(String(value ?? ""));
+
+// the terminal shows one event as aligned columns: what ran, on what, and what it cost
+export function rowParts(event: QEvent): Row | null {
+  const d = event.data;
+  switch (event.type) {
+    case "serp":
+      return { kind: "serp", label: "search", text: str(d["engine"]), meta: `${str(d["credits"])} cr · ${str(d["source"])} · ${str(d["latency_ms"])} ms`, note: "" };
+    case "llm":
+      return { kind: "llm", label: "read", text: str(d["task"]), meta: d["cached"] === true ? "cache" : `${str(d["tokens_in"])}+${str(d["tokens_out"])} tok`, note: "" };
+    case "agent": {
+      const flag = d["flagged"] ? ` · flagged ${str(d["flagged"])}` : "";
+      return { kind: "agent", label: "agent", text: `${str(d["tool"])} "${str(d["terms"])}"`, meta: `${str(d["hits"])} hits · ${str(d["credits"])} cr${flag}`, note: str(d["why"]).slice(0, 110) };
+    }
+    case "stage": {
+      const detail = d["subject"] ?? d["date"];
+      const ms = d["ms"] === undefined ? "" : `${str(d["ms"])} ms`;
+      return { kind: "stage", label: str(d["name"] ?? "stage"), text: detail === undefined ? "" : str(detail), meta: ms, note: "" };
+    }
+    default:
+      return null;
+  }
+}

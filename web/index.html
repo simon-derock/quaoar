@@ -4,49 +4,51 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#0d0a08">
+  <meta name="theme-color" content="#0e0f11">
   <title>Quaoar · Check every IPO before you apply</title>
   <meta name="description" content="Quaoar reads an SME IPO prospectus, checks its claims against public search results and shows the proof behind every line.">
-  <link rel="preload" href="fonts/bodoni-400.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="fonts/manrope-500.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/geist-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="glow" aria-hidden="true"><i data-depth="-0.18"></i><i data-depth="-0.1"></i><i data-depth="-0.3"></i></div>
+  <div class="glow" aria-hidden="true"><i data-depth="-0.16"></i><i data-depth="-0.08"></i></div>
+  <div class="side left" aria-hidden="true"></div>
+  <div class="side right" aria-hidden="true"></div>
   <div class="grain" aria-hidden="true"></div>
 
-  <header class="top" id="top">
+  <header class="top">
     <a class="word" href="#top" aria-label="Quaoar, back to top">QUAOAR</a>
     <nav aria-label="Sections">
       <a href="#product">Product</a>
-      <a href="#how">Method</a>
+      <a href="#how">How it works</a>
       <a href="#checks">Checks</a>
       <a href="#ask">Ask</a>
+      <a href="#questions">Questions</a>
     </nav>
-    <p class="credit">Built by Philip Simon Derock <span>·</span> <a href="https://serpapi.com" rel="noopener noreferrer" target="_blank">SerpApi</a> India Hackathon 2026</p>
+    <p class="credit">Built by Philip Simon Derock<br>for the <a href="https://serpapi.com" rel="noopener noreferrer" target="_blank">SerpApi</a> India Hackathon 2026</p>
   </header>
 
-  <main>
-    <section class="hero">
-      <h1 class="reveal" data-depth="0.12">Check every IPO</h1>
-      <p class="tagline reveal" data-depth="0.12">Before you apply</p>
-      <p class="lede reveal" data-depth="0.07">Quaoar reads the prospectus and shows the proof behind every line.</p>
-      <div class="actions reveal" data-depth="0.04">
-        <a class="btn primary" href="#product">Watch a scan</a>
-        <a class="btn ghost" href="#ask">New to IPOs?</a>
+  <main id="top">
+    <section class="hero" data-depth="0.1">
+      <h1 class="enter">Check every IPO<br>before you apply.</h1>
+      <p class="lede enter">Quaoar reads an SME IPO prospectus and checks its claims against public search results. Every line comes with its source.</p>
+      <div class="actions enter">
+        <a class="btn primary" href="#product">Watch a recorded scan</a>
+        <a class="btn ghost" href="#how">See how a check works</a>
       </div>
     </section>
 
-    <section class="stage reveal" id="product" aria-label="Product" data-depth="-0.02">
+    <section class="product enter" id="product" aria-label="A recorded scan">
       <div class="window">
         <div class="chrome">
           <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="title">quaoar · replay</span>
+          <span class="title">quaoar — replay</span>
           <button id="run" type="button" class="again">Replay</button>
         </div>
         <div class="tabs" id="cases" role="tablist" aria-label="Recorded cases"></div>
         <div class="split">
-          <pre id="terminal" tabindex="0" aria-label="Scan log"></pre>
+          <div id="terminal" class="log" tabindex="0" role="log" aria-label="Scan log"></div>
           <div class="card" aria-live="polite">
             <p class="kicker" id="blurb"></p>
             <h2 id="company"></h2>
@@ -61,40 +63,67 @@
       <p class="caption">A recorded scan of a real prospectus. Search data by SerpApi.</p>
     </section>
 
-    <section class="numbers" aria-label="Why it exists">
-      <div class="reveal" data-depth="0.03"><b>1,770×</b><span>vendor quote against paid-up capital, in the Trafiksol prospectus</span></div>
-      <div class="reveal" data-depth="0.05"><b>5</b><span>checks on every prospectus</span></div>
-      <div class="reveal" data-depth="0.03"><b>0</b><span>verdicts. Every line has a source</span></div>
-    </section>
+    <section class="story" id="how" aria-label="How a check works">
+      <div class="pin">
+        <h2 class="story-title">How a check works</h2>
+        <div class="scene" id="scene">
+          <article class="doc">
+            <header><span>Trafiksol ITS Technologies Ltd</span><span>Red herring prospectus · page 89</span></header>
+            <i class="bar w9"></i><i class="bar w7"></i><i class="bar w8"></i><i class="bar w5"></i>
+            <div class="claim">
+              <p>Software Quotation · May 16, 2024</p>
+              <p>Quotation from: <b>OASIS CORPCARE PRIVATE LIMITED</b></p>
+              <p>Total: <b>₹1,770.00 lakh</b></p>
+            </div>
+            <i class="bar w8"></i><i class="bar w9"></i><i class="bar w6"></i><i class="bar w7"></i><i class="bar w4"></i>
+            <span class="scan" aria-hidden="true"></span>
+          </article>
 
-    <section class="band" id="how">
-      <p class="eyebrow reveal" data-depth="0.05">How it works</p>
-      <h2 class="reveal" data-depth="0.05">From PDF to proof</h2>
-      <div class="tiles three">
-        <article class="reveal" data-depth="0.02"><span class="n">01</span><h3>Read</h3><p>Pull the checkable claims out of the prospectus.</p></article>
-        <article class="reveal" data-depth="0.035"><span class="n">02</span><h3>Check</h3><p>Search for each one through SerpApi.</p></article>
-        <article class="reveal" data-depth="0.02"><span class="n">03</span><h3>Prove</h3><p>Fixed rules set every status, with a source link.</p></article>
+          <div class="chip" aria-hidden="true"><span>Vendor quote · page 89</span><b>Oasis Corpcare · ₹17.70 Cr</b></div>
+
+          <div class="search">
+            <p class="engine">SerpApi · duckduckgo</p>
+            <p class="query"><span id="query"></span><i class="caret"></i></p>
+            <ol class="results">
+              <li><b>zaubacorp.com</b><span>OASIS CORPCARE PRIVATE LIMITED · U74120MH2013PTC240744</span></li>
+              <li class="fact"><b>instafinancials.com</b><span>Paid-up capital <em>₹1.00 lakh</em> · active</span></li>
+            </ol>
+          </div>
+
+          <div class="compare">
+            <p><span>Quote</span><b>₹17.70 Cr</b></p>
+            <p><span>Paid-up capital</span><b>₹1.00 L</b></p>
+            <p class="ratio"><span id="ratio">1</span>×</p>
+          </div>
+
+          <div class="verdict">
+            <span class="tag">Doesn't match</span>
+            <p>The quote is 1,770 times the vendor's paid-up capital.</p>
+            <small>instafinancials.com · SerpApi search 6ac7fe400e285d07c1e956d5</small>
+          </div>
+        </div>
+        <ol class="steps" id="steps">
+          <li>Read the prospectus</li><li>Find the claim</li><li>Search it</li><li>Compare</li><li>Show the proof</li>
+        </ol>
       </div>
     </section>
 
-    <section class="band" id="checks">
-      <p class="eyebrow reveal" data-depth="0.05">What it looks at</p>
-      <h2 class="reveal" data-depth="0.05">Five checks</h2>
-      <div class="tiles bento">
-        <article class="reveal" data-depth="0.02"><h3>Vendor</h3><p>Is the company quoting for the money real, and in proportion?</p></article>
-        <article class="reveal" data-depth="0.035"><h3>Premises</h3><p>Does the office or factory exist?</p></article>
-        <article class="reveal" data-depth="0.02"><h3>Banker</h3><p>Any SEBI order naming the lead manager?</p></article>
-        <article class="reveal half" data-depth="0.02"><h3>Litigation</h3><p>Court matters the prospectus does not list.</p></article>
-        <article class="reveal half" data-depth="0.02"><h3>News</h3><p>Dated coverage, with promotion shown only as context.</p></article>
-      </div>
+    <section class="block" id="checks">
+      <h2>Five checks on every prospectus</h2>
+      <dl class="checks">
+        <div><dt>Vendor</dt><dd>Is the company quoting for the IPO money on the registry, active, and big enough for the quote?</dd></div>
+        <div><dt>Premises</dt><dd>Does the registered office or factory exist on Google Maps, and is it open?</dd></div>
+        <div><dt>Lead manager</dt><dd>Has SEBI issued an order naming the banker or the companies it brought to market?</dd></div>
+        <div><dt>Litigation</dt><dd>Are there court or SEBI matters that the prospectus doesn't list?</dd></div>
+        <div><dt>News</dt><dd>Was there adverse coverage before the prospectus date? Promotion volume is shown only as context.</dd></div>
+      </dl>
     </section>
 
-    <section class="band ask" id="ask">
-      <p class="eyebrow reveal" data-depth="0.05">For beginners</p>
-      <h2 class="reveal" data-depth="0.05">New to IPOs?</h2>
-      <p class="sub reveal" data-depth="0.05">Ask in plain words. Quaoar explains, and never says whether to apply.</p>
-      <div class="chat reveal" data-depth="0.02">
-        <ol id="thread" aria-live="polite"><li class="bot">Ask me anything about SME IPOs, or tap a question below.</li></ol>
+    <section class="block" id="ask">
+      <h2>New to IPOs? Ask.</h2>
+      <p class="sub">Plain answers, written in advance. Quaoar explains, and never says whether to apply.</p>
+      <div class="chat">
+        <ol id="thread" aria-live="polite"><li class="bot">Ask anything about SME IPOs, or pick a question below.</li></ol>
         <div class="chips" id="chips"></div>
         <form id="ask-form" autocomplete="off">
           <input id="question" type="text" maxlength="300" placeholder="What is an SME IPO?" aria-label="Your question">
@@ -103,21 +132,24 @@
       </div>
     </section>
 
-    <section class="band limits" id="limits">
-      <p class="eyebrow reveal" data-depth="0.05">Read this first</p>
-      <h2 class="reveal" data-depth="0.05">Honest limits</h2>
-      <ul class="reveal">
-        <li><b>Absence is not a finding.</b> “Couldn't find” is common and never counted against a company.</li>
-        <li><b>A screen, not a verdict.</b> A flag is a reason to look closer.</li>
-        <li><b>A very small evaluation.</b> No accuracy claim is made.</li>
-      </ul>
+    <section class="block" id="questions">
+      <h2>Questions</h2>
+      <div class="faq">
+        <details open><summary>What is Quaoar?</summary><p>A reality check for SME IPOs. It reads the company's prospectus, picks out the claims that can be checked, such as who quoted for the IPO money and where the factory is, and checks each one against public search results. Every line comes back as checks out, doesn't match or couldn't find, with its source.</p></details>
+        <details><summary>Who is it for?</summary><p>Anyone about to apply to a small-company IPO on NSE Emerge or BSE SME, and the analysts and journalists who read prospectuses for a living.</p></details>
+        <details><summary>Will it tell me whether to apply?</summary><p>No. It shows facts and where they came from. The decision stays with you.</p></details>
+        <details><summary>Where does the evidence come from?</summary><p>Every search goes through SerpApi: Google Maps, Google News, YouTube, and site-restricted searches of company registries, SEBI orders and court records. Each line keeps its SerpApi search id, so anyone can repeat it.</p></details>
+        <details><summary>What does a check cost?</summary><p>Watching a recorded case is free and needs no keys. A live scan of a new prospectus takes about 12 to 37 SerpApi searches.</p></details>
+        <details><summary>Can I trust a flag?</summary><p>A flag is a reason to look closer, not a conclusion. “Couldn't find” is never counted against a company. The evaluation is small: one known case in two versions and three ordinary companies, so no accuracy claim is made.</p></details>
+        <details><summary>Why the name?</summary><p>Quaoar is a small world beyond Neptune: real, but hard to see without the right instruments. Most SME issuers are like that too.</p></details>
+      </div>
     </section>
   </main>
 
   <footer>
     <span class="mark">QUAOAR</span>
     <span>Facts with sources. Not investment advice.</span>
-    <a href="https://github.com/simon-derock/quaoar" rel="noopener noreferrer" target="_blank">GitHub ↗</a>
+    <a href="https://github.com/simon-derock/quaoar" rel="noopener noreferrer" target="_blank">Source on GitHub</a>
   </footer>
   <script src="config.js"></script>
   <script type="module" src="main.js"></script>

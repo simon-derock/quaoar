@@ -34,7 +34,12 @@ function layers(): Layer[] {
   return found;
 }
 
-export function startScroll(): void {
+type Hook = (scroll: number) => void;
+
+export function startScroll(hooks: Hook[] = []): void {
+  // a refresh always starts at the top unless the address names a section
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+  if (window.location.hash === "") window.scrollTo(0, 0);
   const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const header = document.querySelector<HTMLElement>(".top");
   let items = layers();
@@ -84,6 +89,8 @@ export function startScroll(): void {
     }
     const y = window.scrollY;
     if (!still) for (const item of items) item.node.style.setProperty("--py", `${shift(item.centre, y, window.innerHeight, item.depth).toFixed(2)}px`);
+    header?.classList.toggle("solid", y > 40);
+    for (const hook of hooks) hook(y);
     if (y > lastY + 1 && y > 220) header?.classList.add("away");
     if (y < lastY - 1 || y <= 220) header?.classList.remove("away");
     lastY = y;

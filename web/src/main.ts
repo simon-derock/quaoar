@@ -1,6 +1,7 @@
 // the page: plays a recorded scan from the api into a terminal and a card, and answers beginner questions
-import { MARKS, caseBlurb, caseLabel, clean, formatEvent, headline, host, lineKind, parseEvents, safeLink, shares } from "./render.js";
+import { MARKS, caseBlurb, caseLabel, clean, headline, host, parseEvents, rowParts, safeLink, shares } from "./render.js";
 import { startScroll } from "./scroll.js";
+import { storyFrame } from "./story.js";
 import type { Card, QEvent, Signal } from "./render.js";
 
 declare global {
@@ -29,19 +30,41 @@ function cursor(): HTMLElement {
   return node;
 }
 
-function line(text: string, kind: string): void {
-  const terminal = el<HTMLPreElement>("terminal");
-  const row = document.createElement("span");
-  row.className = `l k-${kind}`;
-  if (kind === "cmd") {
-    const prompt = document.createElement("b");
-    prompt.textContent = "$ ";
-    row.append(prompt, document.createTextNode(text));
-  } else {
-    row.textContent = text;
-  }
+function cell(className: string, text: string): HTMLSpanElement {
+  const span = document.createElement("span");
+  span.className = className;
+  span.textContent = text;
+  return span;
+}
+
+function append(row: HTMLElement): void {
+  const terminal = el("terminal");
   terminal.append(row, cursor());
   terminal.scrollTop = terminal.scrollHeight;
+}
+
+function command(text: string): void {
+  const row = document.createElement("div");
+  row.className = "r cmd";
+  row.append(cell("lb", "$"), cell("tx", text));
+  append(row);
+}
+
+function show(event: QEvent): void {
+  const parts = rowParts(event);
+  if (parts === null) return;
+  const row = document.createElement("div");
+  row.className = `r ${parts.kind}`;
+  row.append(cell("lb", parts.label), cell("tx", parts.text), cell("mt", parts.meta));
+  if (parts.note !== "") row.append(cell("nt", parts.note));
+  append(row);
+}
+
+function notice(text: string): void {
+  const row = document.createElement("div");
+  row.className = "r";
+  row.append(cell("lb", ""), cell("tx", text));
+  append(row);
 }
 
 function row(signal: Signal): HTMLElement {
@@ -84,7 +107,7 @@ function showCard(card: Card): void {
 function reset(name: string): void {
   current?.close();
   run += 1;
-  el<HTMLPreElement>("terminal").replaceChildren();
+  el("terminal").replaceChildren();
   el("signals").replaceChildren();
   el("headline").textContent = "";
   el("context").textContent = "";
@@ -97,10 +120,6 @@ function reset(name: string): void {
   });
 }
 
-function show(event: QEvent): void {
-  const text = formatEvent(event);
-  if (text !== null) line(text, lineKind(event));
-}
 
 // plays a bundle shipped with the page at a steady pace; no network wait, so it never stalls
 async function playStatic(name: string, mine: number): Promise<boolean> {
@@ -136,7 +155,7 @@ function playStream(name: string): void {
   source.addEventListener("card", (message) => showCard(JSON.parse((message as MessageEvent<string>).data) as Card));
   source.addEventListener("done", () => source.close());
   source.onerror = () => {
-    line("connection closed", "stage");
+    notice("connection closed");
     source.close();
   };
 }
@@ -144,7 +163,7 @@ function playStream(name: string): void {
 function play(name: string): void {
   reset(name);
   const mine = run;
-  line(`quaoar replay ${name}`, "cmd");
+  command(`quaoar replay ${name}`);
   void playStatic(name, mine).then((ok) => {
     if (!ok && mine === run) playStream(name);
   });
@@ -230,32 +249,15 @@ function chat(): void {
   });
 }
 
-function reveal(): void {
-  const nodes = document.querySelectorAll<HTMLElement>(".reveal");
-  // siblings that appear together arrive one after another, 70 ms apart
-  nodes.forEach((node) => {
-    const siblings = node.parentElement === null ? [] : Array.from(node.parentElement.children).filter((child) => child.classList.contains("reveal"));
-    node.style.setProperty("--d", `${siblings.indexOf(node) * 70}ms`);
-  });
-  if (!("IntersectionObserver" in window)) {
-    nodes.forEach((node) => node.classList.add("in"));
-    return;
-  }
-  const watcher = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("in");
-          watcher.unobserve(entry.target);
-        }
-      }
-    },
-    { threshold: 0.12 },
-  );
-  nodes.forEach((node) => watcher.observe(node));
+// one load sequence: the hero and the product arrive in order, 90 ms apart
+function arrive(): void {
+  document.querySelectorAll<HTMLElement>(".enter").forEach((node, index) => node.style.setProperty("--d", `${index * 90}ms`));
+  const go = (): void => document.body.classList.add("ready");
+  void document.fonts.ready.then(() => requestAnimationFrame(go));
+  window.setTimeout(go, 1200);
 }
 
-reveal();
-startScroll();
+arrive();
+startScroll([storyFrame()]);
 chat();
-start().catch(() => line("couldn't reach the api; it may be waking up, try again in a minute", "stage"));
+start().catch(() => notice("Couldn't load the recorded cases. Reload the page to try again."));

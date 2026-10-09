@@ -4,11 +4,10 @@ import { copyFileSync, mkdirSync, readdirSync, statSync, writeFileSync } from "n
 mkdirSync("dist/fonts", { recursive: true });
 for (const file of ["index.html", "style.css", "_headers"]) copyFileSync(file, `dist/${file}`);
 const FONTS = {
-  "bodoni-400.woff2": "@fontsource/bodoni-moda/files/bodoni-moda-latin-400-normal.woff2",
-  "bodoni-500.woff2": "@fontsource/bodoni-moda/files/bodoni-moda-latin-500-normal.woff2",
-  "manrope-400.woff2": "@fontsource/manrope/files/manrope-latin-400-normal.woff2",
-  "manrope-500.woff2": "@fontsource/manrope/files/manrope-latin-500-normal.woff2",
-  "manrope-600.woff2": "@fontsource/manrope/files/manrope-latin-600-normal.woff2",
+  "fraunces.woff2": "@fontsource-variable/fraunces/files/fraunces-latin-full-normal.woff2",
+  "geist-400.woff2": "@fontsource/geist-sans/files/geist-sans-latin-400-normal.woff2",
+  "geist-500.woff2": "@fontsource/geist-sans/files/geist-sans-latin-500-normal.woff2",
+  "geist-600.woff2": "@fontsource/geist-sans/files/geist-sans-latin-600-normal.woff2",
   "geist-mono-400.woff2": "@fontsource/geist-mono/files/geist-mono-latin-400-normal.woff2",
   "geist-mono-500.woff2": "@fontsource/geist-mono/files/geist-mono-latin-500-normal.woff2",
 };

@@ -23,3 +23,21 @@ export function wheelPixels(delta: number, mode: number, viewport: number): numb
   if (mode === 2) return delta * viewport;
   return delta;
 }
+
+// eases a 0..1 value in and out, for things already on screen that move
+export function inOut(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+}
+
+// how far along one step of a scroll-driven sequence is, from 0 before it starts to 1 after it ends
+export function phase(progress: number, start: number, end: number): number {
+  return inOut(clamp((progress - start) / (end - start), 0, 1));
+}
+
+export function typed(text: string, t: number): string {
+  return text.slice(0, Math.round(text.length * clamp(t, 0, 1)));
+}
+
+export function countUp(from: number, to: number, t: number): number {
+  return Math.round(from + (to - from) * clamp(t, 0, 1));
+}

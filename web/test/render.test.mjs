@@ -93,3 +93,29 @@ test("wheel deltas are normalised from pixels, lines and pages", () => {
   assert.equal(wheelPixels(3, 1, 900), 96);
   assert.equal(wheelPixels(1, 2, 900), 900);
 });
+
+import { rowParts } from "../dist/render.js";
+import { countUp, phase, typed } from "../dist/motion.js";
+
+test("events become aligned terminal rows", () => {
+  assert.deepEqual(rowParts({ type: "serp", data: { engine: "google_maps", credits: 0, source: "ledger", latency_ms: 0.2 } }), { kind: "serp", label: "search", text: "google_maps", meta: "0 cr · ledger · 0.2 ms", note: "" });
+  const agent = rowParts({ type: "agent", data: { tool: "search_maps", terms: "Acme Pune", hits: 2, credits: 1, why: "city added", flagged: "" } });
+  assert.equal(agent.text, 'search_maps "Acme Pune"');
+  assert.equal(agent.note, "city added");
+  assert.equal(rowParts({ type: "stage", data: { name: "vendor", subject: "ACME LTD" } }).text, "ACME LTD");
+  assert.equal(rowParts({ type: "stage", data: { name: "pages", ms: 12.5 } }).meta, "12.5 ms");
+  assert.equal(rowParts({ type: "signal", data: {} }), null);
+});
+
+test("a scroll step runs from 0 to 1 inside its window only", () => {
+  assert.equal(phase(0.1, 0.2, 0.4), 0);
+  assert.equal(phase(0.25, 0, 0.5), 0.5);
+  assert.equal(phase(0.9, 0.2, 0.4), 1);
+});
+
+test("typing and counting follow the step", () => {
+  assert.equal(typed("abcd", 0.5), "ab");
+  assert.equal(typed("abcd", 2), "abcd");
+  assert.equal(countUp(1, 1770, 0), 1);
+  assert.equal(countUp(1, 1770, 1), 1770);
+});
