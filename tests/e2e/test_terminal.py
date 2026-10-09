@@ -166,3 +166,16 @@ def test_an_advice_question_gets_the_facts_or_a_way_to_get_them() -> None:
     handle("/replay trafiksol", session, console)
     handle("should I apply", session, console)
     assert out.getvalue().count("Not investment advice") >= 2
+
+
+def test_with_a_card_on_screen_an_open_question_goes_to_the_analyst() -> None:
+    session, console, out = make()
+    handle("/ask why was it flagged", session, console)
+    assert "no card yet" in out.getvalue()
+    handle("/replay trafiksol", session, console)
+    handle("is the vendor on google maps?", session, console)
+    handle("/ask why was it flagged", session, console)
+    text = out.getvalue()
+    assert "Couldn't find OASIS CORPCARE PRIVATE LIMITED on Google Maps" in text
+    assert "answered from the card" in text
+    assert "1,770 times" in text

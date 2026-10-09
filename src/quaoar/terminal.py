@@ -7,7 +7,8 @@ from pathlib import Path
 from rich.console import Console
 from rich.markup import escape
 
-from quaoar.cli import ConsoleSink, pretty, print_card, safe
+from quaoar.analyst.agent import Analyst, Reply
+from quaoar.cli import ConsoleSink, pretty, print_card, print_reply, safe
 from quaoar.events import Event
 from quaoar.guard.advice import ADVICE_REPLY, advice_request
 from quaoar.guard.injection import scan_injection
@@ -32,6 +33,7 @@ type a prospectus path or https url to scan it, or use:
   /card             show the last card again
   /proof <n>        show the evidence behind line n of the card
   /trace            show what caused what in the last scan
+  /ask <question>   ask about the card in plain words; answers cite its lines
   /comment          draft a neutral public-comment letter from the lines that didn't match
   /mode agent|fixed choose how evidence gaps are filled
   /budget <n>       credit cap for the next live scan
@@ -48,6 +50,8 @@ class Session:
     budget: int = 0
     card: Card | None = None
     events: list[Event] = field(default_factory=list)
+    # with no keys the analyst answers from the card alone
+    ask: Callable[[Card, str], Reply] = field(default=Analyst(None, None).ask)
 
 
 def handle(line: str, session: Session, console: Console) -> bool:
@@ -84,6 +88,9 @@ def intent(text: str, session: Session, console: Console) -> bool:
         console.print(escape(reply))
     if case:
         return command(f"/replay {case}", session, console)
+    if not reply and session.card is not None:
+        # with a card on screen, an open question goes to the analyst
+        return command(f"/ask {text}", session, console)
     if not reply:
         console.print(
             "I can explain IPOs, scan a prospectus pdf, or replay a recorded case. "
@@ -116,6 +123,7 @@ def command(text: str, session: Session, console: Console) -> bool:
         "/proof": lambda: proof(arg, session, console),
         "/trace": lambda: trace(session, console),
         "/comment": lambda: letter(session, console),
+        "/ask": lambda: ask(arg, session, console),
         "/mode": lambda: set_mode(arg, session, console),
         "/budget": lambda: set_budget(arg, session, console),
         "/credits": lambda: credits_view(session, console),
@@ -130,6 +138,16 @@ def command(text: str, session: Session, console: Console) -> bool:
         # Ctrl-C stops the step that is running, not the whole session
         console.print("[yellow]cancelled; partial results are kept in the ledger[/]")
     return True
+
+
+def ask(question: str, session: Session, console: Console) -> None:
+    if session.card is None:
+        console.print("no card yet: /replay trafiksol or scan a prospectus, then ask about it")
+        return
+    if not question:
+        console.print("ask a question, for example: /ask why was this flagged?")
+        return
+    print_reply(session.ask(session.card, question), console)
 
 
 def credits_view(session: Session, console: Console) -> None:

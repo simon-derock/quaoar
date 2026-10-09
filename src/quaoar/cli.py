@@ -7,6 +7,7 @@ import typer
 from rich.console import Console
 from rich.markup import escape
 
+from quaoar.analyst.agent import Reply
 from quaoar.config import all_secrets
 from quaoar.events import Event
 from quaoar.guard.text import clean_text
@@ -16,7 +17,15 @@ from quaoar.replay import ReplayBundleError, export_scan, find_case, load_replay
 from quaoar.scoring.card import MARKS, Card, headline
 from quaoar.serp.client import CreditBudgetExceededError, account_lookup
 from quaoar.serp.keys import KeyPool, KeysExhaustedError
-from quaoar.service import execute, intake, make_runtime, read_only
+from quaoar.service import (
+    CardNotFoundError,
+    execute,
+    find_card,
+    intake,
+    make_analyst,
+    make_runtime,
+    read_only,
+)
 
 app = typer.Typer(add_completion=False, help="Check every IPO before you apply.")
 ledger_app = typer.Typer(no_args_is_help=True, help="The local evidence ledger.")
@@ -143,6 +152,39 @@ def render_changes(changes: list[Change]) -> list[str]:
 
 
 @app.command()
+def ask(case: str, question: str) -> None:
+    # ask the analyst about a recorded case or a saved scan: `quaoar ask trafiksol "why was it flagged?"`
+    runtime = make_runtime()
+    try:
+        card = find_card(case, runtime)
+    except CardNotFoundError as exc:
+        console.print(f"[red]{escape(str(exc))}[/red]")
+        raise typer.Exit(EXIT_INPUT) from None
+    print_reply(make_analyst(runtime, [ConsoleSink(raw=False)]).ask(card, question))
+
+
+MODES = {
+    "agent": "answered by the analyst agent",
+    "evidence": "answered from the card (no model)",
+    "fixed": "",
+}
+
+
+def print_reply(reply: Reply, out: Console | None = None) -> None:
+    console = out or CONSOLE
+    console.print(escape(reply.text))
+    for cite in reply.cites:
+        where = f" · {escape(cite.url)}" if cite.url else ""
+        search = f" (search {escape(cite.search_id)})" if cite.search_id else ""
+        console.print(f"  [bright_black]{escape(cite.label)}{where}{search}[/]")
+    note = MODES.get(reply.mode, "")
+    if reply.searches:
+        note += f" · {reply.searches} follow-up search(es), {reply.credits} credit(s)"
+    if note:
+        console.print(f"[bright_black]{note}[/]")
+
+
+@app.command()
 def mcp() -> None:
     from quaoar.mcp_server import serve
 
@@ -264,7 +306,11 @@ def start_terminal() -> None:
             f"cache hit rate {stats.hit_rate:.0%} · live latency p50 {stats.live_p50_ms} ms",
         ]
 
-    run(Session(live, replay_home(), key_rows), console)
+    def analyst(card: Card, question: str) -> Reply:
+        # a fresh analyst per question, so each question gets its own small credit budget
+        return make_analyst(runtime, [ConsoleSink(raw=False)]).ask(card, question)
+
+    run(Session(live, replay_home(), key_rows, ask=analyst), console)
 
 
 # --- event sinks ---

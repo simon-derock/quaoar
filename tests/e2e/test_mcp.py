@@ -41,6 +41,7 @@ def test_tools_are_listed(server) -> None:  # type: ignore[no-untyped-def]
         "scan_prospectus",
         "saved_card",
         "ledger_stats",
+        "ask_card",
     }
 
 
@@ -78,3 +79,14 @@ def test_skill_file_has_frontmatter_and_the_language_rules() -> None:
     assert "name: quaoar" in head
     assert "description:" in head
     assert "Not investment advice" in text
+
+
+def test_ask_card_answers_with_citations_and_refuses_advice(server) -> None:  # type: ignore[no-untyped-def]
+    reply = call(server, "ask_card", {"name": "trafiksol", "question": "why was it flagged?"}).data
+    assert reply["mode"] == "evidence"
+    assert "1,770 times" in reply["answer"]
+    assert reply["cites"][0]["url"].startswith("https://")
+    advice = call(server, "ask_card", {"name": "trafiksol", "question": "should I apply?"}).data
+    assert advice["mode"] == "fixed"
+    with pytest.raises(ToolError):
+        call(server, "ask_card", {"name": "../etc", "question": "hi"})

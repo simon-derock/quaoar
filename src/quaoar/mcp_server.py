@@ -8,11 +8,21 @@ from typing import Any
 
 from fastmcp import FastMCP
 
+from quaoar.analyst.agent import Analyst
 from quaoar.prospectus.acquire import IntakeError
 from quaoar.replay import ReplayBundleError, load_replay, replay_home
 from quaoar.scoring.card import Card
 from quaoar.scoring.comment import draft_comment as build_letter
-from quaoar.service import Runtime, execute, intake, make_runtime, scan_folder
+from quaoar.service import (
+    CardNotFoundError,
+    Runtime,
+    execute,
+    find_card,
+    intake,
+    make_analyst,
+    make_runtime,
+    scan_folder,
+)
 
 NAME = re.compile(r"^[a-z0-9-]{1,64}$")
 MAX_MCP_CREDITS = 25
@@ -30,7 +40,33 @@ def build_server(
     add_replay_tools(mcp, replay_dir or replay_home())
     add_saved_tools(mcp, runtime_factory)
     add_scan_tool(mcp, runtime_factory, read_only=read_only)
+    add_ask_tool(mcp, runtime_factory, read_only=read_only)
     return mcp
+
+
+def add_ask_tool(mcp: FastMCP, runtime_factory: RuntimeFactory, *, read_only: bool) -> None:
+    @mcp.tool(
+        description="Ask a plain-language question about a recorded case or a saved scan. The answer cites card lines (L<n>) and any follow-up search results (S<n>); it never changes a status or gives advice. Public servers answer from the card alone."
+    )
+    def ask_card(name: str, question: str) -> dict[str, Any]:
+        check_name(name)
+        runtime = runtime_factory()
+        try:
+            card = find_card(name, runtime)
+        except CardNotFoundError as exc:
+            raise ValueError(str(exc)) from None
+        analyst = Analyst(None, None) if read_only else make_analyst(runtime)
+        reply = analyst.ask(card, question)
+        return {
+            "answer": reply.text,
+            "mode": reply.mode,
+            "cites": [
+                {"ref": c.ref, "label": c.label, "url": c.url, "search_id": c.search_id}
+                for c in reply.cites
+            ],
+            "follow_up_searches": reply.searches,
+            "credits": reply.credits,
+        }
 
 
 def add_replay_tools(mcp: FastMCP, replay_dir: Path) -> None:

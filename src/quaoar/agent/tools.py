@@ -67,9 +67,12 @@ class Toolbox:
         *,
         max_credits: int,
         max_searches: int,
+        running_numbers: bool = False,
     ) -> None:
         self._search, self.book, self._emit, self._parent = search, book, emit, parent
         self._max_credits, self._max_searches = max_credits, max_searches
+        # the analyst cites results as S1, S2 ... across all its searches, so numbering carries on
+        self._running = running_numbers
         self._seen: set[tuple[str, str]] = set()
 
     def tools(self, names: tuple[str, ...]) -> list[Tool]:
@@ -118,10 +121,11 @@ class Toolbox:
         self.book.credits += result.credits
         items = [item for key in keys for item in results(result, key)]
         accepted = [item for item in items if accepts(kind, item)]
+        first = len(self.book.hits) + 1 if self._running else 1
         for item in accepted:
             self.book.hits.append(Hit(tool, result, item))
         lines = [
-            describe(n, kind, item) for n, item in enumerate(accepted[:MAX_HITS_SHOWN], start=1)
+            describe(n, kind, item) for n, item in enumerate(accepted[:MAX_HITS_SHOWN], start=first)
         ]
         body = "\n".join(lines) if lines else "no results"
         ignored = len(items) - len(accepted)

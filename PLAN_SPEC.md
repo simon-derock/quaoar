@@ -380,11 +380,11 @@ flowchart LR
     CL --> GD
     scoring --> GD
 ```
-Packages under `src/quaoar/` (SPEC-STY-02 checks this list): `domain`, `guard`, `prospectus`, `serp`, `llm`, `checks`, `agent`, `scoring`, `backtest`, `api`.
+Packages under `src/quaoar/` (SPEC-STY-02 checks this list): `domain`, `guard`, `prospectus`, `serp`, `llm`, `checks`, `agent`, `analyst`, `scoring`, `backtest`, `api`.
 
 ## Layers (SPEC-STY-05 checks imports against this list)
 A module may import only from its own layer or a lower one; dependencies point from domain outward to adapters, never back.
-Layer 0: `domain`, `config`, `clock`, `primer`. Layer 1: `guard`, `events`. Layer 2: `serp`, `llm`, `prospectus`. Layer 3: `checks`, `agent`. Layer 4: `scoring`. Layer 5: `scan`, `service`, `backtest`, `replay`. Layer 6: `cli`, `terminal`, `doctor`, `mcp_server`, `api`.
+Layer 0: `domain`, `config`, `clock`, `primer`. Layer 1: `guard`, `events`. Layer 2: `serp`, `llm`, `prospectus`. Layer 3: `checks`, `agent`. Layer 4: `scoring`. Layer 5: `scan`, `service`, `backtest`, `replay`, `analyst`. Layer 6: `cli`, `terminal`, `doctor`, `mcp_server`, `api`.
 
 ## Class diagram (core)
 ```mermaid
@@ -704,6 +704,11 @@ All checks implement `Check.run(claims, ctx) -> list[Signal]`. Absence of eviden
 - SPEC-AG-04 [P0] The agent only proposes queries and entity matches. Statuses always come from the deterministic rules; the LLM never sets a status.
 - SPEC-AG-05 [P0] Trace per check: steps, tool, args, credits, latency in ns, tokens, strategy changes with reason, stop reason.
 - SPEC-AG-06 [P0] One Cohere model locked per scan; retries stay on the same model.
+- SPEC-AN-01 [P0] The analyst answers a question about a finished card (`quaoar ask`, `/ask` or any open question in the terminal, the `ask_card` MCP tool), citing card lines as L<n> and follow-up results as S<n>.
+- SPEC-AN-02 [P0] Tools: `read_line` (free) and four follow-up searches through the same toolbox as the investigator (model chooses terms only; at most 3 searches and 3 credits per question).
+- SPEC-AN-03 [P0] An answer is shown only if every citation exists, its text passes the wording and advice guards and personal data is masked; otherwise the card-only answer is shown. Statuses are never changed.
+- SPEC-AN-04 [P0] Advice and instruction-shaped questions get fixed replies without a model call; with no keys or a failed model the card-only answer is used.
+- SPEC-AN-05 [P1] An answered question is replayed from its recorded trace with no model call; `scripts/analyst_eval.py` reports groundedness, citation hits, guard passes and cost.
 - Ablation: the backtest runs both modes and reports credits, recall and latency side by side. The agent earns its place only if it finds evidence the templates miss at an acceptable credit cost.
 [/ORCHESTRA:AGENT]
 
