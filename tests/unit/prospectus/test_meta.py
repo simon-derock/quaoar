@@ -55,3 +55,20 @@ def test_other_documents_are_refused_before_any_search(texts: list[str], rule: s
     with pytest.raises(IntakeError) as caught:
         require_prospectus(pages(*texts))
     assert caught.value.rule == rule
+
+
+@pytest.mark.parametrize(
+    ("cover", "expected"),
+    [
+        ("Red Herring Prospectus Dated: 07.10.2026 Please read Section 26", date(2026, 10, 7)),
+        ("Dated 7/10/2026", date(2026, 10, 7)),
+        ("Dated: 07-10-2026", date(2026, 10, 7)),
+        ("Dated: 7th October, 2026", date(2026, 10, 7)),
+    ],
+)
+def test_a_numeric_cover_date_is_read_day_first(cover: str, expected: date) -> None:
+    assert prospectus_date(pages(cover)) == expected
+
+
+def test_a_numeric_date_not_after_dated_is_not_taken_for_the_cover_date() -> None:
+    assert prospectus_date(pages("CIN registered 12.05.2019 and a phone 07.10.2026")) is None

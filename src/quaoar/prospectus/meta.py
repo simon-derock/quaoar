@@ -10,8 +10,9 @@ from quaoar.prospectus.pdf import Page
 COVER_PAGES = 3
 FRONT_PAGES = 8
 MONTH = r"(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?"
+NUMERIC = r"\d{1,2}[./-]\d{1,2}[./-]\d{4}"
 DATED = re.compile(
-    rf"\bdated\s*:?\s*((?:{MONTH}\s+\d{{1,2}}(?:st|nd|rd|th)?,?\s+\d{{4}})|(?:\d{{1,2}}(?:st|nd|rd|th)?\s+{MONTH},?\s+\d{{4}}))",
+    rf"\bdated\s*:?\s*((?:{MONTH}\s+\d{{1,2}}(?:st|nd|rd|th)?,?\s+\d{{4}})|(?:\d{{1,2}}(?:st|nd|rd|th)?\s+{MONTH},?\s+\d{{4}})|(?:{NUMERIC}))",
     re.I,
 )
 
