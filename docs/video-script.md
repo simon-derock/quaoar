@@ -16,3 +16,5 @@ The recorded video is `results/video/quaoar-demo-1080p60.mp4` (2 min 12 s, 1080p
 | 2:06 | Closing card |
 
 How it was made: the terminal is the real CLI driven in a pseudo-terminal with typed input, recorded with timestamps and rendered in xterm.js. Pauses before each step were lengthened so the output can be read; nothing on screen was edited. The website is the real site, captured from the browser while a script scrolls and clicks.
+
+Music: Beethoven, Symphony No. 1 in C, I. Adagio molto – Allegro con brio, played by the Chamber Orchestra of the United States Marine Band (2019). It is public domain as a work of the U.S. federal government, and no attribution is required ([Commons file](https://commons.wikimedia.org/wiki/File:Symphony_No._1_in_C_-_I._Adagio_molto,_Allegro_con_brio_-_Chamber_Orchestra_-_United_States_Marine_Band.opus)). It is normalised to about -15 LUFS and faded in and out.
