@@ -139,3 +139,41 @@ def test_local_path_guard(case: str, tmp_path: Path) -> None:
 def test_real_resolver_sees_loopback_and_unknown_hosts() -> None:
     assert all(ipaddress.ip_address(a).is_loopback for a in resolve_host("localhost"))
     assert resolve_host("no-such-host.invalid") == []
+
+
+def test_a_download_cut_off_midway_is_retried(tmp_path: Path) -> None:
+    calls: list[int] = []
+
+    def flaky(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        if len(calls) < 3:
+            raise httpx.RemoteProtocolError("peer closed connection", request=request)
+        return httpx.Response(200, content=PDF)
+
+    got = from_url(
+        "https://files.example.com/a.pdf",
+        tmp_path,
+        client(httpx.MockTransport(flaky)),
+        resolve=public,
+    )
+    assert got.size == len(PDF)
+    assert len(calls) == 3
+
+
+@pytest.mark.parametrize(
+    ("handler", "rule"),
+    [
+        (lambda r: (_ for _ in ()).throw(httpx.ConnectError("down", request=r)), "download_failed"),
+        (lambda _: httpx.Response(404), "http_status"),
+        (lambda _: httpx.Response(403), "http_status"),
+    ],
+)
+def test_download_problems_are_clean_input_errors(tmp_path: Path, handler, rule: str) -> None:  # type: ignore[no-untyped-def]
+    with pytest.raises(IntakeError) as caught:
+        from_url(
+            "https://files.example.com/a.pdf",
+            tmp_path,
+            client(httpx.MockTransport(handler)),
+            resolve=public,
+        )
+    assert caught.value.rule == rule

@@ -13,6 +13,7 @@ from quaoar.domain.ids import sha256_hex
 MAX_BYTES = 40 * 1024 * 1024
 TIMEOUT_S = 30.0
 MAX_REDIRECTS = 3
+ATTEMPTS = 3
 PDF_MAGIC = b"%PDF"
 # their terms forbid automated collection, so these documents are downloaded by hand
 EXCHANGE_HOSTS = ("nseindia.com", "bseindia.com")
@@ -60,14 +61,28 @@ def from_url(
     # redirects are followed by hand so every hop gets the same checks as the first
     for _ in range(MAX_REDIRECTS + 1):
         check_url(current, lookup)
-        with http.stream("GET", current, timeout=TIMEOUT_S, follow_redirects=False) as response:
-            if response.is_redirect:
-                current = urljoin(current, response.headers.get("location", ""))
-                continue
-            response.raise_for_status()
-            data = read_capped(response, max_bytes)
-        return store(data, dest_dir, url)
+        fetched = fetch_with_retry(http, current, max_bytes)
+        if isinstance(fetched, str):
+            current = urljoin(current, fetched)
+            continue
+        return store(fetched, dest_dir, url)
     raise IntakeError("redirects", f"more than {MAX_REDIRECTS}")
+
+
+def fetch_with_retry(http: httpx.Client, url: str, max_bytes: int) -> bytes | str:
+    # a dropped connection halfway through a 9 MB file is routine; try again before giving up
+    last = "no attempt"
+    for _ in range(ATTEMPTS):
+        try:
+            with http.stream("GET", url, timeout=TIMEOUT_S, follow_redirects=False) as response:
+                if response.is_redirect:
+                    return str(response.headers.get("location", ""))
+                if response.status_code >= 400:
+                    raise IntakeError("http_status", f"the server answered {response.status_code}")
+                return read_capped(response, max_bytes)
+        except httpx.TransportError as exc:
+            last = type(exc).__name__
+    raise IntakeError("download_failed", f"{last} after {ATTEMPTS} tries; download it by hand")
 
 
 def check_url(url: str, lookup: Callable[[str], list[str]]) -> None:
