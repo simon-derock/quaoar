@@ -1,5 +1,9 @@
 # test doubles shared across suites: a clock that only moves when told to
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime, timedelta
+
+from pydantic_ai.messages import ModelMessage, ModelResponse, ToolCallPart
+from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 
 class FixedClock:
@@ -16,3 +20,18 @@ class FixedClock:
 
     def advance(self, **delta: float) -> None:
         self._now += timedelta(**delta)
+
+
+# a scripted model for agent tests: replays tool calls in order, then answers with the final tool
+def scripted_model(
+    steps: Sequence[tuple[str, Mapping[str, object]]], final: Mapping[str, object] | None = None
+) -> FunctionModel:
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        turn = sum(isinstance(m, ModelResponse) for m in messages)
+        if turn < len(steps):
+            name, args = steps[turn]
+            return ModelResponse(parts=[ToolCallPart(name, dict(args))])
+        answer = final if final is not None else {"resolved": [], "unresolved": [], "note": "done"}
+        return ModelResponse(parts=[ToolCallPart(info.output_tools[0].name, dict(answer))])
+
+    return FunctionModel(respond)

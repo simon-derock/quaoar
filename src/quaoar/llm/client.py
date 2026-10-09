@@ -1,11 +1,13 @@
 # cohere through pydantic-ai: one model per scan, keys rotate on rate limits, answers cached
 import os
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass, replace
 
 from pydantic import BaseModel, SecretStr
-from pydantic_ai import Agent, AgentRunResult, ToolOutput
-from pydantic_ai.exceptions import ModelHTTPError, UnexpectedModelBehavior
+from pydantic_ai import Agent, AgentRunResult, Tool, ToolOutput
+from pydantic_ai.exceptions import ModelHTTPError, UnexpectedModelBehavior, UsageLimitExceeded
 from pydantic_ai.models import Model
+from pydantic_ai.usage import UsageLimits
 
 from quaoar.clock import ClockPort
 from quaoar.domain.ids import canonical_json, sha256_hex
@@ -33,6 +35,15 @@ class LlmError(RuntimeError):
 
 class ContextTooLargeError(LlmError):
     pass
+
+
+@dataclass(frozen=True, slots=True)
+class AgentRun[T]:
+    output: T | None
+    input_tokens: int
+    output_tokens: int
+    key_fp: str = ""
+    latency_ns: int = 0
 
 
 def cohere_model(model_name: str, api_key: str) -> Model:
@@ -69,8 +80,7 @@ class LlmClient:
         start = self._clock.ns()
 
         # replay and the ledger answer for free; the model is only asked once per text
-        body = self._replay.get(request_hash) if self._replay is not None else None
-        body = body or self._ledger.llm_body(request_hash)
+        body = self.recall(request_hash)
         if body is not None:
             self._report(
                 task, request_hash, None, 0, 0, self._clock.ns() - start, parent, cached=True
@@ -100,12 +110,66 @@ class LlmClient:
         start: int,
         parent: str | None,
     ) -> T:
+        result, fp = self._across_keys(task, lambda key: self._run(task, output, data, key))
+        latency = self._clock.ns() - start
+        usage = result.usage
+        self.remember(
+            request_hash,
+            task,
+            result.output.model_dump_json().encode(),
+            fp,
+            usage.input_tokens,
+            usage.output_tokens,
+            latency,
+        )
+        self._report(
+            task,
+            request_hash,
+            fp,
+            usage.input_tokens,
+            usage.output_tokens,
+            latency,
+            parent,
+            cached=False,
+        )
+        return result.output
+
+    def recall(self, request_hash: str) -> bytes | None:
+        # replay bundles and the ledger answer for free
+        body = self._replay.get(request_hash) if self._replay is not None else None
+        return body or self._ledger.llm_body(request_hash)
+
+    def remember(
+        self,
+        request_hash: str,
+        task: str,
+        body: bytes,
+        key_fp: str,
+        input_tokens: int,
+        output_tokens: int,
+        latency_ns: int,
+    ) -> None:
+        self._ledger.record_llm(
+            LlmCall(
+                request_hash=request_hash,
+                model=self._model,
+                task=task,
+                body_sha256=self._ledger.blobs.put(body),
+                key_fp=key_fp,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                latency_ns=latency_ns,
+                created_at=self._clock.now(),
+            )
+        )
+
+    def _across_keys[R](self, task: str, attempt: Callable[[SecretStr], R]) -> tuple[R, str]:
         for key in self._keys:
             fp = fingerprint(key.get_secret_value())
             if fp in self._spent:
                 continue
             try:
-                result = self._run(task, output, data, key)
+                return attempt(key), fp
             except ModelHTTPError as exc:
                 # a rate limit retires the key for the run; a stubborn transient error just
                 # moves on to the next key; anything else is a real failure
@@ -117,35 +181,58 @@ class LlmClient:
                 raise LlmError(f"{task}: model error {exc.status_code}") from None
             except UnexpectedModelBehavior as exc:
                 raise LlmError(f"{task}: output failed validation") from exc
-
-            latency = self._clock.ns() - start
-            usage = result.usage
-            body = result.output.model_dump_json().encode()
-            self._ledger.record_llm(
-                LlmCall(
-                    request_hash=request_hash,
-                    model=self._model,
-                    task=task,
-                    body_sha256=self._ledger.blobs.put(body),
-                    key_fp=fp,
-                    input_tokens=usage.input_tokens,
-                    output_tokens=usage.output_tokens,
-                    latency_ns=latency,
-                    created_at=self._clock.now(),
-                )
-            )
-            self._report(
-                task,
-                request_hash,
-                fp,
-                usage.input_tokens,
-                usage.output_tokens,
-                latency,
-                parent,
-                cached=False,
-            )
-            return result.output
         raise LlmError(f"{task}: every Cohere key is rate limited or failing")
+
+    def run_agent[T: BaseModel](
+        self,
+        task: str,
+        output: type[T],
+        system: str,
+        brief: str,
+        tools: Sequence[Tool],
+        limits: UsageLimits,
+        parent: str | None = None,
+    ) -> AgentRun[T]:
+        start = self._clock.ns()
+
+        def attempt(key: SecretStr) -> AgentRun[T]:
+            return self._agent_attempt(output, system, brief, tools, limits, key)
+
+        run, fp = self._across_keys(task, attempt)
+        latency = self._clock.ns() - start
+        self._report(
+            task, "agent", fp, run.input_tokens, run.output_tokens, latency, parent, cached=False
+        )
+        return replace(run, key_fp=fp, latency_ns=latency)
+
+    def _agent_attempt[T: BaseModel](
+        self,
+        output: type[T],
+        system: str,
+        brief: str,
+        tools: Sequence[Tool],
+        limits: UsageLimits,
+        key: SecretStr,
+    ) -> AgentRun[T]:
+        tries = 0
+        while True:
+            agent = Agent(
+                self._factory(self._model, key.get_secret_value()),
+                output_type=ToolOutput(output),
+                instructions=system,
+                tools=list(tools),
+                retries=1,
+            )
+            try:
+                done = agent.run_sync(brief, usage_limits=limits)
+                return AgentRun(done.output, done.usage.input_tokens, done.usage.output_tokens)
+            except (UsageLimitExceeded, UnexpectedModelBehavior):
+                # whatever the tools gathered before the loop ended is still in the book
+                return AgentRun(None, 0, 0)
+            except ModelHTTPError as exc:
+                if exc.status_code not in RETRY_ON or tries >= RETRIES_PER_KEY:
+                    raise
+                tries += 1
 
     def _run[T: BaseModel](
         self, task: str, output: type[T], data: str, key: SecretStr

@@ -7,7 +7,9 @@ from pydantic import BaseModel, ConfigDict, JsonValue
 
 from quaoar.clock import ClockPort
 
-EventType = Literal["stage", "serp", "llm", "guard", "claim", "signal", "card", "warn", "done"]
+EventType = Literal[
+    "stage", "serp", "llm", "agent", "guard", "claim", "signal", "card", "warn", "done"
+]
 MAX_EVENT_BYTES = 4096
 
 
