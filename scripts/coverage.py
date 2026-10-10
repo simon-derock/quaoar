@@ -2,6 +2,7 @@
 # usage: uv run python scripts/coverage.py SAMPLE.txt DOWNLOAD_DIR OUT.json [EARLIER.json]
 # with an earlier run's json, files already downloaded are read from disk, not fetched again
 import json
+import re
 import sys
 import time
 from dataclasses import asdict, dataclass, field
@@ -17,7 +18,9 @@ from quaoar.scan import issuer_name
 
 PAUSE_S = 1.5
 READABLE = 0.9
-SME_PAGES = 5
+SME_PAGES = 12
+# the listing statement of an SME issue names the SME or EMERGE platform; a mainboard one names BSE and NSE
+SME_LISTING = re.compile(r"SME PLATFORM|EMERGE PLATFORM|BSE SME|NSE EMERGE|SME EXCHANGE")
 
 
 @dataclass(slots=True)
@@ -52,8 +55,8 @@ def check(url: str, folder: Path, http: httpx.Client, earlier: dict[str, str]) -
         return row
     row.pages = len(pages)
     row.text_share = round(sum(not p.needs_ocr for p in pages) / max(1, len(pages)), 2)
-    front = " ".join(p.text for p in pages[:SME_PAGES]).upper()
-    row.sme = "SME" in front or "EMERGE" in front
+    front = " ".join(" ".join(p.text.split()) for p in pages[:SME_PAGES]).upper()
+    row.sme = SME_LISTING.search(front) is not None
     try:
         require_prospectus(pages)
         row.recognised = True
