@@ -1,10 +1,16 @@
 # phases B and C of the coverage test: read claims for every located SME prospectus, and run a full
 # scan while search credits last; one record per prospectus, written as it finishes
-# usage: uv run python scripts/run_sample.py RESULT.json PDF_DIR OUT.json
+# usage: uv run python scripts/run_sample.py RESULT.json PDF_DIR OUT.json scan
+#        uv run python scripts/run_sample.py RESULT.json PDF_DIR OUT.json claims SHARD SHARDS
+# one scan worker takes the prospectuses in order while credits last; claim workers share all of them,
+# and a model answer already in the ledger is reused, so overlap costs nothing
 import json
+import sqlite3
 import sys
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+
+import httpx
 
 from quaoar.clock import SystemClock
 from quaoar.events import Emitter, MemorySink
@@ -79,32 +85,46 @@ def full_scan(record: Record, path: Path) -> None:
     ]
 
 
-def main(result: Path, folder: Path, out: Path) -> None:
+def main(result: Path, folder: Path, out: Path, role: str, shard: int, shards: int) -> None:
     rows = [r for r in json.loads(result.read_text()) if r["sme"] and len(r["found"]) == 7]
     rows.sort(key=lambda r: r["sha256"])
     runtime = make_runtime()
     lookup = account_lookup(runtime.http)
     key = runtime.settings.serpapi_keys[0].get_secret_value()
+    if role == "claims":
+        rows = rows[shard::shards]
+    else:
+        rows = [r for r in rows if r["url"].rsplit("/", 1)[-1].removesuffix(".pdf") not in EARLIER]
     records: list[Record] = []
     for row in rows:
-        name = row["url"].rsplit("/", 1)[-1].removesuffix(".pdf")
         record = Record(row["url"], row["sha256"], row["issuer"])
         path = folder / f"{row['sha256']}.pdf"
         left = lookup(key)
+        if role == "scan" and left < SCAN_CAP:
+            break
         try:
-            if name not in EARLIER and left >= SCAN_CAP:
+            if role == "scan":
                 full_scan(record, path)
             else:
                 claims_only(record, path)
         except (CreditBudgetExceededError, KeysExhaustedError) as exc:
             record.kind, record.status = "scan", f"stopped: {type(exc).__name__}"
             record.credits = left - lookup(key)
-        except LlmError as exc:
-            record.status = f"model error: {exc}"[:200]
+        except (LlmError, sqlite3.OperationalError, httpx.HTTPError) as exc:
+            record.status = f"error: {type(exc).__name__}: {exc}"[:200]
         records.append(record)
         out.write_text(json.dumps([asdict(r) for r in records], indent=1))
-        sys.stderr.write(f"{len(records)}/{len(rows)} {name} {record.kind} {record.status}\n")
+        sys.stderr.write(
+            f"{len(records)}/{len(rows)} {record.url[-11:-4]} {record.kind} {record.status}\n"
+        )
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))
+    main(
+        Path(sys.argv[1]),
+        Path(sys.argv[2]),
+        Path(sys.argv[3]),
+        sys.argv[4],
+        int(sys.argv[5]) if len(sys.argv) > 5 else 0,
+        int(sys.argv[6]) if len(sys.argv) > 6 else 1,
+    )
