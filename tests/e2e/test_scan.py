@@ -185,3 +185,30 @@ def test_a_cover_that_prints_the_name_in_mixed_case_still_names_the_issuer() -> 
 def test_a_bare_legal_suffix_line_is_not_taken_for_the_issuer() -> None:
     cover = Page(1, "Red Herring Prospectus\nPrivate Limited\nPrivate Limited\n", needs_ocr=False)
     assert issuer_name([cover]) == "Unnamed issuer"
+
+
+def test_the_issuer_is_counted_across_cases_so_a_registrar_named_twice_in_capitals_does_not_win() -> (
+    None
+):
+    first = Page(
+        1,
+        "Red Herring Prospectus\nDesco Infratech Limited\nREGISTRAR TO THE ISSUE\nBIGSHARE SERVICES PRIVATE LIMITED\n",
+        needs_ocr=False,
+    )
+    third = Page(
+        3,
+        "DESCO INFRATECH LIMITED\nSHARES OF DESCO INFRATECH LIMITED (OUR COMPANY)\nBIGSHARE SERVICES PRIVATE LIMITED\n",
+        needs_ocr=False,
+    )
+    assert issuer_name([first, third]) == "DESCO INFRATECH LIMITED"
+
+
+def test_the_second_half_of_a_wrapped_registrar_name_is_not_taken_for_the_issuer() -> None:
+    cover = Page(
+        1,
+        "BEELINE CAPITAL ADVISORS\nPRIVATE LIMITED\nKFIN TECHNOLOGIES\nPRIVATE LIMITED\nLINK INTIME\nPRIVATE LIMITED\n"
+        "MEHUL TELECOM LIMITED\n",
+        needs_ocr=False,
+    )
+    third = Page(3, "MEHUL TELECOM LIMITED\n", needs_ocr=False)
+    assert issuer_name([cover, third]) == "MEHUL TELECOM LIMITED"

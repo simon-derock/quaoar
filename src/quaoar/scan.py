@@ -301,6 +301,8 @@ ISSUER_LINE = re.compile(r"^[A-Z][A-Z0-9&.,' ()-]{2,80}\bLIMITED$")
 # some covers print the name in mixed case ("MV Electrosystems Limited"); used only when no capitals line exists
 MIXED_ISSUER_LINE = re.compile(r"^[A-Z][A-Za-z0-9&.,'()-]*( [A-Za-z0-9&.,'()-]+){1,10} Limited$")
 INTERMEDIARY = re.compile(r"STOCK EXCHANGE|SECURITIES AND EXCHANGE|REGISTRAR|LEAD MANAGER", re.I)
+# the second half of a wrapped name ("... ADVISORS" then "PRIVATE LIMITED") is not a company
+BARE_SUFFIX = re.compile(r"^(PRIVATE|PUBLIC)\s+LIMITED$", re.I)
 
 
 def issuer_name(pages: list[Page]) -> str:
@@ -308,12 +310,13 @@ def issuer_name(pages: list[Page]) -> str:
     # appear once or twice, so listing order alone would pick the wrong company
     cover = pages[:3]
     lines = [" ".join(line.split()) for p in cover for line in p.text.splitlines()]
-    candidates = [ln for ln in lines if ISSUER_LINE.match(ln) and not INTERMEDIARY.search(ln)]
+    named = [ln for ln in lines if not INTERMEDIARY.search(ln) and not BARE_SUFFIX.match(ln)]
+    candidates = [ln for ln in named if ISSUER_LINE.match(ln)]
     if not candidates:
-        candidates = [
-            ln for ln in lines if MIXED_ISSUER_LINE.match(ln) and not INTERMEDIARY.search(ln)
-        ]
+        candidates = [ln for ln in named if MIXED_ISSUER_LINE.match(ln)]
     if not candidates:
         return "Unnamed issuer"
     text = " ".join(" ".join(p.text.split()) for p in cover)
-    return max(candidates, key=lambda name: (text.count(name), -candidates.index(name)))
+    # a cover prints the issuer in capitals and in mixed case, so count without regard to case
+    shouted = text.upper()
+    return max(candidates, key=lambda name: (shouted.count(name.upper()), -candidates.index(name)))
