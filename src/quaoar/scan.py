@@ -76,7 +76,7 @@ def run_scan(
     sections = timed(emit, clock, root, "sections", lambda: locate_sections(pages))
     extraction = read_claims(pages, sections, claims, emit, root)
 
-    signals = unread_note(company, sections)
+    signals = unread_note(company, sections) + unread_parts_note(company, extraction)
     signals += vendor_stage(extraction, search, emit, root, cutoff, investigator)
     signals += site_stage(company, extraction, search, emit, root, investigator)
     signals += banker_stage(extraction, search, emit, root, cutoff)
@@ -115,6 +115,28 @@ def unread_note(company: str, sections: SectionMap) -> list[Signal]:
         Signal(
             check="sections",
             rule="SC-01",
+            subject=company,
+            status=Status.NOT_APPLICABLE,
+            text=text,
+        )
+    ]
+
+
+def unread_parts_note(company: str, extraction: Extraction) -> list[Signal]:
+    # a model that was down or refused leaves checks out; the card must not read as a complete one
+    missed = sum(extraction.failed.values())
+    if not missed:
+        return []
+    text = (
+        f"Quaoar couldn't read {missed} part{'s' if missed != 1 else ''} of this prospectus "
+        "(the language model was unavailable or refused them), so some of the vendor, premises, "
+        "lead manager and litigation checks are missing and this card is incomplete. "
+        "Run it again to fill them in."
+    )
+    return [
+        Signal(
+            check="claims",
+            rule="SC-02",
             subject=company,
             status=Status.NOT_APPLICABLE,
             text=text,

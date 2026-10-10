@@ -2,9 +2,12 @@
 from datetime import date
 from pathlib import Path
 
+from pydantic import BaseModel
+
 from quaoar.domain.claims import QuoteClaim, Quotes
 from quaoar.domain.findings import Status
 from quaoar.events import Emitter, MemorySink
+from quaoar.llm.client import LlmError
 from quaoar.prospectus.acquire import from_path
 from quaoar.prospectus.pdf import Page
 from quaoar.scan import issuer_name, run_scan, scan_id_for
@@ -212,3 +215,28 @@ def test_the_second_half_of_a_wrapped_registrar_name_is_not_taken_for_the_issuer
     )
     third = Page(3, "MEHUL TELECOM LIMITED\n", needs_ocr=False)
     assert issuer_name([cover, third]) == "MEHUL TELECOM LIMITED"
+
+
+class DownSource:
+    # a model that is unavailable for every request, as when a key's monthly quota is spent
+    def extract[T: BaseModel](
+        self, task: str, output: type[T], text: str, parent: str | None = None
+    ) -> T:
+        raise LlmError(f"{task}: every Cohere key is rate limited or failing")
+
+
+def test_a_card_whose_claims_could_not_be_read_says_it_is_incomplete(tmp_path: Path) -> None:
+    pdf = tmp_path / "demo.pdf"
+    pdf.write_bytes(make_pdf(PAGES))
+    clock = FixedClock()
+    result = run_scan(
+        from_path(pdf),
+        search=FakeSearch({}),
+        claims=DownSource(),
+        emit=Emitter("down", MemorySink(), clock),
+        clock=clock,
+        cutoff=date(2024, 9, 3),
+    )
+    notes = [c.text for c in result.card.context]
+    assert any("couldn't read" in note and "incomplete" in note for note in notes)
+    assert all("fraud" not in note.lower() for note in notes)
