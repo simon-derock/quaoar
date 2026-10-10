@@ -122,7 +122,9 @@ Then the question that matters: does it cry wolf? Three prospectuses with no kno
 
 **A second, pre-registered survey** of six 2026 SME prospectuses ([audit](docs/benchmark-audits/survey-2026-10-09.md)): 4 completed cards with 1 flag (two Delhi court records, with the prospectus's disclosure thresholds likely the explanation), and 2 stopped at their credit cap. It also exposed three parsing gaps, now fixed.
 
-**A scan costs** about 12 to 37 SerpApi searches on a fresh prospectus, 0 on a replay. Seven ordinary companies is not an accuracy claim.
+**A reading-coverage test** on 59 real prospectuses ([audit](docs/benchmark-audits/coverage-2026-10-10.md)): on 23 SME prospectuses the parser had not been tuned on, all seven sections were located in 21 (91%). Among 13 completed cards of ordinary companies, 3 surfaced a real public record and 1 was a wrong-company match, now fixed. A spent model quota left part of the run invalid, and the audit says which.
+
+**A scan costs** about 12 to 37 SerpApi searches on a fresh prospectus, 0 on a replay. Thirteen ordinary companies is not an accuracy claim.
 
 `quaoar diff earlier.pdf later.pdf` compares two versions of a prospectus (draft, red herring, final) and lists vendors, matters and lead managers that were added, removed or changed. It reads claims only, no searches. The promoter list is noisy when a draft lists promoter-group members.
 
@@ -198,7 +200,7 @@ Full design, specs and diagrams: [`PLAN_SPEC.md`](PLAN_SPEC.md). Decisions: [`do
 - **The 100x vendor-capital rule is a screen, not a verdict.** It was fixed before any control was scanned. A tiny vendor quoting a large amount is worth a look, but real small suppliers do this too.
 - **Registry snippets are not live filings** and can lag the official records.
 - **Point-in-time is partial.** Registry and Maps pages show today's state; strict "before listing" evidence relies on dated news, orders and court records.
-- **Small evaluation.** One positive (two versions) and seven ordinary companies: three controls from one banker's website, and four completed cards from a second, pre-registered survey of 2026 prospectuses. No accuracy claim is made.
+- **Small evaluation.** One positive (two versions) and thirteen ordinary companies with a completed card, from three pre-registered audits. A reading test on 59 prospectuses covers more files than that, but only six of its cards are valid, because a model quota ran out. No accuracy claim is made.
 
 ## Development
 ```bash
