@@ -7,7 +7,7 @@ from quaoar.prospectus.pdf import Page
 
 TARGETS: dict[str, re.Pattern[str]] = {
     "general_information": re.compile(r"^GENERAL INFORMATION$"),
-    "objects": re.compile(r"^OBJECTS? OF THE (ISSUE|OFFER)$"),
+    "objects": re.compile(r"^OBJECTS? (OF|FOR) THE (ISSUE|OFFER)$"),
     "business": re.compile(r"^(OUR )?BUSINESS( OVERVIEW)?$"),
     "promoters": re.compile(r"^OUR PROMOTERS?( AND PROMOTERS?[' ]?S? GROUPS?)?$"),
     "group_companies": re.compile(
@@ -16,7 +16,7 @@ TARGETS: dict[str, re.Pattern[str]] = {
     ),
     # filings misspell this one ("DEVELOPEMENT", "DEVLOPMENTS"), so any DEV... word counts
     "litigation": re.compile(r"^OUTSTANDING LITIGATIONS? AND MATERIAL DEV\w*$"),
-    "regulatory": re.compile(r"^OTHER REGULATORY AND STATUTORY DISCLOSURES?$"),
+    "regulatory": re.compile(r"^OTHER REGULATORY AND STATUTORY DISCL\w+$"),
 }
 TOC_TITLE = re.compile(r"^((TABLE( OF)? )?CONTENTS?|INDEX( OF CONTENTS?)?)$")
 LEADER = re.compile(r"^(?P<title>.+?)\s*[._]{3,}\s*\d{0,4}$")
