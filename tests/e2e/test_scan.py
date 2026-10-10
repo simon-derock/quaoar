@@ -166,3 +166,22 @@ def test_a_prospectus_whose_sections_cant_be_located_says_so_on_the_card(tmp_pat
     notes = [c.text for c in result.card.context]
     assert any("couldn't locate" in note for note in notes)
     assert all("fraud" not in note.lower() for note in notes)
+
+
+def test_a_cover_that_prints_the_name_in_mixed_case_still_names_the_issuer() -> None:
+    cover = Page(
+        1,
+        "Red Herring Prospectus\nMV Electrosystems Limited\nCorporate Identity Number: U31401HR2009PLC140536\n",
+        needs_ocr=False,
+    )
+    third = Page(
+        3,
+        "Red Herring Prospectus\nMV Electrosystems Limited\nKFin Technologies Limited\n",
+        needs_ocr=False,
+    )
+    assert issuer_name([cover, third]) == "MV Electrosystems Limited"
+
+
+def test_a_bare_legal_suffix_line_is_not_taken_for_the_issuer() -> None:
+    cover = Page(1, "Red Herring Prospectus\nPrivate Limited\nPrivate Limited\n", needs_ocr=False)
+    assert issuer_name([cover]) == "Unnamed issuer"

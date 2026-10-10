@@ -298,6 +298,8 @@ def timed[T](emit: Emitter, clock: ClockPort, parent: str, name: str, run: Calla
 
 
 ISSUER_LINE = re.compile(r"^[A-Z][A-Z0-9&.,' ()-]{2,80}\bLIMITED$")
+# some covers print the name in mixed case ("MV Electrosystems Limited"); used only when no capitals line exists
+MIXED_ISSUER_LINE = re.compile(r"^[A-Z][A-Za-z0-9&.,'()-]*( [A-Za-z0-9&.,'()-]+){1,10} Limited$")
 INTERMEDIARY = re.compile(r"STOCK EXCHANGE|SECURITIES AND EXCHANGE|REGISTRAR|LEAD MANAGER", re.I)
 
 
@@ -307,6 +309,10 @@ def issuer_name(pages: list[Page]) -> str:
     cover = pages[:3]
     lines = [" ".join(line.split()) for p in cover for line in p.text.splitlines()]
     candidates = [ln for ln in lines if ISSUER_LINE.match(ln) and not INTERMEDIARY.search(ln)]
+    if not candidates:
+        candidates = [
+            ln for ln in lines if MIXED_ISSUER_LINE.match(ln) and not INTERMEDIARY.search(ln)
+        ]
     if not candidates:
         return "Unnamed issuer"
     text = " ".join(" ".join(p.text.split()) for p in cover)
