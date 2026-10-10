@@ -11,14 +11,15 @@ TARGETS: dict[str, re.Pattern[str]] = {
     "business": re.compile(r"^(OUR )?BUSINESS( OVERVIEW)?$"),
     "promoters": re.compile(r"^OUR PROMOTERS?( AND PROMOTERS?[' ]?S? GROUPS?)?$"),
     "group_companies": re.compile(
-        r"^(INFORMATION WITH RESPECT TO )?(OUR )?GROUP COMPAN(Y|IES)( ?/ ?ENTITIES)?$"
+        r"^(INFORMATION WITH RESPECT TO )?(OUR )?GROUP (COMPAN(Y|IES)|ENTIT(Y|IES))"
+        r"( OF OUR COMPANY)?( ?/ ?ENTITIES)?$"
     ),
-    # filings misspell this one ("DEVELOPEMENT"), so any DEVELOP... word counts
-    "litigation": re.compile(r"^OUTSTANDING LITIGATIONS? AND MATERIAL DEVELOP\w*$"),
-    "regulatory": re.compile(r"^OTHER REGULATORY AND STATUTORY DISCLOSURES$"),
+    # filings misspell this one ("DEVELOPEMENT", "DEVLOPMENTS"), so any DEV... word counts
+    "litigation": re.compile(r"^OUTSTANDING LITIGATIONS? AND MATERIAL DEV\w*$"),
+    "regulatory": re.compile(r"^OTHER REGULATORY AND STATUTORY DISCLOSURES?$"),
 }
-TOC_TITLE = re.compile(r"^((TABLE OF )?CONTENTS|INDEX( OF CONTENTS)?)$")
-LEADER = re.compile(r"^(?P<title>.+?)\s*\.{3,}\s*\d{0,4}$")
+TOC_TITLE = re.compile(r"^((TABLE( OF)? )?CONTENTS?|INDEX( OF CONTENTS?)?)$")
+LEADER = re.compile(r"^(?P<title>.+?)\s*[._]{3,}\s*\d{0,4}$")
 # some filings print no dotted leaders: "GENERAL INFORMATION 81"; a title carries no digits, which keeps body text out
 # a part heading ("I. GENERAL", "SECTION III - INTRODUCTION") is its own line, never the first half of a wrapped title
 PART = re.compile(r"^([IVXL]+[.:]\s|SECTION\s)")
@@ -82,7 +83,9 @@ def toc_titles(lines: list[str]) -> list[str]:
     for line in lines:
         match = LEADER.match(line) or PLAIN.match(line)
         if match:
-            titles.append(normal(f"{pending} {match.group('title')}"))
+            # a title that normalises to nothing (a lone full stop) must not match any page
+            if title := normal(f"{pending} {match.group('title')}"):
+                titles.append(title)
             pending = ""
         elif PART.match(line):
             pending = ""
@@ -111,7 +114,7 @@ def top_lines(page: Page) -> set[str]:
     return {normal(line) for line in lines[:TOP_LINES]}
 
 
-SECTION_PREFIX = re.compile(r"^SECTION [IVXL]+ ?[-:] ?")
+SECTION_PREFIX = re.compile(r"^SECTION (- )?[IVXL]+ ?[-:] ?")
 
 
 def target_name(title: str) -> str | None:

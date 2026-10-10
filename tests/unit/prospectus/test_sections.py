@@ -110,6 +110,11 @@ def test_real_trafiksol_prospectus_sections() -> None:
         ("OUR GROUP COMPANY", "group_companies"),
         ("SECTION XII - OTHER REGULATORY AND STATUTORY DISCLOSURES", "regulatory"),
         ("OUTSTANDING LITIGATIONS AND MATERIAL DEVELOPMENTS", "litigation"),
+        ("OUTSTANDING LITIGATION AND MATERIAL DEVLOPMENTS", "litigation"),
+        ("GROUP ENTITIES OF OUR COMPANY", "group_companies"),
+        ("SECTION - V - GENERAL INFORMATION", "general_information"),
+        ("SECTION - XII - OTHER REGULATORY AND STATUTORY DISCLOSURES", "regulatory"),
+        ("OTHER REGULATORY AND STATUTORY DISCLOSURE", "regulatory"),
         ("SECTION VII - PARTICULARS OF THE ISSUE", None),
         ("OUR MANAGEMENT", None),
     ],
@@ -188,3 +193,45 @@ def test_ampersand_and_plural_wording_differences_between_contents_and_heading_a
     ]
     found = locate_sections(pages)
     assert set(found.sections) == {"promoters", "litigation"}
+
+
+def contents_then(toc: list[str], *rest: Page) -> list[Page]:
+    return [Page(1, "\n".join(toc), needs_ocr=False), *rest]
+
+
+@pytest.mark.parametrize("heading", ["TABLE OF CONTENT", "TABLE CONTENTS", "CONTENT"])
+def test_contents_headings_without_the_final_s_or_the_of_are_read(heading: str) -> None:
+    pages = contents_then(
+        [heading, "GENERAL INFORMATION..........58"], page(3, "GENERAL INFORMATION")
+    )
+    assert set(locate_sections(pages).sections) == {"general_information"}
+
+
+def test_contents_lines_with_underscore_leaders_are_read() -> None:
+    toc = [
+        "TABLE OF CONTENTS",
+        "SECTION IV - GENERAL INFORMATION ________________58",
+        "OBJECTS OF THE OFFER ____89",
+    ]
+    pages = contents_then(
+        toc, page(3, "SECTION IV - GENERAL INFORMATION"), page(4, "OBJECTS OF THE OFFER")
+    )
+    assert set(locate_sections(pages).sections) == {"general_information", "objects"}
+
+
+def test_a_stray_punctuation_line_cannot_pose_as_a_title_and_skip_later_sections() -> None:
+    # a contents entry that normalises to nothing must not match a lone "." at the top of a later page
+    toc = [
+        "CONTENTS",
+        "OUR BUSINESS ....... 3",
+        ". ....... 4",
+        "OUTSTANDING LITIGATION AND MATERIAL DEVELOPMENTS ....... 5",
+    ]
+    pages = contents_then(
+        toc,
+        page(2, "OUR BUSINESS"),
+        page(3, "filler"),
+        page(4, "OUTSTANDING LITIGATION AND MATERIAL DEVELOPMENTS"),
+        Page(5, ".\nbody text body text body text body text", needs_ocr=False),
+    )
+    assert set(locate_sections(pages).sections) == {"business", "litigation"}
