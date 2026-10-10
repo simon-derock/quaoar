@@ -173,8 +173,16 @@ def quote_paise(quote: QuoteClaim) -> int | None:
         return None
 
 
+# a business of the same name in another country is another business; only an address that plainly
+# says so is dropped (a US state and ZIP, or a country named), never one that merely lacks a PIN code
+ABROAD = re.compile(
+    r"\b[A-Z]{2} \d{5}(-\d{4})?\b|\b(USA|United States|United Kingdom|Canada|Australia|Singapore)\b"
+)
+
+
 def best_place(vendor: str, places: Sequence[Mapping[str, object]]) -> Mapping[str, object] | None:
-    scored = [(similarity(vendor, str(p.get("title", ""))), p) for p in places]
+    home = [p for p in places if not ABROAD.search(str(p.get("address", "")))]
+    scored = [(similarity(vendor, str(p.get("title", ""))), p) for p in home]
     scored = [(score, p) for score, p in scored if score >= PLACE_MATCH]
     return max(scored, key=lambda pair: pair[0])[1] if scored else None
 

@@ -238,3 +238,20 @@ def test_a_vendor_with_no_company_form_is_never_matched_to_a_same_named_company(
     assert by_rule["VX-05"].status is Status.UNVERIFIED
     assert "name alone doesn't confirm" in by_rule["VX-05"].text
     assert by_rule["VX-05"].evidence
+
+
+def test_a_name_match_at_a_plainly_foreign_address_is_a_different_business() -> None:
+    # "M/s Vraj Construction" matched a Pennsylvania company on Maps and was reported permanently closed
+    from quaoar.checks.vendor import best_place
+
+    abroad = {
+        "title": "VRAJ Construction",
+        "address": "964 Station Ave, Bensalem, PA 19020",
+        "open_state": "Permanently closed",
+    }
+    home = {"title": "Vraj Construction", "address": "Ring Road, Surat, Gujarat 395002"}
+    assert best_place("M/s Vraj Construction", [abroad]) is None
+    assert best_place("M/s Vraj Construction", [abroad, home]) is home
+    # an address without a country or a PIN code is still accepted: only plain foreign ones are dropped
+    local = {"title": "Vraj Construction", "address": "Raiya Road, Rajkot"}
+    assert best_place("M/s Vraj Construction", [local]) is local
